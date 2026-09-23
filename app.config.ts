@@ -2,6 +2,7 @@ import type { ExpoConfig } from "expo/config";
 
 const config: ExpoConfig = {
   name: "Expense Tracker",
+  icon: "./assets/images/icon.png",
   slug: "expense-tracker-group6",
   version: "1.0.0",
   orientation: "portrait",
@@ -16,6 +17,7 @@ const config: ExpoConfig = {
     package: "expense.tracker.group6",
     adaptiveIcon: {
       backgroundColor: "#2A4740",
+      foregroundImage: "./assets/images/icon.png",
     },
   },
   extra: {
@@ -23,7 +25,7 @@ const config: ExpoConfig = {
       projectId: "e2002670-90ed-468a-b2f7-cfd6aa16be13",
     },
   },
-  plugins: ["expo-router"],
+  plugins: ["expo-router", "expo-font"],
   experiments: {
     typedRoutes: true,
   },

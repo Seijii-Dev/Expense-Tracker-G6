@@ -1,5 +1,6 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
+import { useAuth } from "@/lib/auth-store";
 
 export type Category = "Food" | "Transport" | "School" | "Shopping" | "Bills" | "Fun" | "Health" | "Other";
 export type Payment = "Cash" | "GCash" | "Card" | "Bank";
@@ -16,18 +17,9 @@ export const categoryMeta: Record<Category, { color: string; soft: string }> = {
   Other: { color: "#82908D", soft: "#F1F4F3" },
 };
 
-const seedExpenses: Expense[] = [
-  { id: "1", amount: 150, category: "Food", date: "2026-09-23", description: "Lunch at Canto", payment: "Cash" },
-  { id: "2", amount: 65, category: "Transport", date: "2026-09-23", description: "Jeepney to campus", payment: "Cash" },
-  { id: "3", amount: 380, category: "School", date: "2026-09-22", description: "Printing and supplies", payment: "GCash" },
-  { id: "4", amount: 890, category: "Shopping", date: "2026-09-21", description: "New running shoes", payment: "Card" },
-  { id: "5", amount: 120, category: "Food", date: "2026-09-20", description: "Coffee and pastry", payment: "GCash" },
-  { id: "6", amount: 550, category: "Bills", date: "2026-09-19", description: "Mobile plan", payment: "Bank" },
-  { id: "7", amount: 275, category: "Fun", date: "2026-09-18", description: "Movie night", payment: "Card" },
-  { id: "8", amount: 90, category: "Transport", date: "2026-09-17", description: "Tricycle fare", payment: "Cash" },
-];
-
-const today = "2026-09-23";
+export const getPhilippinesDate = (date = new Date()) => new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Manila", year: "numeric", month: "2-digit", day: "2-digit" }).format(date);
+export const getPhilippinesMonth = (date = new Date()) => getPhilippinesDate(date).slice(0, 7);
+const today = getPhilippinesDate();
 
 type ExpenseContextValue = {
   expenses: Expense[];
@@ -45,20 +37,25 @@ type ExpenseContextValue = {
 const ExpenseContext = createContext<ExpenseContextValue | null>(null);
 
 export function ExpenseProvider({ children }: { children: React.ReactNode }) {
-  const [expenses, setExpenses] = useState<Expense[]>(seedExpenses);
+  const { account } = useAuth();
+  const [expenses, setExpenses] = useState<Expense[]>([]);
   const [budget, setBudgetState] = useState(5000);
+  const storageKey = account ? `expense-tracker:${account.email}` : null;
 
   useEffect(() => {
-    AsyncStorage.multiGet(["expense-tracker-expenses", "expense-tracker-budget"]).then(([expensePair, budgetPair]) => {
+    if (!storageKey) { setExpenses([]); setBudgetState(5000); return; }
+    setExpenses([]);
+    setBudgetState(5000);
+    AsyncStorage.multiGet([`${storageKey}:expenses`, `${storageKey}:budget`]).then(([expensePair, budgetPair]) => {
       if (expensePair[1]) setExpenses(JSON.parse(expensePair[1]));
       if (budgetPair[1]) setBudgetState(Number(budgetPair[1]));
     }).catch(() => undefined);
-  }, []);
+  }, [storageKey]);
 
-  useEffect(() => { AsyncStorage.setItem("expense-tracker-expenses", JSON.stringify(expenses)).catch(() => undefined); }, [expenses]);
-  useEffect(() => { AsyncStorage.setItem("expense-tracker-budget", String(budget)).catch(() => undefined); }, [budget]);
+  useEffect(() => { if (storageKey) AsyncStorage.setItem(`${storageKey}:expenses`, JSON.stringify(expenses)).catch(() => undefined); }, [expenses, storageKey]);
+  useEffect(() => { if (storageKey) AsyncStorage.setItem(`${storageKey}:budget`, String(budget)).catch(() => undefined); }, [budget, storageKey]);
 
-  const monthExpenses = expenses.filter((expense) => expense.date.startsWith("2026-09"));
+  const monthExpenses = expenses.filter((expense) => expense.date.startsWith(getPhilippinesMonth()));
   const monthTotal = monthExpenses.reduce((sum, expense) => sum + expense.amount, 0);
   const todayTotal = expenses.filter((expense) => expense.date === today).reduce((sum, expense) => sum + expense.amount, 0);
   const remaining = Math.max(0, budget - monthTotal);
