@@ -40,20 +40,28 @@ export function ExpenseProvider({ children }: { children: React.ReactNode }) {
   const { account } = useAuth();
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [budget, setBudgetState] = useState(5000);
+  const [hydratedKey, setHydratedKey] = useState<string | null>(null);
   const storageKey = account ? `expense-tracker:${account.email}` : null;
 
   useEffect(() => {
+    setHydratedKey(null);
     if (!storageKey) { setExpenses([]); setBudgetState(5000); return; }
     setExpenses([]);
     setBudgetState(5000);
     AsyncStorage.multiGet([`${storageKey}:expenses`, `${storageKey}:budget`]).then(([expensePair, budgetPair]) => {
-      if (expensePair[1]) setExpenses(JSON.parse(expensePair[1]));
-      if (budgetPair[1]) setBudgetState(Number(budgetPair[1]));
-    }).catch(() => undefined);
+      if (expensePair[1]) {
+        try { setExpenses(JSON.parse(expensePair[1])); } catch { setExpenses([]); }
+      }
+      if (budgetPair[1]) {
+        const storedBudget = Number(budgetPair[1]);
+        if (Number.isFinite(storedBudget) && storedBudget > 0) setBudgetState(storedBudget);
+      }
+      setHydratedKey(storageKey);
+    }).catch(() => setHydratedKey(storageKey));
   }, [storageKey]);
 
-  useEffect(() => { if (storageKey) AsyncStorage.setItem(`${storageKey}:expenses`, JSON.stringify(expenses)).catch(() => undefined); }, [expenses, storageKey]);
-  useEffect(() => { if (storageKey) AsyncStorage.setItem(`${storageKey}:budget`, String(budget)).catch(() => undefined); }, [budget, storageKey]);
+  useEffect(() => { if (storageKey && hydratedKey === storageKey) AsyncStorage.setItem(`${storageKey}:expenses`, JSON.stringify(expenses)).catch(() => undefined); }, [expenses, storageKey, hydratedKey]);
+  useEffect(() => { if (storageKey && hydratedKey === storageKey) AsyncStorage.setItem(`${storageKey}:budget`, String(budget)).catch(() => undefined); }, [budget, storageKey, hydratedKey]);
 
   const monthExpenses = expenses.filter((expense) => expense.date.startsWith(getPhilippinesMonth()));
   const monthTotal = monthExpenses.reduce((sum, expense) => sum + expense.amount, 0);
