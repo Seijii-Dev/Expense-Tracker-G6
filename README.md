@@ -1,10 +1,10 @@
-# Expense Tracker
+# Smart Spending and Savings Tracker
 
 A React Native / Expo expense tracking app for Group 6.
 
 ## App identity
 
-- Display name: `Expense Tracker`
+- Display name: `Smart Spending and Savings Tracker`
 - Package name: `expense.tracker.group6`
 - iOS bundle identifier: `expense.tracker.group6`
 - Android package: `expense.tracker.group6`

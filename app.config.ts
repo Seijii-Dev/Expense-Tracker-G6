@@ -1,7 +1,7 @@
 import type { ExpoConfig } from "expo/config";
 
 const config: ExpoConfig = {
-  name: "Expense Tracker",
+  name: "Smart Spending and Savings Tracker",
   icon: "./assets/images/icon.png",
   slug: "expense-tracker-group6",
   version: "1.0.0",
