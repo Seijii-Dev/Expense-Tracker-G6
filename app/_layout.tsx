@@ -7,6 +7,7 @@ import { Fraunces_600SemiBold, Fraunces_700Bold } from "@expo-google-fonts/fraun
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { ExpenseProvider } from "@/lib/expense-store";
 import { AuthProvider } from "@/lib/auth-store";
+import { ThemeProvider } from "@/lib/theme-store";
 
 export default function RootLayout() {
   const [fontsLoaded] = useFonts({ DMSans_400Regular, DMSans_500Medium, DMSans_700Bold, Fraunces_600SemiBold, Fraunces_700Bold });
@@ -14,5 +15,5 @@ export default function RootLayout() {
   const TextWithDefaults = Text as typeof Text & { defaultProps?: { style?: unknown } };
   TextWithDefaults.defaultProps = TextWithDefaults.defaultProps || {};
   TextWithDefaults.defaultProps.style = [{ fontFamily: "DMSans_400Regular" }];
-  return <SafeAreaProvider><AuthProvider><ExpenseProvider><StatusBar style="dark" /><Stack screenOptions={{ headerShown: false }} /></ExpenseProvider></AuthProvider></SafeAreaProvider>;
+  return <SafeAreaProvider><AuthProvider><ThemeProvider><ExpenseProvider><StatusBar style="dark" /><Stack screenOptions={{ headerShown: false }} /></ExpenseProvider></ThemeProvider></AuthProvider></SafeAreaProvider>;
 }

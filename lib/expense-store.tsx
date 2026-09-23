@@ -19,13 +19,14 @@ export const categoryMeta: Record<Category, { color: string; soft: string }> = {
 
 export const getPhilippinesDate = (date = new Date()) => new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Manila", year: "numeric", month: "2-digit", day: "2-digit" }).format(date);
 export const getPhilippinesMonth = (date = new Date()) => getPhilippinesDate(date).slice(0, 7);
-const today = getPhilippinesDate();
 
 type ExpenseContextValue = {
   expenses: Expense[];
+  hydrated: boolean;
   budget: number;
   setBudget: (value: number) => void;
   addExpense: (expense: Omit<Expense, "id">) => void;
+  updateExpense: (id: string, expense: Omit<Expense, "id">) => void;
   removeExpense: (id: string) => void;
   monthTotal: number;
   todayTotal: number;
@@ -42,6 +43,7 @@ export function ExpenseProvider({ children }: { children: React.ReactNode }) {
   const [budget, setBudgetState] = useState(5000);
   const [hydratedKey, setHydratedKey] = useState<string | null>(null);
   const storageKey = account ? `expense-tracker:${account.email}` : null;
+  const hydrated = storageKey !== null && hydratedKey === storageKey;
 
   useEffect(() => {
     setHydratedKey(null);
@@ -50,7 +52,10 @@ export function ExpenseProvider({ children }: { children: React.ReactNode }) {
     setBudgetState(5000);
     AsyncStorage.multiGet([`${storageKey}:expenses`, `${storageKey}:budget`]).then(([expensePair, budgetPair]) => {
       if (expensePair[1]) {
-        try { setExpenses(JSON.parse(expensePair[1])); } catch { setExpenses([]); }
+        try {
+          const parsed = JSON.parse(expensePair[1]);
+          if (Array.isArray(parsed)) setExpenses(parsed);
+        } catch { setExpenses([]); }
       }
       if (budgetPair[1]) {
         const storedBudget = Number(budgetPair[1]);
@@ -60,17 +65,24 @@ export function ExpenseProvider({ children }: { children: React.ReactNode }) {
     }).catch(() => setHydratedKey(storageKey));
   }, [storageKey]);
 
-  useEffect(() => { if (storageKey && hydratedKey === storageKey) AsyncStorage.setItem(`${storageKey}:expenses`, JSON.stringify(expenses)).catch(() => undefined); }, [expenses, storageKey, hydratedKey]);
-  useEffect(() => { if (storageKey && hydratedKey === storageKey) AsyncStorage.setItem(`${storageKey}:budget`, String(budget)).catch(() => undefined); }, [budget, storageKey, hydratedKey]);
+  useEffect(() => { if (hydrated) AsyncStorage.setItem(`${storageKey}:expenses`, JSON.stringify(expenses)).catch(() => undefined); }, [expenses, storageKey, hydrated]);
+  useEffect(() => { if (hydrated) AsyncStorage.setItem(`${storageKey}:budget`, String(budget)).catch(() => undefined); }, [budget, storageKey, hydrated]);
 
+  const currentDate = getPhilippinesDate();
   const monthExpenses = expenses.filter((expense) => expense.date.startsWith(getPhilippinesMonth()));
   const monthTotal = monthExpenses.reduce((sum, expense) => sum + expense.amount, 0);
-  const todayTotal = expenses.filter((expense) => expense.date === today).reduce((sum, expense) => sum + expense.amount, 0);
+  const todayTotal = expenses.filter((expense) => expense.date === currentDate).reduce((sum, expense) => sum + expense.amount, 0);
   const remaining = Math.max(0, budget - monthTotal);
-  const budgetPercent = Math.min(100, Math.round((monthTotal / budget) * 100));
+  const budgetPercent = budget > 0 ? Math.min(100, Math.round((monthTotal / budget) * 100)) : 0;
   const sortedExpenses = [...expenses].sort((a, b) => b.date.localeCompare(a.date) || b.id.localeCompare(a.id));
 
-  const value = useMemo(() => ({ expenses, budget, setBudget: setBudgetState, addExpense: (expense: Omit<Expense, "id">) => setExpenses((current) => [{ ...expense, id: String(Date.now()) }, ...current]), removeExpense: (id: string) => setExpenses((current) => current.filter((expense) => expense.id !== id)), monthTotal, todayTotal, remaining, budgetPercent, sortedExpenses }), [expenses, budget, monthTotal, todayTotal, remaining, budgetPercent, sortedExpenses]);
+  const value = useMemo(() => ({
+    expenses, hydrated, budget, setBudget: setBudgetState,
+    addExpense: (expense: Omit<Expense, "id">) => setExpenses((current) => [{ ...expense, id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}` }, ...current]),
+    updateExpense: (id: string, expense: Omit<Expense, "id">) => setExpenses((current) => current.map((item) => item.id === id ? { ...expense, id } : item)),
+    removeExpense: (id: string) => setExpenses((current) => current.filter((expense) => expense.id !== id)),
+    monthTotal, todayTotal, remaining, budgetPercent, sortedExpenses,
+  }), [expenses, hydrated, budget, monthTotal, todayTotal, remaining, budgetPercent, sortedExpenses]);
 
   return <ExpenseContext.Provider value={value}>{children}</ExpenseContext.Provider>;
 }
@@ -80,5 +92,3 @@ export function useExpenses() {
   if (!value) throw new Error("useExpenses must be used inside ExpenseProvider");
   return value;
 }
-
-export const CURRENT_DATE = today;

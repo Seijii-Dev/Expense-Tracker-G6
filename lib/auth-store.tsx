@@ -1,11 +1,14 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import * as SecureStore from "expo-secure-store";
 import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
 
-type LocalAccount = { name: string; email: string; password: string };
+type LocalAccount = { name: string; email: string };
+type StoredAccount = LocalAccount & { password?: string };
 type AuthContextValue = { account: LocalAccount | null; loading: boolean; register: (name: string, email: string, password: string) => Promise<{ ok: boolean; message?: string }>; login: (email: string, password: string) => Promise<{ ok: boolean; message?: string }>; logout: () => Promise<void> };
 
 const ACCOUNT_KEY = "expense-tracker-local-account";
 const SESSION_KEY = "expense-tracker-local-session";
+const passwordKey = (email: string) => `expense-tracker-password-${email}`;
 const AuthContext = createContext<AuthContextValue | null>(null);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
@@ -13,27 +16,39 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    Promise.all([AsyncStorage.getItem(ACCOUNT_KEY), AsyncStorage.getItem(SESSION_KEY)]).then(([storedAccount, session]) => {
-      if (storedAccount && session === "active") setAccount(JSON.parse(storedAccount));
+    Promise.all([AsyncStorage.getItem(ACCOUNT_KEY), AsyncStorage.getItem(SESSION_KEY)]).then(async ([storedAccount, session]) => {
+      if (!storedAccount || session !== "active") return;
+      const parsed = JSON.parse(storedAccount) as StoredAccount;
+      const safeAccount = { name: parsed.name, email: parsed.email };
+      if (parsed.password) await SecureStore.setItemAsync(passwordKey(parsed.email), parsed.password);
+      await AsyncStorage.setItem(ACCOUNT_KEY, JSON.stringify(safeAccount));
+      setAccount(safeAccount);
     }).catch(() => undefined).finally(() => setLoading(false));
   }, []);
 
   const register = async (name: string, email: string, password: string) => {
     const normalizedEmail = email.trim().toLowerCase();
     if (!name.trim() || !normalizedEmail || password.length < 6) return { ok: false, message: "Use your name, email, and a password with 6+ characters." };
-    const next = { name: name.trim(), email: normalizedEmail, password };
+    const next = { name: name.trim(), email: normalizedEmail };
     await AsyncStorage.setItem(ACCOUNT_KEY, JSON.stringify(next));
+    await SecureStore.setItemAsync(passwordKey(normalizedEmail), password);
     await AsyncStorage.setItem(SESSION_KEY, "active");
     setAccount(next);
     return { ok: true };
   };
 
   const login = async (email: string, password: string) => {
+    const normalizedEmail = email.trim().toLowerCase();
     const stored = await AsyncStorage.getItem(ACCOUNT_KEY);
-    const saved: LocalAccount | null = stored ? JSON.parse(stored) : null;
-    if (!saved || saved.email !== email.trim().toLowerCase() || saved.password !== password) return { ok: false, message: "We couldn’t match those details on this phone." };
+    const saved: StoredAccount | null = stored ? JSON.parse(stored) : null;
+    const savedPassword = saved?.password ?? (saved ? await SecureStore.getItemAsync(passwordKey(saved.email)) : null);
+    if (!saved || saved.email !== normalizedEmail || savedPassword !== password) return { ok: false, message: "We couldn’t match those details on this phone." };
+    if (saved.password) {
+      await SecureStore.setItemAsync(passwordKey(saved.email), saved.password);
+      await AsyncStorage.setItem(ACCOUNT_KEY, JSON.stringify({ name: saved.name, email: saved.email }));
+    }
     await AsyncStorage.setItem(SESSION_KEY, "active");
-    setAccount(saved);
+    setAccount({ name: saved.name, email: saved.email });
     return { ok: true };
   };
 

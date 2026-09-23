@@ -25,7 +25,7 @@ const config: ExpoConfig = {
       projectId: "e2002670-90ed-468a-b2f7-cfd6aa16be13",
     },
   },
-  plugins: ["expo-router", "expo-font"],
+  plugins: ["expo-router", "expo-font", "expo-secure-store"],
   experiments: {
     typedRoutes: true,
   },

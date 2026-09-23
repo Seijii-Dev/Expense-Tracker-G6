@@ -20,11 +20,11 @@ Then open the project with Expo Go, an Android emulator, or an iOS simulator.
 
 ## Features
 
-The app includes a mobile welcome landing page, local registration and login, a dashboard, add-expense flow, transaction search and category filters, spending reports, budget settings, and local persistence for expenses and account session state.
+The app includes a mobile welcome landing page, local registration and login, a dashboard, add and edit expense flows, transaction search and category filters, live spending reports, budget settings, persistent light/dark mode, CSV export and local persistence for expenses and account session state.
 
 ## Local authentication note
 
-Registration and login are intentionally local-only for this version. The account record, session flag, budget, and expenses are stored on the device using AsyncStorage. No network API, cloud database, or remote authentication provider is used. This is suitable for a school-project MVP, but production authentication should use a secure backend and should not store raw passwords in AsyncStorage.
+Registration and login are intentionally local-only for this version. The profile, session flag, budget, and expenses are stored on the device using AsyncStorage; passwords are stored in Expo SecureStore. No network API, cloud database, or remote authentication provider is used. This is suitable for a school-project MVP, but production authentication should still use a secure backend.
 
 ## GitHub Actions builds
 

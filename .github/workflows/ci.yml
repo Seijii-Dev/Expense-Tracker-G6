@@ -31,5 +31,8 @@ jobs:
       - name: Typecheck
         run: pnpm typecheck
 
+      - name: Expo Doctor
+        run: npx -y expo-doctor
+
       - name: Validate Expo configuration
         run: npx expo config --type public
