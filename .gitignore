@@ -1,0 +1,18 @@
+node_modules/
+.expo/
+dist/
+web-build/
+.env
+.env.*
+*.log
+.DS_Store
+*.jks
+*.p8
+*.p12
+*.key
+
+# Expo local metadata
+.expo-shared/
+
+# TypeScript build output
+*.tsbuildinfo
