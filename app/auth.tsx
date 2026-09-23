@@ -16,11 +16,19 @@ export default function AuthScreen() {
 
   const submit = async () => {
     setBusy(true);
-    const result = mode === "register" ? await register(name, email, password) : await login(email, password);
-    setBusy(false);
-    if (!result.ok) { Alert.alert(mode === "register" ? "Couldn’t create account" : "Couldn’t sign in", result.message); return; }
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    router.replace("/(tabs)");
+    try {
+      const result = mode === "register" ? await register(name, email, password) : await login(email, password);
+      if (!result.ok) {
+        Alert.alert(mode === "register" ? "Couldn’t create account" : "Couldn’t sign in", result.message);
+        return;
+      }
+      await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      router.replace("/(tabs)");
+    } catch {
+      Alert.alert("Something went wrong", "We couldn’t finish that request. Please try again.");
+    } finally {
+      setBusy(false);
+    }
   };
 
   if (mode === "welcome") return <View style={styles.screen}><View style={styles.heroGlow} /><ScrollView contentContainerStyle={styles.welcomeScroll}><View style={styles.logoRow}><Image source={require("../assets/images/icon.png")} style={styles.logoImage} /><Text style={styles.logoText}>ledgerly</Text></View><View style={styles.heroArt}><View style={styles.heroCircle}><Ionicons name="sparkles" size={28} color="#EB6F61" /></View><View style={styles.floatingCard}><Text style={styles.floatingLabel}>THIS MONTH</Text><Text style={styles.floatingAmount}>₱0</Text><View style={styles.floatingLine}><View /><View /></View></View><View style={styles.orbitDot} /></View><Text style={styles.welcomeKicker}>YOUR MONEY, CLEARER</Text><Text style={styles.welcomeTitle}>Make every peso tell a story<Text style={styles.dot}>.</Text></Text><Text style={styles.welcomeCopy}>A calm, simple place to record expenses, understand your habits, and spend with intention.</Text><View style={styles.valueList}><ValueItem icon={<Ionicons name="shield-checkmark" size={17} color="#5A9E7E" />} text="Your data stays on this phone" /><ValueItem icon={<Ionicons name="checkmark" size={17} color="#EB6F61" />} text="Track spending in seconds" /><ValueItem icon={<Ionicons name="sparkles" size={17} color="#8A69DC" />} text="See patterns without the noise" /></View><Pressable style={({ pressed }) => [styles.primaryButton, pressed && styles.pressed]} onPress={() => setMode("register")}><Text style={styles.primaryButtonText}>Create local account</Text><Ionicons name="arrow-forward" size={17} color="#FFFFFF" /></Pressable><Pressable style={styles.secondaryLink} onPress={() => setMode("login")}><Text style={styles.secondaryLinkText}>Already have an account? <Text style={styles.secondaryLinkAccent}>Sign in</Text></Text></Pressable><Text style={styles.localNote}>No cloud account required · Works offline</Text></ScrollView></View>;
