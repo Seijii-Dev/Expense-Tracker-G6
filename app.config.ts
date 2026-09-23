@@ -18,6 +18,11 @@ const config: ExpoConfig = {
       backgroundColor: "#2A4740",
     },
   },
+  extra: {
+    eas: {
+      projectId: "e2002670-90ed-468a-b2f7-cfd6aa16be13",
+    },
+  },
   plugins: ["expo-router"],
   experiments: {
     typedRoutes: true,
