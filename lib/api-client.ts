@@ -1,6 +1,7 @@
-// Talks to the Vercel/Postgres backend. Set EXPO_PUBLIC_API_URL in your .env file
-// to your deployed API's URL, e.g. https://your-project.vercel.app
-const API_URL = process.env.EXPO_PUBLIC_API_URL;
+// The API URL is public and bundled into the app. The environment variable can
+// override it for alternate deployments; production has a safe default so a
+// build still works if the CI environment does not forward the variable.
+const API_URL = process.env.EXPO_PUBLIC_API_URL ?? "https://expense-tracker-apis-gamma.vercel.app";
 
 if (!API_URL && __DEV__) {
   console.warn(
