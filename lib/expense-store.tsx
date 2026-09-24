@@ -37,6 +37,7 @@ type ExpenseContextValue = {
   addExpense: (expense: Omit<Expense, "id">) => void;
   updateExpense: (id: string, expense: Omit<Expense, "id">) => void;
   removeExpense: (id: string) => void;
+  refreshExpenses: () => Promise<void>;
   monthTotal: number;
   todayTotal: number;
   remaining: number;
@@ -56,6 +57,39 @@ export function ExpenseProvider({ children }: { children: React.ReactNode }) {
   const [syncError, setSyncError] = useState<string | null>(null);
   const accountKey = account ? account.email : null;
   const hydrated = accountKey !== null && hydratedKey === accountKey;
+
+  const refreshExpenses = async () => {
+    if (!token || !account) return;
+    setSyncing(true);
+    try {
+      const [expensesResult, meResult] = await Promise.all([
+        api.listExpenses(token),
+        api.me(token),
+      ]);
+      if (expensesResult.ok) {
+        const remote: Expense[] = expensesResult.expenses.map((e) => ({
+          ...e,
+          date: normalizeDate(e.date),
+          category: e.category as Category,
+          payment: e.payment as Payment,
+        }));
+        setExpenses(remote);
+        AsyncStorage.setItem(cacheKey(account.email), JSON.stringify(remote)).catch(() => undefined);
+        setSyncError(null);
+      } else {
+        setSyncError(expensesResult.message);
+      }
+
+      if (meResult.ok) {
+        setBudgetState(meResult.account.budget);
+        refreshAccount(meResult.account);
+      }
+    } catch {
+      setSyncError("Unable to refresh latest expenses from server.");
+    } finally {
+      setSyncing(false);
+    }
+  };
 
   // On login (or account switch): load cache first, then sync fresh data from server
   useEffect(() => {
@@ -97,36 +131,7 @@ export function ExpenseProvider({ children }: { children: React.ReactNode }) {
 
       // 2. Fetch latest state from server in background without being overwritten by cache
       if (!mounted) return;
-      setSyncing(true);
-      try {
-        const [expensesResult, meResult] = await Promise.all([
-          api.listExpenses(token),
-          api.me(token),
-        ]);
-        if (!mounted) return;
-        if (expensesResult.ok) {
-          const remote: Expense[] = expensesResult.expenses.map((e) => ({
-            ...e,
-            date: normalizeDate(e.date),
-            category: e.category as Category,
-            payment: e.payment as Payment,
-          }));
-          setExpenses(remote);
-          AsyncStorage.setItem(cacheKey(account.email), JSON.stringify(remote)).catch(() => undefined);
-          setSyncError(null);
-        } else {
-          setSyncError(expensesResult.message);
-        }
-
-        if (meResult.ok) {
-          setBudgetState(meResult.account.budget);
-          refreshAccount(meResult.account);
-        }
-      } catch {
-        if (mounted) setSyncError("Unable to refresh latest expenses from server.");
-      } finally {
-        if (mounted) setSyncing(false);
-      }
+      await refreshExpenses();
     })();
 
     return () => {
@@ -257,8 +262,9 @@ export function ExpenseProvider({ children }: { children: React.ReactNode }) {
       remaining,
       budgetPercent,
       sortedExpenses,
+      refreshExpenses,
     }),
-    [expenses, hydrated, syncing, syncError, budget, token, monthTotal, todayTotal, remaining, budgetPercent, sortedExpenses]
+    [expenses, hydrated, syncing, syncError, budget, token, monthTotal, todayTotal, remaining, budgetPercent, sortedExpenses, refreshExpenses]
   );
 
   return <ExpenseContext.Provider value={value}>{children}</ExpenseContext.Provider>;
