@@ -18,8 +18,14 @@ export const categoryMeta: Record<Category, { color: string; soft: string }> = {
   Other: { color: "#82908D", soft: "#F1F4F3" },
 };
 
-export const getPhilippinesDate = (date = new Date()) => new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Manila", year: "numeric", month: "2-digit", day: "2-digit" }).format(date);
+export const getPhilippinesDate = (date = new Date()) =>
+  new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Manila", year: "numeric", month: "2-digit", day: "2-digit" }).format(date);
 export const getPhilippinesMonth = (date = new Date()) => getPhilippinesDate(date).slice(0, 7);
+
+export const normalizeDate = (date?: string): string => {
+  if (!date || typeof date !== "string") return getPhilippinesDate();
+  return date.slice(0, 10);
+};
 
 type ExpenseContextValue = {
   expenses: Expense[];
@@ -51,114 +57,209 @@ export function ExpenseProvider({ children }: { children: React.ReactNode }) {
   const accountKey = account ? account.email : null;
   const hydrated = accountKey !== null && hydratedKey === accountKey;
 
-  // On login (or account switch): show cached data instantly, then refresh from the server.
+  // On login (or account switch): load cache first, then sync fresh data from server
   useEffect(() => {
     let mounted = true;
     setHydratedKey(null);
     setSyncError(null);
-    if (!account || !token) { setExpenses([]); setBudgetState(5000); return; }
+    if (!account || !token) {
+      setExpenses([]);
+      setBudgetState(5000);
+      return;
+    }
 
     setBudgetState(account.budget);
 
-    AsyncStorage.getItem(cacheKey(account.email)).then((cached) => {
-      if (!mounted) return;
-      if (cached) {
-        try {
-          const parsed = JSON.parse(cached);
-          if (Array.isArray(parsed)) setExpenses(parsed);
-        } catch {
-          // Ignore corrupt cache; server sync below will replace it.
-        }
-      }
-      setHydratedKey(account.email);
-    });
-
     (async () => {
-      setSyncing(true);
-      const [expensesResult, meResult] = await Promise.all([api.listExpenses(token), api.me(token)]);
+      // 1. Read cached data first so UI renders instantly
+      try {
+        const cached = await AsyncStorage.getItem(cacheKey(account.email));
+        if (mounted && cached) {
+          try {
+            const parsed = JSON.parse(cached);
+            if (Array.isArray(parsed)) {
+              setExpenses(
+                parsed.map((item) => ({
+                  ...item,
+                  date: normalizeDate(item.date),
+                }))
+              );
+            }
+          } catch {
+            // Ignore corrupted cache
+          }
+        }
+      } catch {
+        // Disk read error fallback
+      } finally {
+        if (mounted) setHydratedKey(account.email);
+      }
+
+      // 2. Fetch latest state from server in background without being overwritten by cache
       if (!mounted) return;
-      if (expensesResult.ok) {
-        const remote = expensesResult.expenses.map((e) => ({ ...e, category: e.category as Category, payment: e.payment as Payment }));
-        setExpenses(remote);
-        AsyncStorage.setItem(cacheKey(account.email), JSON.stringify(remote)).catch(() => undefined);
-        setSyncError(null);
-      } else {
-        // Keep showing cached data; just flag that we couldn't refresh.
-        setSyncError(expensesResult.message);
+      setSyncing(true);
+      try {
+        const [expensesResult, meResult] = await Promise.all([
+          api.listExpenses(token),
+          api.me(token),
+        ]);
+        if (!mounted) return;
+        if (expensesResult.ok) {
+          const remote: Expense[] = expensesResult.expenses.map((e) => ({
+            ...e,
+            date: normalizeDate(e.date),
+            category: e.category as Category,
+            payment: e.payment as Payment,
+          }));
+          setExpenses(remote);
+          AsyncStorage.setItem(cacheKey(account.email), JSON.stringify(remote)).catch(() => undefined);
+          setSyncError(null);
+        } else {
+          setSyncError(expensesResult.message);
+        }
+
+        if (meResult.ok) {
+          setBudgetState(meResult.account.budget);
+          refreshAccount(meResult.account);
+        }
+      } catch {
+        if (mounted) setSyncError("Unable to refresh latest expenses from server.");
+      } finally {
+        if (mounted) setSyncing(false);
       }
-      if (meResult.ok) {
-        setBudgetState(meResult.account.budget);
-        refreshAccount(meResult.account);
-      }
-      setSyncing(false);
     })();
 
-    return () => { mounted = false; };
+    return () => {
+      mounted = false;
+    };
   }, [account?.email, token]);
 
-  // Keep the local cache fresh so re-opening the app shows the latest data instantly.
+  // Keep the local cache fresh whenever expenses change after hydration
   useEffect(() => {
-    if (hydrated && account) AsyncStorage.setItem(cacheKey(account.email), JSON.stringify(expenses)).catch(() => undefined);
+    if (hydrated && account) {
+      AsyncStorage.setItem(cacheKey(account.email), JSON.stringify(expenses)).catch(() => undefined);
+    }
   }, [expenses, hydrated, account?.email]);
 
   const currentDate = getPhilippinesDate();
   const currentMonth = getPhilippinesMonth();
-  const monthExpenses = expenses.filter((expense) => expense.date.startsWith(currentMonth));
-  const monthTotal = monthExpenses.reduce((sum, expense) => sum + expense.amount, 0);
-  const todayTotal = expenses.filter((expense) => expense.date === currentDate).reduce((sum, expense) => sum + expense.amount, 0);
+  const monthExpenses = expenses.filter((expense) => normalizeDate(expense.date).startsWith(currentMonth));
+  const monthTotal = monthExpenses.reduce((sum, expense) => sum + (expense.amount || 0), 0);
+  const todayTotal = expenses
+    .filter((expense) => normalizeDate(expense.date) === currentDate)
+    .reduce((sum, expense) => sum + (expense.amount || 0), 0);
   const remaining = Math.max(0, budget - monthTotal);
   const budgetPercent = budget > 0 ? Math.min(100, Math.round((monthTotal / budget) * 100)) : 0;
-  const sortedExpenses = [...expenses].sort((a, b) => b.date.localeCompare(a.date) || b.id.localeCompare(a.id));
+  const sortedExpenses = [...expenses].sort((a, b) => {
+    const dateComp = (b.date || "").localeCompare(a.date || "");
+    if (dateComp !== 0) return dateComp;
+    return (b.id || "").localeCompare(a.id || "");
+  });
 
-  const value = useMemo(() => ({
-    expenses, hydrated, syncing, syncError, budget,
+  const value = useMemo(
+    () => ({
+      expenses,
+      hydrated,
+      syncing,
+      syncError,
+      budget,
 
-    setBudget: (value: number) => {
-      setBudgetState(value); // optimistic — updates immediately in the UI
-      if (token) api.updateBudget(token, value).then((result) => { if (!result.ok) setSyncError(result.message); });
-    },
-
-    addExpense: (expense: Omit<Expense, "id">) => {
-      // Optimistic add with a temporary id, replaced once the server confirms.
-      const tempId = `temp-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-      setExpenses((current) => [{ ...expense, id: tempId }, ...current]);
-      if (!token) return;
-      api.createExpense(token, expense).then((result) => {
-        if (result.ok) {
-          setExpenses((current) => current.map((item) => (item.id === tempId ? { ...result.expense, category: result.expense.category as Category, payment: result.expense.payment as Payment } : item)));
-        } else {
-          setExpenses((current) => current.filter((item) => item.id !== tempId));
-          setSyncError(result.message);
+      setBudget: (value: number) => {
+        const safeValue = Math.max(0, isNaN(value) ? 0 : Math.round(value));
+        setBudgetState(safeValue);
+        if (token) {
+          api.updateBudget(token, safeValue).then((result) => {
+            if (!result.ok) setSyncError(result.message);
+          });
         }
-      });
-    },
+      },
 
-    updateExpense: (id: string, expense: Omit<Expense, "id">) => {
-      const previous = expenses.find((item) => item.id === id);
-      setExpenses((current) => current.map((item) => (item.id === id ? { ...expense, id } : item)));
-      if (!token) return;
-      api.updateExpense(token, id, expense).then((result) => {
-        if (!result.ok) {
-          setSyncError(result.message);
-          if (previous) setExpenses((current) => current.map((item) => (item.id === id ? previous : item)));
-        }
-      });
-    },
+      addExpense: (expense: Omit<Expense, "id">) => {
+        const sanitized: Omit<Expense, "id"> = {
+          ...expense,
+          amount: Math.max(0.01, isNaN(expense.amount) ? 0 : Math.round(expense.amount * 100) / 100),
+          date: normalizeDate(expense.date),
+        };
+        const tempId = `temp-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+        setExpenses((current) => [{ ...sanitized, id: tempId }, ...current]);
+        if (!token) return;
+        api.createExpense(token, sanitized).then((result) => {
+          if (result.ok) {
+            setExpenses((current) =>
+              current.map((item) =>
+                item.id === tempId
+                  ? {
+                      ...result.expense,
+                      date: normalizeDate(result.expense.date),
+                      category: result.expense.category as Category,
+                      payment: result.expense.payment as Payment,
+                    }
+                  : item
+              )
+            );
+          } else {
+            setExpenses((current) => current.filter((item) => item.id !== tempId));
+            setSyncError(result.message);
+          }
+        });
+      },
 
-    removeExpense: (id: string) => {
-      const previous = expenses.find((item) => item.id === id);
-      setExpenses((current) => current.filter((expense) => expense.id !== id));
-      if (!token) return;
-      api.deleteExpense(token, id).then((result) => {
-        if (!result.ok) {
-          setSyncError(result.message);
-          if (previous) setExpenses((current) => [previous, ...current]);
-        }
-      });
-    },
+      updateExpense: (id: string, expense: Omit<Expense, "id">) => {
+        const sanitized: Omit<Expense, "id"> = {
+          ...expense,
+          amount: Math.max(0.01, isNaN(expense.amount) ? 0 : Math.round(expense.amount * 100) / 100),
+          date: normalizeDate(expense.date),
+        };
+        let previous: Expense | undefined;
+        setExpenses((current) => {
+          previous = current.find((item) => item.id === id);
+          return current.map((item) => (item.id === id ? { ...sanitized, id } : item));
+        });
+        if (!token) return;
+        api.updateExpense(token, id, sanitized).then((result) => {
+          if (!result.ok) {
+            setSyncError(result.message);
+            if (previous) {
+              setExpenses((current) => current.map((item) => (item.id === id ? previous! : item)));
+            }
+          }
+        });
+      },
 
-    monthTotal, todayTotal, remaining, budgetPercent, sortedExpenses,
-  }), [expenses, hydrated, syncing, syncError, budget, token, monthTotal, todayTotal, remaining, budgetPercent, sortedExpenses]);
+      removeExpense: (id: string) => {
+        let previousItem: Expense | undefined;
+        let previousIndex = -1;
+        setExpenses((current) => {
+          previousIndex = current.findIndex((item) => item.id === id);
+          previousItem = current[previousIndex];
+          return current.filter((expense) => expense.id !== id);
+        });
+        if (!token) return;
+        api.deleteExpense(token, id).then((result) => {
+          if (!result.ok) {
+            setSyncError(result.message);
+            if (previousItem) {
+              setExpenses((current) => {
+                const next = [...current];
+                if (previousIndex >= 0 && previousIndex <= next.length) {
+                  next.splice(previousIndex, 0, previousItem!);
+                  return next;
+                }
+                return [previousItem!, ...current];
+              });
+            }
+          }
+        });
+      },
+
+      monthTotal,
+      todayTotal,
+      remaining,
+      budgetPercent,
+      sortedExpenses,
+    }),
+    [expenses, hydrated, syncing, syncError, budget, token, monthTotal, todayTotal, remaining, budgetPercent, sortedExpenses]
+  );
 
   return <ExpenseContext.Provider value={value}>{children}</ExpenseContext.Provider>;
 }

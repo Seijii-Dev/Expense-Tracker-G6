@@ -1,5 +1,16 @@
 import { useState } from "react";
-import { Image, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import {
+  Image,
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import * as Haptics from "expo-haptics";
@@ -16,9 +27,37 @@ export default function AuthScreen() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const submit = async () => {
+    const cleanEmail = email.trim();
+    const cleanName = name.trim();
+
+    if (mode === "register") {
+      if (!cleanName) {
+        setErrorMessage("Please enter your name.");
+        return;
+      }
+      if (!cleanEmail || !/^\S+@\S+\.\S+$/.test(cleanEmail)) {
+        setErrorMessage("Please enter a valid email address.");
+        return;
+      }
+      if (password.length < 6) {
+        setErrorMessage("Password must be at least 6 characters.");
+        return;
+      }
+    } else {
+      if (!cleanEmail) {
+        setErrorMessage("Please enter your email address.");
+        return;
+      }
+      if (!password) {
+        setErrorMessage("Please enter your password.");
+        return;
+      }
+    }
+
     setBusy(true);
     try {
-      const result = mode === "register" ? await register(name, email, password) : await login(email, password);
+      const result =
+        mode === "register" ? await register(cleanName, cleanEmail, password) : await login(cleanEmail, password);
       if (!result.ok) {
         setErrorMessage(result.message || "Please check your details and try again.");
         return;
@@ -26,22 +65,271 @@ export default function AuthScreen() {
       await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       router.replace("/(tabs)");
     } catch {
-      setErrorMessage("We couldn’t finish that request. Please try again.");
+      setErrorMessage("We couldn’t finish that request. Please check your connection and try again.");
     } finally {
       setBusy(false);
     }
   };
 
-  if (mode === "welcome") return <View style={styles.screen}><View style={styles.heroGlow} /><ScrollView contentContainerStyle={styles.welcomeScroll}><View style={styles.logoRow}><Image source={require("../assets/images/icon.png")} style={styles.logoImage} /><Text style={styles.logoText}>ledgerly</Text></View><View style={styles.heroArt}><View style={styles.heroCircle}><Ionicons name="sparkles" size={28} color="#EB6F61" /></View><View style={styles.floatingCard}><Text style={styles.floatingLabel}>THIS MONTH</Text><Text style={styles.floatingAmount}>₱0</Text><View style={styles.floatingLine}><View /><View /></View></View><View style={styles.orbitDot} /></View><Text style={styles.welcomeKicker}>YOUR MONEY, CLEARER</Text><Text style={styles.welcomeTitle}>Make every peso tell a story<Text style={styles.dot}>.</Text></Text><Text style={styles.welcomeCopy}>A calm, simple place to record expenses, understand your habits, and spend with intention.</Text><View style={styles.valueList}><ValueItem icon={<Ionicons name="shield-checkmark" size={17} color="#5A9E7E" />} text="Your data stays on this phone" /><ValueItem icon={<Ionicons name="checkmark" size={17} color="#EB6F61" />} text="Track spending in seconds" /><ValueItem icon={<Ionicons name="sparkles" size={17} color="#8A69DC" />} text="See patterns without the noise" /></View><Pressable style={({ pressed }) => [styles.primaryButton, pressed && styles.pressed]} onPress={() => setMode("register")}><Text style={styles.primaryButtonText}>Create local account</Text><Ionicons name="arrow-forward" size={17} color="#FFFFFF" /></Pressable><Pressable style={styles.secondaryLink} onPress={() => setMode("login")}><Text style={styles.secondaryLinkText}>Already have an account? <Text style={styles.secondaryLinkAccent}>Sign in</Text></Text></Pressable><Text style={styles.localNote}>No cloud account required · Works offline</Text></ScrollView></View>;
+  if (mode === "welcome") {
+    return (
+      <View style={styles.screen}>
+        <View style={styles.heroGlow} />
+        <ScrollView contentContainerStyle={styles.welcomeScroll}>
+          <View style={styles.logoRow}>
+            <Image source={require("../assets/images/icon.png")} style={styles.logoImage} />
+            <Text style={styles.logoText}>ledgerly</Text>
+          </View>
+          <View style={styles.heroArt}>
+            <View style={styles.heroCircle}>
+              <Ionicons name="sparkles" size={28} color="#EB6F61" />
+            </View>
+            <View style={styles.floatingCard}>
+              <Text style={styles.floatingLabel}>THIS MONTH</Text>
+              <Text style={styles.floatingAmount}>₱0</Text>
+              <View style={styles.floatingLine}>
+                <View style={[styles.floatingBar, { height: 14, backgroundColor: "#5A9E7E" }]} />
+                <View style={[styles.floatingBar, { height: 24, backgroundColor: "#EB6F61" }]} />
+                <View style={[styles.floatingBar, { height: 18, backgroundColor: "#4D8AF0" }]} />
+              </View>
+            </View>
+            <View style={styles.orbitDot} />
+          </View>
+          <Text style={styles.welcomeKicker}>YOUR MONEY, CLEARER</Text>
+          <Text style={styles.welcomeTitle}>
+            Make every peso tell a story<Text style={styles.dot}>.</Text>
+          </Text>
+          <Text style={styles.welcomeCopy}>
+            A calm, simple place to record expenses, understand your habits, and spend with intention.
+          </Text>
+          <View style={styles.valueList}>
+            <ValueItem
+              icon={<Ionicons name="shield-checkmark" size={17} color="#5A9E7E" />}
+              text="Secure cloud sync with instant offline access"
+            />
+            <ValueItem
+              icon={<Ionicons name="checkmark" size={17} color="#EB6F61" />}
+              text="Track spending in seconds"
+            />
+            <ValueItem
+              icon={<Ionicons name="sparkles" size={17} color="#8A69DC" />}
+              text="See patterns without the noise"
+            />
+          </View>
+          <Pressable
+            style={({ pressed }) => [styles.primaryButton, pressed && styles.pressed]}
+            onPress={() => setMode("register")}
+          >
+            <Text style={styles.primaryButtonText}>Create account</Text>
+            <Ionicons name="arrow-forward" size={17} color="#FFFFFF" />
+          </Pressable>
+          <Pressable style={styles.secondaryLink} onPress={() => setMode("login")}>
+            <Text style={styles.secondaryLinkText}>
+              Already have an account? <Text style={styles.secondaryLinkAccent}>Sign in</Text>
+            </Text>
+          </Pressable>
+          <Text style={styles.localNote}>Syncs across your devices · Cached for offline use</Text>
+        </ScrollView>
+      </View>
+    );
+  }
 
-  return <KeyboardAvoidingView style={styles.screen} behavior={Platform.OS === "ios" ? "padding" : undefined}><ScrollView contentContainerStyle={styles.formScroll} keyboardShouldPersistTaps="handled"><Pressable onPress={() => setMode("welcome")}><Text style={styles.backLink}>‹  Back to welcome</Text></Pressable><View style={styles.formIntro}><View style={styles.formIcon}>{mode === "login" ? <Ionicons name="lock-closed" size={20} color="#EB6F61" /> : <Ionicons name="person-outline" size={20} color="#EB6F61" />}</View><Text style={styles.formTitle}>{mode === "login" ? "Welcome back" : "Start your ledger"}<Text style={styles.dot}>.</Text></Text><Text style={styles.formCopy}>{mode === "login" ? "Sign in to pick up where you left off." : "Create a local account for this device."}</Text></View>{mode === "register" && <Field icon={<Ionicons name="person-outline" size={16} color="#9BA7A2" />} placeholder="Your name" value={name} onChangeText={setName} autoCapitalize="words" />}<Field icon={<Ionicons name="mail" size={16} color="#9BA7A2" />} placeholder="Email address" value={email} onChangeText={setEmail} keyboardType="email-address" autoCapitalize="none" /><View style={styles.field}><Ionicons name="lock-closed" size={16} color="#9BA7A2" /><TextInput style={styles.textInput} placeholder="Password" placeholderTextColor="#A9B2AE" value={password} onChangeText={setPassword} secureTextEntry={!showPassword} autoCapitalize="none" /><Pressable onPress={() => setShowPassword((value) => !value)}>{showPassword ? <Ionicons name="eye-off" size={17} color="#9BA7A2" /> : <Ionicons name="eye" size={17} color="#9BA7A2" />}</Pressable></View>{mode === "register" && <Text style={styles.helper}>Use at least 6 characters. Your credentials stay local to this phone.</Text>}<Pressable disabled={busy} style={({ pressed }) => [styles.primaryButton, styles.formButton, pressed && styles.pressed, busy && { opacity: .6 }]} onPress={submit}><Text style={styles.primaryButtonText}>{busy ? "Please wait…" : mode === "login" ? "Sign in" : "Create account"}</Text><Ionicons name="arrow-forward" size={17} color="#FFFFFF" /></Pressable><Pressable style={styles.switchMode} onPress={() => setMode(mode === "login" ? "register" : "login")}><Text style={styles.switchText}>{mode === "login" ? "New here? " : "Already registered? "}<Text style={styles.switchAccent}>{mode === "login" ? "Create an account" : "Sign in instead"}</Text></Text></Pressable><View style={styles.formTrust}><Ionicons name="shield-checkmark" size={16} color="#5A9E7E" /><Text style={styles.trustText}>Private by default. No server or cloud account is used.</Text></View></ScrollView><Modal visible={Boolean(errorMessage)} transparent animationType="fade" onRequestClose={() => setErrorMessage(null)}><View style={dialogStyles.backdrop}><View style={dialogStyles.card}><View style={dialogStyles.icon}><Ionicons name="cloud-offline-outline" size={21} color="#EB6F61" /></View><Text style={dialogStyles.title}>{mode === "register" ? "Couldn’t create account" : "Couldn’t sign in"}</Text><Text style={dialogStyles.copy}>{errorMessage}</Text><Pressable style={dialogStyles.button} onPress={() => setErrorMessage(null)}><Text style={dialogStyles.buttonText}>Got it</Text></Pressable></View></View></Modal></KeyboardAvoidingView>;
+  return (
+    <KeyboardAvoidingView style={styles.screen} behavior={Platform.OS === "ios" ? "padding" : undefined}>
+      <ScrollView contentContainerStyle={styles.formScroll} keyboardShouldPersistTaps="handled">
+        <Pressable onPress={() => setMode("welcome")}>
+          <Text style={styles.backLink}>‹ Back to welcome</Text>
+        </Pressable>
+        <View style={styles.formIntro}>
+          <View style={styles.formIcon}>
+            {mode === "login" ? (
+              <Ionicons name="lock-closed" size={20} color="#EB6F61" />
+            ) : (
+              <Ionicons name="person-outline" size={20} color="#EB6F61" />
+            )}
+          </View>
+          <Text style={styles.formTitle}>
+            {mode === "login" ? "Welcome back" : "Start your ledger"}
+            <Text style={styles.dot}>.</Text>
+          </Text>
+          <Text style={styles.formCopy}>
+            {mode === "login" ? "Sign in to pick up where you left off." : "Create your account to sync your ledger."}
+          </Text>
+        </View>
+
+        {mode === "register" && (
+          <Field
+            icon={<Ionicons name="person-outline" size={16} color="#9BA7A2" />}
+            placeholder="Your name"
+            value={name}
+            onChangeText={setName}
+            autoCapitalize="words"
+          />
+        )}
+
+        <Field
+          icon={<Ionicons name="mail" size={16} color="#9BA7A2" />}
+          placeholder="Email address"
+          value={email}
+          onChangeText={setEmail}
+          keyboardType="email-address"
+          autoCapitalize="none"
+        />
+
+        <View style={styles.field}>
+          <Ionicons name="lock-closed" size={16} color="#9BA7A2" />
+          <TextInput
+            style={styles.textInput}
+            placeholder="Password"
+            placeholderTextColor="#A9B2AE"
+            value={password}
+            onChangeText={setPassword}
+            secureTextEntry={!showPassword}
+            autoCapitalize="none"
+          />
+          <Pressable onPress={() => setShowPassword((value) => !value)}>
+            {showPassword ? (
+              <Ionicons name="eye-off" size={17} color="#9BA7A2" />
+            ) : (
+              <Ionicons name="eye" size={17} color="#9BA7A2" />
+            )}
+          </Pressable>
+        </View>
+
+        {mode === "register" && (
+          <Text style={styles.helper}>Use at least 6 characters. Credentials are securely authenticated.</Text>
+        )}
+
+        <Pressable
+          disabled={busy}
+          style={({ pressed }) => [
+            styles.primaryButton,
+            styles.formButton,
+            pressed && styles.pressed,
+            busy && { opacity: 0.6 },
+          ]}
+          onPress={submit}
+        >
+          <Text style={styles.primaryButtonText}>
+            {busy ? "Please wait…" : mode === "login" ? "Sign in" : "Create account"}
+          </Text>
+          <Ionicons name="arrow-forward" size={17} color="#FFFFFF" />
+        </Pressable>
+
+        <Pressable style={styles.switchMode} onPress={() => setMode(mode === "login" ? "register" : "login")}>
+          <Text style={styles.switchText}>
+            {mode === "login" ? "New here? " : "Already registered? "}
+            <Text style={styles.switchAccent}>{mode === "login" ? "Create an account" : "Sign in instead"}</Text>
+          </Text>
+        </Pressable>
+
+        <View style={styles.formTrust}>
+          <Ionicons name="shield-checkmark" size={16} color="#5A9E7E" />
+          <Text style={styles.trustText}>Private & secure. Local cache keeps your records accessible anytime.</Text>
+        </View>
+      </ScrollView>
+
+      <Modal visible={Boolean(errorMessage)} transparent animationType="fade" onRequestClose={() => setErrorMessage(null)}>
+        <View style={dialogStyles.backdrop}>
+          <View style={dialogStyles.card}>
+            <View style={dialogStyles.icon}>
+              <Ionicons name="alert-circle-outline" size={21} color="#EB6F61" />
+            </View>
+            <Text style={dialogStyles.title}>{mode === "register" ? "Couldn’t create account" : "Couldn’t sign in"}</Text>
+            <Text style={dialogStyles.copy}>{errorMessage}</Text>
+            <Pressable style={dialogStyles.button} onPress={() => setErrorMessage(null)}>
+              <Text style={dialogStyles.buttonText}>Got it</Text>
+            </Pressable>
+          </View>
+        </View>
+      </Modal>
+    </KeyboardAvoidingView>
+  );
 }
 
-function Field({ icon, placeholder, value, onChangeText, ...props }: { icon: React.ReactNode; placeholder: string; value: string; onChangeText: (value: string) => void; [key: string]: unknown }) { return <View style={styles.field}>{icon}<TextInput style={styles.textInput} placeholder={placeholder} placeholderTextColor="#A9B2AE" value={value} onChangeText={onChangeText} {...props} /></View>; }
-function ValueItem({ icon, text }: { icon: React.ReactNode; text: string }) { return <View style={styles.valueItem}><View style={styles.valueIcon}>{icon}</View><Text style={styles.valueText}>{text}</Text></View>; }
+function Field({
+  icon,
+  placeholder,
+  value,
+  onChangeText,
+  ...props
+}: {
+  icon: React.ReactNode;
+  placeholder: string;
+  value: string;
+  onChangeText: (value: string) => void;
+  [key: string]: unknown;
+}) {
+  return (
+    <View style={styles.field}>
+      {icon}
+      <TextInput
+        style={styles.textInput}
+        placeholder={placeholder}
+        placeholderTextColor="#A9B2AE"
+        value={value}
+        onChangeText={onChangeText}
+        {...props}
+      />
+    </View>
+  );
+}
 
-const styles = StyleSheet.create({ screen: { flex: 1, backgroundColor: "#F6F8F5" }, heroGlow: { position: "absolute", width: 320, height: 320, top: -110, right: -120, borderRadius: 200, backgroundColor: "#E9F0EC" }, welcomeScroll: { flexGrow: 1, padding: 25, paddingTop: 55, paddingBottom: 25 }, logoRow: { flexDirection: "row", alignItems: "center", gap: 9 }, logoMark: { width: 29, height: 29, flexDirection: "row", alignItems: "flex-end", gap: 3, padding: 5, borderRadius: 9, backgroundColor: "#EB6F61" }, logoImage: { width: 29, height: 29, borderRadius: 9 }, logoText: { fontFamily: "Fraunces_700Bold", color: "#26312E", fontSize: 21, fontWeight: "700", letterSpacing: -.8 }, heroArt: { height: 245, alignItems: "center", justifyContent: "center", position: "relative" }, heroCircle: { width: 150, height: 150, alignItems: "center", justifyContent: "center", borderRadius: 100, borderWidth: 1, borderColor: "#C9D8D0", backgroundColor: "#EDF4F0" }, floatingCard: { position: "absolute", right: 4, top: 61, width: 153, padding: 15, borderRadius: 13, backgroundColor: "#FFFFFF", shadowColor: "#2A4740", shadowOpacity: .12, shadowRadius: 14, shadowOffset: { width: 0, height: 8 }, elevation: 4 }, floatingLabel: { color: "#9BA7A2", fontSize: 8, fontWeight: "800", letterSpacing: 1 }, floatingAmount: { fontFamily: "Fraunces_700Bold", color: "#26312E", fontSize: 23, fontWeight: "700", marginTop: 6 }, floatingLine: { flexDirection: "row", alignItems: "flex-end", gap: 4, height: 28, marginTop: 8 }, orbitDot: { position: "absolute", width: 11, height: 11, top: 20, left: 66, borderRadius: 9, backgroundColor: "#EB6F61" }, welcomeKicker: { color: "#EB6F61", fontSize: 10, fontWeight: "800", letterSpacing: 1.5 }, welcomeTitle: { fontFamily: "Fraunces_700Bold", maxWidth: 355, color: "#26312E", fontSize: 39, fontWeight: "700", letterSpacing: -1.7, lineHeight: 44, marginTop: 9 }, dot: { color: "#EB6F61" }, welcomeCopy: { maxWidth: 345, color: "#899590", fontSize: 13, lineHeight: 20, marginTop: 12 }, valueList: { gap: 10, marginTop: 23, marginBottom: 24 }, valueItem: { flexDirection: "row", alignItems: "center", gap: 10 }, valueIcon: { width: 29, height: 29, alignItems: "center", justifyContent: "center", borderRadius: 9, backgroundColor: "#FFFFFF" }, valueText: { color: "#5F6D67", fontSize: 11, fontWeight: "600" }, primaryButton: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, height: 49, borderRadius: 11, backgroundColor: "#EB6F61", shadowColor: "#EB6F61", shadowOpacity: .2, shadowRadius: 10, shadowOffset: { width: 0, height: 5 }, elevation: 4 }, primaryButtonText: { color: "#FFFFFF", fontSize: 12, fontWeight: "700" }, pressed: { opacity: .8, transform: [{ scale: .98 }] }, secondaryLink: { alignItems: "center", marginTop: 16 }, secondaryLinkText: { color: "#899590", fontSize: 11 }, secondaryLinkAccent: { color: "#EB6F61", fontWeight: "700" }, localNote: { color: "#AAB4AF", fontSize: 9, textAlign: "center", marginTop: 22 }, formScroll: { flexGrow: 1, padding: 25, paddingTop: 58 }, backLink: { color: "#899590", fontSize: 12 }, formIntro: { marginTop: 46, marginBottom: 28 }, formIcon: { width: 41, height: 41, alignItems: "center", justifyContent: "center", borderRadius: 12, backgroundColor: "#FFF0ED", marginBottom: 18 }, formTitle: { fontFamily: "Fraunces_700Bold", color: "#26312E", fontSize: 35, fontWeight: "700", letterSpacing: -1.3 }, formCopy: { color: "#899590", fontSize: 12, marginTop: 7 }, field: { flexDirection: "row", alignItems: "center", gap: 9, height: 48, paddingHorizontal: 13, marginBottom: 12, borderRadius: 10, borderWidth: 1, borderColor: "#E1E9E4", backgroundColor: "#FFFFFF" }, textInput: { flex: 1, color: "#26312E", fontSize: 12 }, helper: { color: "#A1AAA6", fontSize: 10, lineHeight: 15, marginTop: -1, marginBottom: 15 }, formButton: { marginTop: 12 }, switchMode: { alignItems: "center", marginTop: 18 }, switchText: { color: "#899590", fontSize: 11 }, switchAccent: { color: "#EB6F61", fontWeight: "700" }, formTrust: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6, marginTop: "auto", paddingTop: 35 }, trustText: { color: "#A1AAA6", fontSize: 9 } });
+function ValueItem({ icon, text }: { icon: React.ReactNode; text: string }) {
+  return (
+    <View style={styles.valueItem}>
+      <View style={styles.valueIcon}>{icon}</View>
+      <Text style={styles.valueText}>{text}</Text>
+    </View>
+  );
+}
 
+const styles = StyleSheet.create({
+  screen: { flex: 1, backgroundColor: "#F6F8F5" },
+  heroGlow: { position: "absolute", width: 320, height: 320, top: -110, right: -120, borderRadius: 200, backgroundColor: "#E9F0EC" },
+  welcomeScroll: { flexGrow: 1, padding: 25, paddingTop: 55, paddingBottom: 25 },
+  logoRow: { flexDirection: "row", alignItems: "center", gap: 9 },
+  logoImage: { width: 29, height: 29, borderRadius: 9 },
+  logoText: { fontFamily: "Fraunces_700Bold", color: "#26312E", fontSize: 21, fontWeight: "700", letterSpacing: -0.8 },
+  heroArt: { height: 245, alignItems: "center", justifyContent: "center", position: "relative" },
+  heroCircle: { width: 150, height: 150, alignItems: "center", justifyContent: "center", borderRadius: 100, borderWidth: 1, borderColor: "#C9D8D0", backgroundColor: "#EDF4F0" },
+  floatingCard: { position: "absolute", right: 4, top: 61, width: 153, padding: 15, borderRadius: 13, backgroundColor: "#FFFFFF", shadowColor: "#2A4740", shadowOpacity: 0.12, shadowRadius: 14, shadowOffset: { width: 0, height: 8 }, elevation: 4 },
+  floatingLabel: { color: "#9BA7A2", fontSize: 8, fontWeight: "800", letterSpacing: 1 },
+  floatingAmount: { fontFamily: "Fraunces_700Bold", color: "#26312E", fontSize: 23, fontWeight: "700", marginTop: 6 },
+  floatingLine: { flexDirection: "row", alignItems: "flex-end", gap: 4, height: 28, marginTop: 8 },
+  floatingBar: { width: 10, borderRadius: 3 },
+  orbitDot: { position: "absolute", width: 11, height: 11, top: 20, left: 66, borderRadius: 9, backgroundColor: "#EB6F61" },
+  welcomeKicker: { color: "#EB6F61", fontSize: 10, fontWeight: "800", letterSpacing: 1.5 },
+  welcomeTitle: { fontFamily: "Fraunces_700Bold", maxWidth: 355, color: "#26312E", fontSize: 39, fontWeight: "700", letterSpacing: -1.7, lineHeight: 44, marginTop: 9 },
+  dot: { color: "#EB6F61" },
+  welcomeCopy: { maxWidth: 345, color: "#899590", fontSize: 13, lineHeight: 20, marginTop: 12 },
+  valueList: { gap: 10, marginTop: 23, marginBottom: 24 },
+  valueItem: { flexDirection: "row", alignItems: "center", gap: 10 },
+  valueIcon: { width: 29, height: 29, alignItems: "center", justifyContent: "center", borderRadius: 9, backgroundColor: "#FFFFFF" },
+  valueText: { color: "#5F6D67", fontSize: 11, fontWeight: "600" },
+  primaryButton: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, height: 49, borderRadius: 11, backgroundColor: "#EB6F61", shadowColor: "#EB6F61", shadowOpacity: 0.2, shadowRadius: 10, shadowOffset: { width: 0, height: 5 }, elevation: 4 },
+  primaryButtonText: { color: "#FFFFFF", fontSize: 12, fontWeight: "700" },
+  pressed: { opacity: 0.8, transform: [{ scale: 0.98 }] },
+  secondaryLink: { alignItems: "center", marginTop: 16 },
+  secondaryLinkText: { color: "#899590", fontSize: 11 },
+  secondaryLinkAccent: { color: "#EB6F61", fontWeight: "700" },
+  localNote: { color: "#AAB4AF", fontSize: 9, textAlign: "center", marginTop: 22 },
+  formScroll: { flexGrow: 1, padding: 25, paddingTop: 58 },
+  backLink: { color: "#899590", fontSize: 12 },
+  formIntro: { marginTop: 46, marginBottom: 28 },
+  formIcon: { width: 41, height: 41, alignItems: "center", justifyContent: "center", borderRadius: 12, backgroundColor: "#FFF0ED", marginBottom: 18 },
+  formTitle: { fontFamily: "Fraunces_700Bold", color: "#26312E", fontSize: 35, fontWeight: "700", letterSpacing: -1.3 },
+  formCopy: { color: "#899590", fontSize: 12, marginTop: 7 },
+  field: { flexDirection: "row", alignItems: "center", gap: 9, height: 48, paddingHorizontal: 13, marginBottom: 12, borderRadius: 10, borderWidth: 1, borderColor: "#E1E9E4", backgroundColor: "#FFFFFF" },
+  textInput: { flex: 1, color: "#26312E", fontSize: 12 },
+  helper: { color: "#A1AAA6", fontSize: 10, lineHeight: 15, marginTop: -1, marginBottom: 15 },
+  formButton: { marginTop: 12 },
+  switchMode: { alignItems: "center", marginTop: 18 },
+  switchText: { color: "#899590", fontSize: 11 },
+  switchAccent: { color: "#EB6F61", fontWeight: "700" },
+  formTrust: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6, marginTop: "auto", paddingTop: 35 },
+  trustText: { color: "#A1AAA6", fontSize: 9 },
+});
 
 const dialogStyles = StyleSheet.create({
   backdrop: { flex: 1, justifyContent: "center", padding: 24, backgroundColor: "rgba(38,49,46,.48)" },

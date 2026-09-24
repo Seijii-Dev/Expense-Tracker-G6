@@ -24,11 +24,25 @@ async function request<T>(path: string, options: { method?: string; token?: stri
       },
       body: options.body !== undefined ? JSON.stringify(options.body) : undefined,
     });
-    const data = await response.json().catch(() => null);
-    if (!response.ok || !data) {
-      return { ok: false, message: data?.message ?? "Something went wrong. Please try again." };
+    const text = await response.text().catch(() => "");
+    let data: Record<string, unknown> | null = null;
+    if (text) {
+      try {
+        data = JSON.parse(text);
+      } catch {
+        data = null;
+      }
+    } else {
+      data = {};
     }
-    return data as ApiResult<T>;
+
+    if (!response.ok) {
+      return { ok: false, message: (data?.message as string) ?? "Something went wrong. Please try again." };
+    }
+    if (data && data.ok === false) {
+      return { ok: false, message: (data.message as string) ?? "Something went wrong. Please try again." };
+    }
+    return { ok: true, ...(data || {}) } as ApiResult<T>;
   } catch {
     return { ok: false, message: "Couldn't reach the server. Check your connection and try again." };
   }
