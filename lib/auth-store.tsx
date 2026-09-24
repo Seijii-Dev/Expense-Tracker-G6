@@ -27,7 +27,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           await SecureStore.setItemAsync(passwordKey(parsed.email), parsed.password);
           await AsyncStorage.setItem(ACCOUNT_KEY, JSON.stringify(safeAccount));
         } catch {
-          // Keep the session usable if migration is temporarily unavailable.
+          // Skip migration errors.
         }
       }
       if (mounted) setAccount(safeAccount);
