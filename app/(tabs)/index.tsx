@@ -35,7 +35,7 @@ export default function OverviewScreen() {
     setAmount(""); setDescription(""); setCategory("Food"); setPayment("Cash"); setShowAdd(false);
   };
 
-  if (!hydrated) return <ScreenContainer><View style={styles.loadingState}><Ionicons name="sync-outline" size={24} color="#EB6F61" /><Text style={styles.loadingTitle}>Loading your ledger</Text><Text style={styles.loadingCopy}>Restoring your saved expenses from this phone.</Text></View></ScreenContainer>;
+  if (!hydrated) return <ScreenContainer><View style={styles.loadingState}><Ionicons name="sync-outline" size={24} color="#EB6F61" /><Text style={styles.loadingTitle}>Loading your ledger</Text><Text style={styles.loadingCopy}>Restoring your saved expenses.</Text></View></ScreenContainer>;
 
   return <ScreenContainer><ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll}>
     <View style={styles.header}><View><Text style={styles.kicker}>{todayLabel}</Text><Text style={styles.title}>{greeting}, {account?.name || "there"}<Text style={styles.dot}>.</Text></Text><Text style={styles.subtitle}>Here’s your financial pulse for today.</Text></View><Pressable style={styles.bell}><Ionicons name="notifications-outline" size={20} color="#7F8C86" /><View style={styles.notificationDot} /></Pressable></View>

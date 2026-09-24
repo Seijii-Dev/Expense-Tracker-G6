@@ -16,3 +16,5 @@ web-build/
 
 # TypeScript build output
 *.tsbuildinfo
+
+!.env.example
