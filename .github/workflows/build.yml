@@ -36,6 +36,7 @@ jobs:
     env:
       EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
       EXPO_PUBLIC_API_URL: ${{ secrets.EXPO_PUBLIC_API_URL }}
+      GRADLE_OPTS: "-Dorg.gradle.jvmargs=-Xmx3072m -XX:MaxMetaspaceSize=512m"
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -54,9 +55,10 @@ jobs:
           distribution: "temurin"
           java-version: "17"
 
-      - name: Setup Android SDK
+      - name: Accept Android SDK licenses
         if: ${{ inputs.build_mode == 'local' }}
-        uses: android-actions/setup-android@v3
+        run: |
+          yes | sdkmanager --licenses 2>/dev/null || yes | /usr/local/lib/android/sdk/cmdline-tools/latest/bin/sdkmanager --licenses 2>/dev/null || true
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
