@@ -18,7 +18,7 @@ interface AboutDialogProps {
   onClose: () => void;
 }
 
-const WEBSITE_URL = "https://smart-expense-web.vercel.app";
+const WEBSITE_URL = "https://smart-expense-group6-web.vercel.app";
 
 export function AboutDialog({ visible, onClose }: AboutDialogProps) {
   const { colors } = useTheme();
