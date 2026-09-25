@@ -7,10 +7,10 @@ import { useTheme } from "@/lib/theme-store";
 export type GlassVariant = "card" | "pill" | "sheet" | "nav";
 
 const INTENSITY: Record<GlassVariant, number> = {
-  pill: 28,
-  card: 52,
-  sheet: 78,
-  nav: 86,
+  pill: 14,
+  card: 20,
+  sheet: 28,
+  nav: 32,
 };
 
 type GlassSurfaceProps = {
@@ -43,10 +43,10 @@ export function GlassSurface({
           borderWidth: 1,
           borderColor: colors.glassBorder,
           shadowColor: dark ? "#000814" : "#6A8494",
-          shadowOpacity: dark ? 0.4 : 0.16,
-          shadowRadius: variant === "pill" ? 10 : 22,
-          shadowOffset: { width: 0, height: variant === "pill" ? 4 : 12 },
-          elevation: variant === "pill" ? 3 : 8,
+          shadowOpacity: dark ? 0.3 : 0.08,
+          shadowRadius: variant === "pill" ? 8 : 16,
+          shadowOffset: { width: 0, height: variant === "pill" ? 2 : 8 },
+          elevation: variant === "pill" ? 2 : 4,
         },
         style,
       ]}
@@ -54,7 +54,6 @@ export function GlassSurface({
       <BlurView
         intensity={blurIntensity}
         tint={tint}
-        experimentalBlurMethod={Platform.OS === "android" ? "dimezisBlurView" : undefined}
         style={StyleSheet.absoluteFill}
       />
       <View pointerEvents="none" style={[StyleSheet.absoluteFill, { backgroundColor: colors.glassFill }]} />

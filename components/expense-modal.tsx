@@ -88,7 +88,11 @@ export function ExpenseModal({ visible, initialExpense, onClose, onSubmit }: Exp
         style={styles.backdrop}
       >
         <Pressable style={styles.dismissOverlay} onPress={onClose} />
-        <GlassSurface variant="sheet" radius={28} contentStyle={styles.card}>
+        <GlassSurface
+          variant="sheet"
+          radius={28}
+          contentStyle={[styles.card, { backgroundColor: dark ? "#14222A" : "#FFFFFF" }]}
+        >
           {/* Header */}
           <View style={styles.header}>
             <View>
@@ -116,8 +120,8 @@ export function ExpenseModal({ visible, initialExpense, onClose, onSubmit }: Exp
               style={[
                 styles.amountWrap,
                 {
-                  backgroundColor: dark ? colors.surfaceSubtle : "#FFFAF9",
-                  borderColor: dark ? colors.border : "#F2B8B0",
+                  backgroundColor: dark ? "rgba(255,255,255,0.06)" : "#FFF9F8",
+                  borderColor: dark ? colors.border : "#F4CCC5",
                 },
               ]}
             >
@@ -142,7 +146,11 @@ export function ExpenseModal({ visible, initialExpense, onClose, onSubmit }: Exp
               placeholderTextColor={colors.subtle}
               style={[
                 styles.input,
-                { backgroundColor: colors.surfaceSubtle, borderColor: colors.glassBorder, color: colors.foreground },
+                {
+                  backgroundColor: dark ? "rgba(255,255,255,0.06)" : "#F6FAFC",
+                  borderColor: colors.border,
+                  color: colors.foreground,
+                },
               ]}
             />
 
@@ -153,7 +161,7 @@ export function ExpenseModal({ visible, initialExpense, onClose, onSubmit }: Exp
                 onPress={() => setDate(today)}
                 style={[
                   styles.presetChip,
-                  { borderColor: colors.glassBorder, backgroundColor: colors.surfaceSubtle },
+                  { borderColor: colors.border, backgroundColor: dark ? "rgba(255,255,255,0.06)" : "#F6FAFC" },
                   date === today && styles.presetActive,
                 ]}
               >
@@ -177,7 +185,7 @@ export function ExpenseModal({ visible, initialExpense, onClose, onSubmit }: Exp
                 onPress={() => setDate(yesterday)}
                 style={[
                   styles.presetChip,
-                  { borderColor: colors.glassBorder, backgroundColor: colors.surfaceSubtle },
+                  { borderColor: colors.border, backgroundColor: dark ? "rgba(255,255,255,0.06)" : "#F6FAFC" },
                   date === yesterday && styles.presetActive,
                 ]}
               >
@@ -213,7 +221,7 @@ export function ExpenseModal({ visible, initialExpense, onClose, onSubmit }: Exp
                     }}
                     style={[
                       styles.chip,
-                      { borderColor: colors.glassBorder, backgroundColor: colors.surfaceSubtle },
+                      { borderColor: colors.border, backgroundColor: dark ? "rgba(255,255,255,0.06)" : "#F6FAFC" },
                       active && {
                         backgroundColor: dark ? `${meta.color}25` : meta.soft,
                         borderColor: meta.color,
@@ -249,7 +257,7 @@ export function ExpenseModal({ visible, initialExpense, onClose, onSubmit }: Exp
                     }}
                     style={[
                       styles.chip,
-                      { borderColor: colors.glassBorder, backgroundColor: colors.surfaceSubtle },
+                      { borderColor: colors.border, backgroundColor: dark ? "rgba(255,255,255,0.06)" : "#F6FAFC" },
                       active && styles.paymentActive,
                     ]}
                   >

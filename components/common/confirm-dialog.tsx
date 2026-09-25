@@ -31,7 +31,7 @@ export function ConfirmDialog({
   onCancel,
   destructive = false,
 }: ConfirmDialogProps) {
-  const { colors } = useTheme();
+  const { colors, dark } = useTheme();
 
   const effectiveIconColor = iconColor || (destructive ? colors.primary : colors.foreground);
   const effectiveIconBg = iconBgColor || (destructive ? colors.primarySoft : colors.surfaceSubtle);
@@ -39,7 +39,12 @@ export function ConfirmDialog({
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onCancel || onConfirm}>
       <View style={[styles.backdrop, { backgroundColor: colors.dialogBackdrop }]}>
-        <GlassSurface variant="sheet" radius={26} style={styles.cardWrap} contentStyle={styles.card}>
+        <GlassSurface
+          variant="sheet"
+          radius={26}
+          style={styles.cardWrap}
+          contentStyle={[styles.card, { backgroundColor: dark ? "#14222A" : "#FFFFFF" }]}
+        >
           <View style={[styles.iconWrap, { backgroundColor: effectiveIconBg }]}>
             <Ionicons name={icon} size={22} color={effectiveIconColor} />
           </View>

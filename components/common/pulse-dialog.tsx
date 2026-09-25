@@ -30,7 +30,7 @@ export function PulseDialog({
   remaining,
   formatMoney,
 }: PulseDialogProps) {
-  const { colors } = useTheme();
+  const { colors, dark } = useTheme();
 
   const isOver = budgetPercent >= 100;
   const isWarning = budgetPercent >= 80 && !isOver;
@@ -74,7 +74,12 @@ export function PulseDialog({
       onRequestClose={onClose}
     >
       <View style={[styles.backdrop, { backgroundColor: colors.dialogBackdrop }]}>
-        <GlassSurface variant="sheet" radius={28} style={styles.cardWrap} contentStyle={styles.card}>
+        <GlassSurface
+          variant="sheet"
+          radius={28}
+          style={styles.cardWrap}
+          contentStyle={[styles.card, { backgroundColor: dark ? "#14222A" : "#FFFFFF" }]}
+        >
           {/* Pulse Header */}
           <View style={styles.topRow}>
             <View style={[styles.iconRing, { backgroundColor: statusBg }]}>
