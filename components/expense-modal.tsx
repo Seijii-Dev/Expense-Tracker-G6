@@ -17,6 +17,7 @@ import { Category, Expense, NewExpenseData, Payment } from "@/types/expense";
 import { CATEGORIES, CATEGORY_META, PAYMENT_METHODS } from "@/constants/categories";
 import { getPhilippinesDate, getYesterdayDate, normalizeDate } from "@/utils/date";
 import { useTheme } from "@/lib/theme-store";
+import { GlassSurface } from "@/components/ui/glass-surface";
 
 interface ExpenseModalProps {
   visible: boolean;
@@ -87,7 +88,7 @@ export function ExpenseModal({ visible, initialExpense, onClose, onSubmit }: Exp
         style={styles.backdrop}
       >
         <Pressable style={styles.dismissOverlay} onPress={onClose} />
-        <View style={[styles.card, { backgroundColor: colors.surface }]}>
+        <GlassSurface variant="sheet" radius={28} contentStyle={styles.card}>
           {/* Header */}
           <View style={styles.header}>
             <View>
@@ -141,7 +142,7 @@ export function ExpenseModal({ visible, initialExpense, onClose, onSubmit }: Exp
               placeholderTextColor={colors.subtle}
               style={[
                 styles.input,
-                { backgroundColor: colors.surface, borderColor: colors.border, color: colors.foreground },
+                { backgroundColor: colors.surfaceSubtle, borderColor: colors.glassBorder, color: colors.foreground },
               ]}
             />
 
@@ -152,7 +153,7 @@ export function ExpenseModal({ visible, initialExpense, onClose, onSubmit }: Exp
                 onPress={() => setDate(today)}
                 style={[
                   styles.presetChip,
-                  { borderColor: colors.border, backgroundColor: colors.surface },
+                  { borderColor: colors.glassBorder, backgroundColor: colors.surfaceSubtle },
                   date === today && styles.presetActive,
                 ]}
               >
@@ -176,7 +177,7 @@ export function ExpenseModal({ visible, initialExpense, onClose, onSubmit }: Exp
                 onPress={() => setDate(yesterday)}
                 style={[
                   styles.presetChip,
-                  { borderColor: colors.border, backgroundColor: colors.surface },
+                  { borderColor: colors.glassBorder, backgroundColor: colors.surfaceSubtle },
                   date === yesterday && styles.presetActive,
                 ]}
               >
@@ -212,7 +213,7 @@ export function ExpenseModal({ visible, initialExpense, onClose, onSubmit }: Exp
                     }}
                     style={[
                       styles.chip,
-                      { borderColor: colors.border, backgroundColor: colors.surface },
+                      { borderColor: colors.glassBorder, backgroundColor: colors.surfaceSubtle },
                       active && {
                         backgroundColor: dark ? `${meta.color}25` : meta.soft,
                         borderColor: meta.color,
@@ -248,7 +249,7 @@ export function ExpenseModal({ visible, initialExpense, onClose, onSubmit }: Exp
                     }}
                     style={[
                       styles.chip,
-                      { borderColor: colors.border, backgroundColor: colors.surface },
+                      { borderColor: colors.glassBorder, backgroundColor: colors.surfaceSubtle },
                       active && styles.paymentActive,
                     ]}
                   >
@@ -275,7 +276,7 @@ export function ExpenseModal({ visible, initialExpense, onClose, onSubmit }: Exp
               <Ionicons name={isEditing ? "checkmark" : "arrow-up"} size={17} color="#FFFFFF" />
             </Pressable>
           </ScrollView>
-        </View>
+        </GlassSurface>
       </KeyboardAvoidingView>
     </Modal>
   );
@@ -294,13 +295,6 @@ const styles = StyleSheet.create({
     maxHeight: "88%",
     padding: 22,
     paddingBottom: Platform.OS === "ios" ? 38 : 28,
-    borderTopLeftRadius: 26,
-    borderTopRightRadius: 26,
-    shadowColor: "#000",
-    shadowOpacity: 0.15,
-    shadowRadius: 18,
-    shadowOffset: { width: 0, height: -6 },
-    elevation: 8,
   },
   header: {
     flexDirection: "row",

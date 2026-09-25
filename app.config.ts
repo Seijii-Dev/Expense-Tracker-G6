@@ -19,6 +19,7 @@ const config: ExpoConfig = {
       backgroundColor: "#16382B",
       foregroundImage: "./assets/images/icon.png",
     },
+    permissions: ["READ_EXTERNAL_STORAGE", "WRITE_EXTERNAL_STORAGE"],
   },
   extra: {
     eas: {

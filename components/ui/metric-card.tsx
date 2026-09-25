@@ -1,6 +1,7 @@
 import React from "react";
 import { StyleSheet, Text, View } from "react-native";
 import { useTheme } from "@/lib/theme-store";
+import { GlassSurface } from "@/components/ui/glass-surface";
 
 export type MetricTone = "coral" | "blue" | "green" | "warning";
 
@@ -28,14 +29,14 @@ export function MetricCard({
   const getToneStyle = () => {
     switch (tone) {
       case "blue":
-        return { backgroundColor: dark ? "#1E2C3D" : "#EEF4FF" };
+        return { backgroundColor: dark ? "rgba(77,138,240,0.18)" : "rgba(77,138,240,0.16)" };
       case "green":
-        return { backgroundColor: dark ? "#1B3127" : "#EDF8F1" };
+        return { backgroundColor: dark ? "rgba(90,158,126,0.2)" : "rgba(90,158,126,0.18)" };
       case "warning":
-        return { backgroundColor: dark ? "#362B1D" : "#FFF8ED" };
+        return { backgroundColor: dark ? "rgba(224,149,64,0.18)" : "rgba(209,139,56,0.16)" };
       case "coral":
       default:
-        return { backgroundColor: dark ? "#362220" : "#FFF0ED" };
+        return { backgroundColor: dark ? "rgba(235,111,97,0.2)" : "rgba(235,111,97,0.16)" };
     }
   };
 
@@ -49,14 +50,14 @@ export function MetricCard({
   };
 
   return (
-    <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+    <GlassSurface radius={20} contentStyle={styles.card}>
       <View style={styles.topRow}>
         <Text style={[styles.label, { color: colors.muted }]}>{label}</Text>
         <View style={[styles.iconWrap, getToneStyle()]}>{icon}</View>
       </View>
       <Text style={[styles.value, { color: colors.foreground }]}>{value}</Text>
       {progress !== undefined && (
-        <View style={[styles.progressTrack, { backgroundColor: colors.border }]}>
+        <View style={[styles.progressTrack, { backgroundColor: "rgba(150,160,170,0.22)" }]}>
           <View
             style={[
               styles.progressFill,
@@ -69,7 +70,7 @@ export function MetricCard({
         </View>
       )}
       {foot ? <Text style={[styles.foot, { color: colors.subtle }]}>{foot}</Text> : null}
-    </View>
+    </GlassSurface>
   );
 }
 
@@ -77,13 +78,6 @@ const styles = StyleSheet.create({
   card: {
     minHeight: 112,
     padding: 16,
-    borderRadius: 16,
-    borderWidth: 1,
-    shadowColor: "#000",
-    shadowOpacity: 0.03,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 1,
   },
   topRow: {
     flexDirection: "row",

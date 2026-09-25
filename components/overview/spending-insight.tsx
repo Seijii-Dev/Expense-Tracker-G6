@@ -1,7 +1,9 @@
 import React from "react";
 import { StyleSheet, Text, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
 import { Expense } from "@/types/expense";
+import { GlassSurface } from "@/components/ui/glass-surface";
 
 interface SpendingInsightProps {
   expenses: Expense[];
@@ -21,7 +23,14 @@ export function SpendingInsight({ expenses }: SpendingInsightProps) {
   const topName = getTopCategoryName(expenses);
 
   return (
-    <View style={styles.insight}>
+    <GlassSurface radius={24} style={styles.wrap} contentStyle={styles.insight}>
+      <LinearGradient
+        pointerEvents="none"
+        colors={["rgba(39,69,63,0.55)", "rgba(235,111,97,0.28)"]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={StyleSheet.absoluteFill}
+      />
       <View style={styles.insightIcon}>
         <Ionicons name="sparkles" size={17} color="#FFFFFF" />
       </View>
@@ -32,17 +41,18 @@ export function SpendingInsight({ expenses }: SpendingInsightProps) {
           ? `${topName} is currently your largest category this month.`
           : "Add your first expense to unlock spending insights and intelligent breakdowns."}
       </Text>
-    </View>
+    </GlassSurface>
   );
 }
 
 const styles = StyleSheet.create({
+  wrap: {
+    marginBottom: 16,
+  },
   insight: {
     minHeight: 190,
     padding: 20,
-    marginBottom: 16,
-    borderRadius: 16,
-    backgroundColor: "#27453F",
+    overflow: "hidden",
   },
   insightIcon: {
     width: 34,

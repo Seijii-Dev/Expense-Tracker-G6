@@ -24,6 +24,7 @@ import { useTheme } from "@/lib/theme-store";
 import { useAuth } from "@/lib/auth-store";
 import { formatMoney } from "@/utils/formatters";
 import { exportExpensesToCsv } from "@/utils/export-csv";
+import { StoragePermissionDialog } from "@/components/common/storage-permission-dialog";
 
 const BUDGET_PRESETS = [3000, 5000, 10000, 15000, 20000] as const;
 
@@ -34,6 +35,7 @@ export default function SettingsScreen() {
 
   const [budgetText, setBudgetText] = useState(String(budget));
   const [budgetNudges, setBudgetNudges] = useState(true);
+  const [showStorageDialog, setShowStorageDialog] = useState(false);
 
   useEffect(() => {
     setBudgetText(String(budget));
@@ -279,8 +281,31 @@ export default function SettingsScreen() {
             <Ionicons name="download-outline" size={16} color="#FFFFFF" />
             <Text style={styles.exportText}>Export as CSV</Text>
           </Pressable>
+
+          <Pressable
+            style={({ pressed }) => [
+              styles.outlineButton,
+              { borderColor: colors.border, marginTop: 12, alignSelf: "stretch", justifyContent: "center" },
+              pressed && styles.pressed,
+            ]}
+            onPress={() => {
+              Haptics.selectionAsync();
+              setShowStorageDialog(true);
+            }}
+          >
+            <Ionicons name="shield-checkmark-outline" size={15} color={colors.primary} />
+            <Text style={[styles.outlineText, { color: colors.primary }]}>
+              Storage Permission Details
+            </Text>
+          </Pressable>
         </View>
       </ScrollView>
+
+      {/* Storage Permission Dialog */}
+      <StoragePermissionDialog
+        visible={showStorageDialog}
+        onClose={() => setShowStorageDialog(false)}
+      />
     </ScreenContainer>
   );
 }

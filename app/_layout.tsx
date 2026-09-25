@@ -7,6 +7,7 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 import { ExpenseProvider } from "@/lib/expense-store";
 import { AuthProvider } from "@/lib/auth-store";
 import { ThemeProvider, useTheme } from "@/lib/theme-store";
+import { StoragePermissionPrompt } from "@/components/common/storage-permission-dialog";
 
 function ThemedStatusBar() {
   const { dark } = useTheme();
@@ -31,6 +32,7 @@ export default function RootLayout() {
           <ExpenseProvider>
             <ThemedStatusBar />
             <Stack screenOptions={{ headerShown: false }} />
+            <StoragePermissionPrompt />
           </ExpenseProvider>
         </ThemeProvider>
       </AuthProvider>

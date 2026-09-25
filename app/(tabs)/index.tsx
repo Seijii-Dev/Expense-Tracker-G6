@@ -9,6 +9,7 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { ScreenContainer } from "@/components/screen-container";
+import { GlassSurface } from "@/components/ui/glass-surface";
 import { MetricCard } from "@/components/ui/metric-card";
 import { ExpenseRow } from "@/components/ui/expense-row";
 import { ExpenseModal } from "@/components/expense-modal";
@@ -116,21 +117,20 @@ export default function OverviewScreen() {
             </Text>
             <Text style={[styles.subtitle, { color: colors.muted }]}>Here’s your financial pulse for today.</Text>
           </View>
-          <Pressable
-            style={[styles.bell, { backgroundColor: colors.surface, borderColor: colors.border }]}
-            onPress={showPulseAlert}
-          >
-            <Ionicons name="notifications-outline" size={20} color={colors.muted} />
-            <View style={[styles.notificationDot, { backgroundColor: colors.primary }]} />
+          <Pressable onPress={showPulseAlert}>
+            <GlassSurface variant="pill" radius={14} contentStyle={styles.bell}>
+              <Ionicons name="notifications-outline" size={20} color={colors.muted} />
+              <View style={[styles.notificationDot, { backgroundColor: colors.primary }]} />
+            </GlassSurface>
           </Pressable>
         </View>
 
         {/* Action Row */}
         <View style={styles.actionRow}>
-          <View style={[styles.monthPill, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+          <GlassSurface variant="pill" radius={14} contentStyle={styles.monthPill}>
             <Ionicons name="calendar-outline" size={15} color={colors.primary} />
             <Text style={[styles.monthText, { color: colors.foreground }]}>{monthLabel}</Text>
-          </View>
+          </GlassSurface>
           <Pressable
             style={({ pressed }) => [
               styles.addButton,
@@ -171,7 +171,7 @@ export default function OverviewScreen() {
         </View>
 
         {/* Money Map Panel */}
-        <View style={[styles.panel, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+        <GlassSurface style={styles.panel} contentStyle={styles.panelInner}>
           <View style={styles.panelHeader}>
             <View>
               <Text style={[styles.kicker, { color: colors.primary }]}>MONEY MAP</Text>
@@ -189,13 +189,13 @@ export default function OverviewScreen() {
             <Text style={[styles.footerLabel, { color: colors.muted }]}>Highest spending category</Text>
             <Text style={[styles.footerValue, { color: colors.foreground }]}>{topCategorySummary}</Text>
           </View>
-        </View>
+        </GlassSurface>
 
         {/* Daily Rhythm Weekly Chart */}
         <DailyRhythm expenses={sortedExpenses} />
 
         {/* Latest Activity Panel */}
-        <View style={[styles.panel, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+        <GlassSurface style={styles.panel} contentStyle={styles.panelInner}>
           <View style={styles.panelHeader}>
             <View>
               <Text style={[styles.kicker, { color: colors.primary }]}>LATEST ACTIVITY</Text>
@@ -220,7 +220,7 @@ export default function OverviewScreen() {
                 />
               ))
           )}
-        </View>
+        </GlassSurface>
 
         {/* Spending Insight Card */}
         <SpendingInsight expenses={monthExpenses} />
@@ -308,8 +308,6 @@ const styles = StyleSheet.create({
     height: 40,
     alignItems: "center",
     justifyContent: "center",
-    borderRadius: 12,
-    borderWidth: 1,
   },
   notificationDot: {
     position: "absolute",
@@ -333,8 +331,6 @@ const styles = StyleSheet.create({
     gap: 7,
     paddingHorizontal: 12,
     height: 38,
-    borderRadius: 10,
-    borderWidth: 1,
   },
   monthText: {
     fontSize: 12,
@@ -346,7 +342,7 @@ const styles = StyleSheet.create({
     gap: 6,
     height: 38,
     paddingHorizontal: 15,
-    borderRadius: 10,
+    borderRadius: 14,
     shadowColor: "#EB6F61",
     shadowOpacity: 0.25,
     shadowRadius: 8,
@@ -367,15 +363,10 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   panel: {
-    padding: 18,
     marginBottom: 16,
-    borderRadius: 16,
-    borderWidth: 1,
-    shadowColor: "#000",
-    shadowOpacity: 0.02,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 1,
+  },
+  panelInner: {
+    padding: 18,
   },
   panelHeader: {
     flexDirection: "row",

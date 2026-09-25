@@ -60,7 +60,7 @@ export function AboutDialog({ visible, onClose }: AboutDialogProps) {
                 SMART SPENDING & SAVINGS
               </Text>
               <View style={[styles.versionPill, { backgroundColor: colors.surfaceSubtle }]}>
-                <Text style={[styles.versionText, { color: colors.muted }]}>v1.0.0 • Offline Ready</Text>
+                <Text style={[styles.versionText, { color: colors.muted }]}>v1.0.0</Text>
               </View>
             </View>
           </View>

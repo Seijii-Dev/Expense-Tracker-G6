@@ -2,6 +2,7 @@ import React from "react";
 import { Modal, Pressable, StyleSheet, Text, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "@/lib/theme-store";
+import { GlassSurface } from "@/components/ui/glass-surface";
 
 interface ConfirmDialogProps {
   visible: boolean;
@@ -38,7 +39,7 @@ export function ConfirmDialog({
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onCancel || onConfirm}>
       <View style={[styles.backdrop, { backgroundColor: colors.dialogBackdrop }]}>
-        <View style={[styles.card, { backgroundColor: colors.surface }]}>
+        <GlassSurface variant="sheet" radius={26} style={styles.cardWrap} contentStyle={styles.card}>
           <View style={[styles.iconWrap, { backgroundColor: effectiveIconBg }]}>
             <Ionicons name={icon} size={22} color={effectiveIconColor} />
           </View>
@@ -64,7 +65,7 @@ export function ConfirmDialog({
               <Text style={styles.confirmText}>{confirmText}</Text>
             </Pressable>
           </View>
-        </View>
+        </GlassSurface>
       </View>
     </Modal>
   );
@@ -77,16 +78,12 @@ const styles = StyleSheet.create({
     alignItems: "center",
     padding: 24,
   },
-  card: {
-    padding: 24,
-    borderRadius: 22,
+  cardWrap: {
     maxWidth: 360,
     width: "100%",
-    shadowColor: "#000",
-    shadowOpacity: 0.15,
-    shadowRadius: 16,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 6,
+  },
+  card: {
+    padding: 24,
   },
   iconWrap: {
     width: 44,

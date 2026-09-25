@@ -2,6 +2,7 @@ import { Alert, Platform, Share } from "react-native";
 import * as FileSystem from "expo-file-system/legacy";
 import * as Sharing from "expo-sharing";
 import { Expense } from "@/types/expense";
+import { requestStoragePermission } from "@/utils/storage-permission";
 
 function escapeCsvField(value: string | number | undefined | null): string {
   return `"${String(value ?? "").replace(/"/g, '""')}"`;
@@ -29,6 +30,8 @@ export async function exportExpensesToCsv(expenses: Expense[]): Promise<boolean>
     Alert.alert("Nothing to export", "Add at least one expense before creating an export backup.");
     return false;
   }
+
+  await requestStoragePermission();
 
   const csv = generateExpenseCsv(expenses);
   const filename = `ledgerly-export-${new Date().toISOString().slice(0, 10)}.csv`;

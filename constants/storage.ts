@@ -8,4 +8,5 @@ export const STORAGE_KEYS = {
   budgetNudges: (email: string) => `expense-tracker:${email}:budget-nudges`,
   localAccounts: "expense-tracker-local-accounts",
   userPassword: (email: string) => `expense-tracker-password-${email}`,
+  storagePermissionPrompted: "expense-tracker-storage-permission-prompted",
 } as const;

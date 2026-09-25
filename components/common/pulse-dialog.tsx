@@ -9,6 +9,7 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { useTheme } from "@/lib/theme-store";
+import { GlassSurface } from "@/components/ui/glass-surface";
 
 interface PulseDialogProps {
   visible: boolean;
@@ -73,7 +74,7 @@ export function PulseDialog({
       onRequestClose={onClose}
     >
       <View style={[styles.backdrop, { backgroundColor: colors.dialogBackdrop }]}>
-        <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+        <GlassSurface variant="sheet" radius={28} style={styles.cardWrap} contentStyle={styles.card}>
           {/* Pulse Header */}
           <View style={styles.topRow}>
             <View style={[styles.iconRing, { backgroundColor: statusBg }]}>
@@ -163,7 +164,7 @@ export function PulseDialog({
           >
             <Text style={styles.dismissBtnText}>Got it</Text>
           </Pressable>
-        </View>
+        </GlassSurface>
       </View>
     </Modal>
   );
@@ -176,17 +177,12 @@ const styles = StyleSheet.create({
     alignItems: "center",
     padding: 20,
   },
-  card: {
+  cardWrap: {
     width: "100%",
     maxWidth: 380,
-    borderRadius: 24,
-    borderWidth: 1,
+  },
+  card: {
     padding: 22,
-    shadowColor: "#000",
-    shadowOpacity: 0.2,
-    shadowRadius: 20,
-    shadowOffset: { width: 0, height: 6 },
-    elevation: 8,
   },
   topRow: {
     flexDirection: "row",

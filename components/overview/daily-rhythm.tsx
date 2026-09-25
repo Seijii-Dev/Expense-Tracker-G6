@@ -3,6 +3,7 @@ import { StyleSheet, Text, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { Expense } from "@/types/expense";
 import { useTheme } from "@/lib/theme-store";
+import { GlassSurface } from "@/components/ui/glass-surface";
 import { formatMoney } from "@/utils/formatters";
 import { getPhilippinesDate, getWeekdayShort, normalizeDate } from "@/utils/date";
 
@@ -32,7 +33,7 @@ export function DailyRhythm({ expenses }: DailyRhythmProps) {
   const weekTotal = days.reduce((sum, day) => sum + day.total, 0);
 
   return (
-    <View style={[styles.panel, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+    <GlassSurface style={styles.panel} contentStyle={styles.panelInner}>
       <View style={styles.panelHeader}>
         <View>
           <Text style={[styles.kicker, { color: colors.primary }]}>DAILY RHYTHM</Text>
@@ -74,21 +75,16 @@ export function DailyRhythm({ expenses }: DailyRhythmProps) {
           {weekTotal ? `${days.filter((day) => day.total > 0).length} active days this week` : "No spending recorded this week"}
         </Text>
       </View>
-    </View>
+    </GlassSurface>
   );
 }
 
 const styles = StyleSheet.create({
   panel: {
-    padding: 18,
     marginBottom: 16,
-    borderRadius: 16,
-    borderWidth: 1,
-    shadowColor: "#000",
-    shadowOpacity: 0.02,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 1,
+  },
+  panelInner: {
+    padding: 18,
   },
   panelHeader: {
     flexDirection: "row",
