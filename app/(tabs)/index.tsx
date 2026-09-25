@@ -1,6 +1,5 @@
 import React, { useMemo, useState } from "react";
 import {
-  Alert,
   Pressable,
   RefreshControl,
   ScrollView,
@@ -18,6 +17,8 @@ import { CategoryLegend } from "@/components/overview/category-legend";
 import { DailyRhythm } from "@/components/overview/daily-rhythm";
 import { SpendingInsight } from "@/components/overview/spending-insight";
 import { Expense } from "@/types/expense";
+import { PulseDialog } from "@/components/common/pulse-dialog";
+import * as Haptics from "expo-haptics";
 import { useExpenses } from "@/lib/expense-store";
 import { useAuth } from "@/lib/auth-store";
 import { useTheme } from "@/lib/theme-store";
@@ -50,6 +51,7 @@ export default function OverviewScreen() {
 
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
+  const [showPulseModal, setShowPulseModal] = useState(false);
 
   const greeting = getTimeGreeting();
   const todayLabel = getFormattedTodayHeader();
@@ -72,22 +74,8 @@ export default function OverviewScreen() {
   }, [monthExpenses]);
 
   const showPulseAlert = () => {
-    if (budgetPercent >= 100) {
-      Alert.alert(
-        "Budget Limit Reached",
-        `You have used ${budgetPercent}% of your monthly budget of ${formatMoney(budget)} (Spent: ${formatMoney(monthTotal)}).`
-      );
-    } else if (budgetPercent >= 80) {
-      Alert.alert(
-        "Approaching Budget",
-        `You've used ${budgetPercent}% of your monthly budget. Remaining balance is ${formatMoney(remaining)}.`
-      );
-    } else {
-      Alert.alert(
-        "Spending Pulse",
-        `Looking good! You've used ${budgetPercent}% of your ${formatMoney(budget)} budget with ${formatMoney(remaining)} remaining.`
-      );
-    }
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    setShowPulseModal(true);
   };
 
   if (!hydrated) {
@@ -253,6 +241,17 @@ export default function OverviewScreen() {
             addExpense(data);
           }
         }}
+      />
+
+      {/* Spending Pulse Notification Modal */}
+      <PulseDialog
+        visible={showPulseModal}
+        onClose={() => setShowPulseModal(false)}
+        budgetPercent={budgetPercent}
+        monthTotal={monthTotal}
+        budget={budget}
+        remaining={remaining}
+        formatMoney={formatMoney}
       />
     </ScreenContainer>
   );

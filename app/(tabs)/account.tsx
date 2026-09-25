@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import {
-  Alert,
   Pressable,
   RefreshControl,
   ScrollView,
@@ -14,6 +13,7 @@ import * as Haptics from "expo-haptics";
 import { ScreenContainer } from "@/components/screen-container";
 import { ScreenHeader } from "@/components/common/screen-header";
 import { ConfirmDialog } from "@/components/common/confirm-dialog";
+import { AboutDialog } from "@/components/common/about-dialog";
 import { ProfileCard } from "@/components/account/profile-card";
 import { StatCard } from "@/components/account/stat-card";
 import { AccountRow } from "@/components/account/account-row";
@@ -27,6 +27,7 @@ export default function AccountScreen() {
   const { expenses, budget, syncing, syncError, refreshExpenses } = useExpenses();
   const { colors } = useTheme();
   const [showSignOut, setShowSignOut] = useState(false);
+  const [showAboutModal, setShowAboutModal] = useState(false);
 
   const totalTracked = expenses.reduce((sum, expense) => sum + (expense.amount || 0), 0);
 
@@ -38,10 +39,7 @@ export default function AccountScreen() {
 
   const showAbout = () => {
     Haptics.selectionAsync();
-    Alert.alert(
-      "About Ledgerly",
-      "Ledgerly — Smart Spending and Savings Tracker v1.0.0\n\nBuilt for calm, deliberate money management with seamless cloud sync and instant offline access.\n\nDeveloped by Group 6."
-    );
+    setShowAboutModal(true);
   };
 
   return (
@@ -128,6 +126,12 @@ export default function AccountScreen() {
         onConfirm={confirmSignOut}
         onCancel={() => setShowSignOut(false)}
         destructive
+      />
+
+      {/* About Ledgerly Modal */}
+      <AboutDialog
+        visible={showAboutModal}
+        onClose={() => setShowAboutModal(false)}
       />
     </ScreenContainer>
   );
