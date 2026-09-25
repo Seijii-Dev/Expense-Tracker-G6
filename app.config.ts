@@ -16,7 +16,7 @@ const config: ExpoConfig = {
   android: {
     package: "expense.tracker.group6",
     adaptiveIcon: {
-      backgroundColor: "#2A4740",
+      backgroundColor: "#16382B",
       foregroundImage: "./assets/images/icon.png",
     },
   },
