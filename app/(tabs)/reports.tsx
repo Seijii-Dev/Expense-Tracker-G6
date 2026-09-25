@@ -1,64 +1,33 @@
-import React, { useMemo } from "react";
+import React from "react";
 import { RefreshControl, ScrollView, StyleSheet, Text, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { ScreenContainer } from "@/components/screen-container";
-import { EmptyState } from "@/components/ui/empty-state";
-import {
-  Category,
-  Payment,
-  categoryMeta,
-  getPhilippinesMonth,
-  normalizeDate,
-  useExpenses,
-} from "@/lib/expense-store";
+import { ScreenHeader } from "@/components/common/screen-header";
+import { CategoryBreakdown } from "@/components/reports/category-breakdown";
+import { PaymentMethods } from "@/components/reports/payment-methods";
+import { ReportNote } from "@/components/reports/report-note";
+import { useExpenses } from "@/lib/expense-store";
 import { useTheme } from "@/lib/theme-store";
-import { formatMoney, formatPercent } from "@/lib/formatters";
-
-const categories: Category[] = ["Food", "Transport", "School", "Shopping", "Bills", "Fun", "Health", "Other"];
-const payments: Payment[] = ["Cash", "GCash", "Card", "Bank"];
+import { formatMoney, formatPercent } from "@/utils/formatters";
+import { useReportMetrics } from "@/hooks/useReportMetrics";
 
 export default function ReportsScreen() {
-  const { expenses, monthTotal, refreshExpenses, syncing } = useExpenses();
+  const { expenses, refreshExpenses, syncing } = useExpenses();
   const { colors } = useTheme();
 
-  const currentMonth = getPhilippinesMonth();
-  const monthExpenses = useMemo(
-    () => expenses.filter((expense) => normalizeDate(expense.date).startsWith(currentMonth)),
-    [expenses, currentMonth]
-  );
+  const {
+    monthExpenses,
+    monthTotal,
+    categoryTotals,
+    paymentTotals,
+    activeCategoryCount,
+    maxCategorySpend,
+    topCategory,
+  } = useReportMetrics(expenses);
 
-  // Category totals
-  const categoryTotals = useMemo(
-    () =>
-      categories
-        .map((category) => {
-          const total = monthExpenses
-            .filter((expense) => expense.category === category)
-            .reduce((sum, expense) => sum + (expense.amount || 0), 0);
-          return { category, total };
-        })
-        .sort((a, b) => b.total - a.total),
-    [monthExpenses]
-  );
-
-  // Payment method totals
-  const paymentTotals = useMemo(
-    () =>
-      payments
-        .map((payment) => {
-          const total = monthExpenses
-            .filter((expense) => expense.payment === payment)
-            .reduce((sum, expense) => sum + (expense.amount || 0), 0);
-          return { payment, total };
-        })
-        .filter((item) => item.total > 0)
-        .sort((a, b) => b.total - a.total),
-    [monthExpenses]
-  );
-
-  const maxCategorySpend = Math.max(...categoryTotals.map((item) => item.total), 1);
-  const topCategory = categoryTotals.find((item) => item.total > 0) ?? null;
-  const activeCategoryCount = categoryTotals.filter((item) => item.total > 0).length;
+  const averageExpenseSize = monthExpenses.length
+    ? formatMoney(monthTotal / monthExpenses.length)
+    : "₱0";
 
   return (
     <ScreenContainer>
@@ -74,19 +43,12 @@ export default function ReportsScreen() {
           />
         }
       >
-        {/* Header */}
-        <View style={styles.header}>
-          <View>
-            <Text style={styles.kicker}>MAKE SENSE OF IT</Text>
-            <Text style={[styles.title, { color: colors.foreground }]}>
-              Spending reports<Text style={styles.dot}>.</Text>
-            </Text>
-            <Text style={[styles.subtitle, { color: colors.muted }]}>
-              A clear, insightful view of where your money is flowing this month.
-            </Text>
-          </View>
-          <Ionicons name="calendar-outline" size={22} color={colors.primary} />
-        </View>
+        <ScreenHeader
+          kicker="MAKE SENSE OF IT"
+          title="Spending reports"
+          subtitle="A clear, insightful view of where your money is flowing this month."
+          rightAction={<Ionicons name="calendar-outline" size={22} color={colors.primary} />}
+        />
 
         {/* Hero Card */}
         <View style={styles.hero}>
@@ -107,94 +69,27 @@ export default function ReportsScreen() {
         </View>
 
         {/* Category Breakdown Panel */}
-        <View style={[styles.panel, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-          <View style={styles.panelHeader}>
-            <View>
-              <Text style={styles.kicker}>BREAKDOWN</Text>
-              <Text style={[styles.panelTitle, { color: colors.foreground }]}>By category</Text>
-            </View>
-            <Ionicons name="pie-chart-outline" size={19} color={colors.subtle} />
-          </View>
-
-          {activeCategoryCount === 0 ? (
-            <EmptyState
-              icon="pie-chart-outline"
-              title="No spending this month"
-              description="Log expenses to see your category breakdown and spending share."
-            />
-          ) : (
-            <View style={styles.bars}>
-              {categoryTotals.map(({ category, total }) => {
-                const meta = categoryMeta[category];
-                const pct = monthTotal > 0 ? (total / monthTotal) * 100 : 0;
-                return (
-                  <View key={category} style={styles.barRow}>
-                    <View style={styles.barLabels}>
-                      <View style={styles.labelLeft}>
-                        <View style={[styles.dotMark, { backgroundColor: meta.color }]} />
-                        <Text style={[styles.categoryLabel, { color: colors.foreground }]}>{category}</Text>
-                        <Text style={[styles.categoryPct, { color: colors.subtle }]}>
-                          ({formatPercent(total, monthTotal)})
-                        </Text>
-                      </View>
-                      <Text style={[styles.categoryAmount, { color: colors.foreground }]}>{formatMoney(total)}</Text>
-                    </View>
-                    <View style={[styles.track, { backgroundColor: colors.border }]}>
-                      <View
-                        style={[
-                          styles.fill,
-                          {
-                            width: total > 0 ? `${(total / maxCategorySpend) * 100}%` : "0%",
-                            backgroundColor: meta.color,
-                          },
-                        ]}
-                      />
-                    </View>
-                  </View>
-                );
-              })}
-            </View>
-          )}
-        </View>
+        <CategoryBreakdown
+          categoryTotals={categoryTotals}
+          monthTotal={monthTotal}
+          maxCategorySpend={maxCategorySpend}
+          activeCount={activeCategoryCount}
+        />
 
         {/* Payment Methods Panel */}
-        {paymentTotals.length > 0 && (
-          <View style={[styles.panel, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-            <View style={styles.panelHeader}>
-              <View>
-                <Text style={styles.kicker}>PAYMENT CHANNELS</Text>
-                <Text style={[styles.panelTitle, { color: colors.foreground }]}>How you paid</Text>
-              </View>
-              <Ionicons name="wallet-outline" size={19} color={colors.subtle} />
-            </View>
-            <View style={styles.paymentGrid}>
-              {paymentTotals.map(({ payment, total }) => (
-                <View
-                  key={payment}
-                  style={[styles.paymentCard, { backgroundColor: colors.surfaceSubtle, borderColor: colors.border }]}
-                >
-                  <Text style={[styles.paymentMethod, { color: colors.foreground }]}>{payment}</Text>
-                  <Text style={[styles.paymentAmount, { color: colors.primary }]}>{formatMoney(total)}</Text>
-                  <Text style={[styles.paymentPct, { color: colors.subtle }]}>
-                    {formatPercent(total, monthTotal)} of total
-                  </Text>
-                </View>
-              ))}
-            </View>
-          </View>
-        )}
+        <PaymentMethods paymentTotals={paymentTotals} monthTotal={monthTotal} />
 
         {/* Observations Panel */}
         <View style={[styles.panel, { backgroundColor: colors.surface, borderColor: colors.border }]}>
           <View style={styles.panelHeader}>
             <View>
-              <Text style={styles.kicker}>WORTH NOTING</Text>
+              <Text style={[styles.kicker, { color: colors.primary }]}>WORTH NOTING</Text>
               <Text style={[styles.panelTitle, { color: colors.foreground }]}>Spending highlights</Text>
             </View>
             <Ionicons name="sparkles" size={19} color={colors.subtle} />
           </View>
 
-          <Note
+          <ReportNote
             number="01"
             title={topCategory ? `${topCategory.category} is your top category` : "No category data yet"}
             copy={
@@ -206,7 +101,7 @@ export default function ReportsScreen() {
                 : "Add expenses to see category breakdown insights."
             }
           />
-          <Note
+          <ReportNote
             number="02"
             title={`${expenses.length} expense ${expenses.length === 1 ? "record" : "records"} so far`}
             copy={
@@ -215,12 +110,12 @@ export default function ReportsScreen() {
                 : "Your transaction activity patterns will appear here once you log expenses."
             }
           />
-          <Note
+          <ReportNote
             number="03"
             title="Average expense size"
             copy={
               monthExpenses.length
-                ? `Your average transaction this month is ${formatMoney(monthTotal / monthExpenses.length)}.`
+                ? `Your average transaction this month is ${averageExpenseSize}.`
                 : "Add transactions to calculate your average expense size."
             }
             last
@@ -231,56 +126,89 @@ export default function ReportsScreen() {
   );
 }
 
-function Note({ number, title, copy, last }: { number: string; title: string; copy: string; last?: boolean }) {
-  const { colors } = useTheme();
-  return (
-    <View style={[styles.note, { borderBottomColor: colors.border }, last && styles.lastNote]}>
-      <Text style={styles.noteNumber}>{number}</Text>
-      <View style={styles.noteBody}>
-        <Text style={[styles.noteTitle, { color: colors.foreground }]}>{title}</Text>
-        <Text style={[styles.noteCopy, { color: colors.muted }]}>{copy}</Text>
-      </View>
-    </View>
-  );
-}
-
 const styles = StyleSheet.create({
-  scroll: { paddingTop: 12, paddingBottom: 32 },
-  header: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 16 },
-  kicker: { color: "#EB6F61", fontSize: 10, fontWeight: "800", letterSpacing: 1.4 },
-  kickerLight: { color: "#A5C9BB", fontSize: 9, fontWeight: "800", letterSpacing: 1.3 },
-  title: { fontFamily: "Fraunces_700Bold", fontSize: 32, fontWeight: "700", letterSpacing: -1.2, marginTop: 6 },
-  dot: { color: "#EB6F61" },
-  subtitle: { fontSize: 12, marginTop: 4 },
-  hero: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", minHeight: 160, paddingHorizontal: 20, marginTop: 8, marginBottom: 16, borderRadius: 18, backgroundColor: "#2A4740" },
-  heroValue: { fontFamily: "Fraunces_700Bold", color: "#FFFFFF", fontSize: 36, fontWeight: "700", letterSpacing: -1.2, marginTop: 6 },
-  heroFootRow: { flexDirection: "row", alignItems: "center", gap: 6, marginTop: 8 },
-  heroFootText: { color: "#B5D0C7", fontSize: 11, fontWeight: "600" },
-  heroRing: { width: 96, height: 96, alignItems: "center", justifyContent: "center", borderRadius: 48, borderWidth: 1.5, borderColor: "rgba(255,255,255,0.3)" },
-  heroRingNumber: { fontFamily: "Fraunces_700Bold", color: "#FFFFFF", fontSize: 24, fontWeight: "700" },
-  heroRingLabel: { color: "#B5D0C7", fontSize: 9, fontWeight: "600" },
-  panel: { padding: 18, marginBottom: 16, borderRadius: 16, borderWidth: 1 },
-  panelHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 14 },
-  panelTitle: { fontFamily: "Fraunces_700Bold", fontSize: 20, fontWeight: "700", letterSpacing: -0.4, marginTop: 4 },
-  bars: { gap: 16, marginTop: 10 },
-  barRow: {},
-  barLabels: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 8 },
-  labelLeft: { flexDirection: "row", alignItems: "center", gap: 8 },
-  dotMark: { width: 8, height: 8, borderRadius: 4 },
-  categoryLabel: { fontSize: 12, fontWeight: "600" },
-  categoryPct: { fontSize: 10 },
-  categoryAmount: { fontFamily: "Fraunces_700Bold", fontSize: 13, fontWeight: "700" },
-  track: { height: 8, overflow: "hidden", borderRadius: 8 },
-  fill: { height: "100%", borderRadius: 8 },
-  paymentGrid: { flexDirection: "row", flexWrap: "wrap", gap: 10, marginTop: 4 },
-  paymentCard: { flex: 1, minWidth: "45%", padding: 14, borderRadius: 12, borderWidth: 1 },
-  paymentMethod: { fontSize: 12, fontWeight: "700" },
-  paymentAmount: { fontFamily: "Fraunces_700Bold", fontSize: 16, fontWeight: "700", marginTop: 4 },
-  paymentPct: { fontSize: 9, marginTop: 2 },
-  note: { flexDirection: "row", gap: 14, paddingVertical: 14, borderBottomWidth: 1 },
-  noteBody: { flex: 1 },
-  lastNote: { borderBottomWidth: 0, paddingBottom: 0 },
-  noteNumber: { color: "#EB6F61", fontSize: 15, fontWeight: "800" },
-  noteTitle: { fontSize: 13, fontWeight: "700" },
-  noteCopy: { fontSize: 11, lineHeight: 16, marginTop: 4 },
+  scroll: {
+    paddingTop: 12,
+    paddingBottom: 32,
+  },
+  kicker: {
+    fontSize: 10,
+    fontWeight: "800",
+    letterSpacing: 1.4,
+  },
+  kickerLight: {
+    color: "#A5C9BB",
+    fontSize: 9,
+    fontWeight: "800",
+    letterSpacing: 1.3,
+  },
+  hero: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    minHeight: 160,
+    paddingHorizontal: 20,
+    marginTop: 8,
+    marginBottom: 16,
+    borderRadius: 18,
+    backgroundColor: "#2A4740",
+  },
+  heroValue: {
+    fontFamily: "Fraunces_700Bold",
+    color: "#FFFFFF",
+    fontSize: 36,
+    fontWeight: "700",
+    letterSpacing: -1.2,
+    marginTop: 6,
+  },
+  heroFootRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    marginTop: 8,
+  },
+  heroFootText: {
+    color: "#B5D0C7",
+    fontSize: 11,
+    fontWeight: "600",
+  },
+  heroRing: {
+    width: 96,
+    height: 96,
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: 48,
+    borderWidth: 1.5,
+    borderColor: "rgba(255,255,255,0.3)",
+  },
+  heroRingNumber: {
+    fontFamily: "Fraunces_700Bold",
+    color: "#FFFFFF",
+    fontSize: 24,
+    fontWeight: "700",
+  },
+  heroRingLabel: {
+    color: "#B5D0C7",
+    fontSize: 9,
+    fontWeight: "600",
+  },
+  panel: {
+    padding: 18,
+    marginBottom: 16,
+    borderRadius: 16,
+    borderWidth: 1,
+  },
+  panelHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
+    marginBottom: 14,
+  },
+  panelTitle: {
+    fontFamily: "Fraunces_700Bold",
+    fontSize: 20,
+    fontWeight: "700",
+    letterSpacing: -0.4,
+    marginTop: 4,
+  },
 });

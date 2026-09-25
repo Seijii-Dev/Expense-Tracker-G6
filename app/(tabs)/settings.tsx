@@ -1,31 +1,31 @@
 import React, { useEffect, useState } from "react";
 import {
   Alert,
-  Platform,
   Pressable,
   RefreshControl,
   ScrollView,
-  Share,
   StyleSheet,
-  Switch,
   Text,
   TextInput,
   View,
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import * as FileSystem from "expo-file-system/legacy";
-import * as Sharing from "expo-sharing";
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { ScreenContainer } from "@/components/screen-container";
-import { categoryMeta, useExpenses } from "@/lib/expense-store";
+import { ScreenHeader } from "@/components/common/screen-header";
+import { SectionHeading } from "@/components/settings/section-heading";
+import { PreferenceRow } from "@/components/settings/preference-row";
+import { CATEGORIES, CATEGORY_META } from "@/constants/categories";
+import { STORAGE_KEYS } from "@/constants/storage";
+import { useExpenses } from "@/lib/expense-store";
 import { useTheme } from "@/lib/theme-store";
 import { useAuth } from "@/lib/auth-store";
-import { formatMoney } from "@/lib/formatters";
+import { formatMoney } from "@/utils/formatters";
+import { exportExpensesToCsv } from "@/utils/export-csv";
 
-const categories = ["Food", "Transport", "School", "Shopping", "Bills", "Fun", "Health", "Other"] as const;
-const budgetPresets = [3000, 5000, 10000, 15000, 20000];
+const BUDGET_PRESETS = [3000, 5000, 10000, 15000, 20000] as const;
 
 export default function SettingsScreen() {
   const { budget, setBudget, expenses, syncing, syncError, refreshExpenses } = useExpenses();
@@ -41,7 +41,7 @@ export default function SettingsScreen() {
 
   useEffect(() => {
     if (!account) return;
-    const nudgeKey = `expense-tracker:${account.email}:budget-nudges`;
+    const nudgeKey = STORAGE_KEYS.budgetNudges(account.email);
     AsyncStorage.getItem(nudgeKey)
       .then((val) => {
         if (val !== null) setBudgetNudges(val === "true");
@@ -53,7 +53,7 @@ export default function SettingsScreen() {
     Haptics.selectionAsync();
     setBudgetNudges(value);
     if (account) {
-      const nudgeKey = `expense-tracker:${account.email}:budget-nudges`;
+      const nudgeKey = STORAGE_KEYS.budgetNudges(account.email);
       AsyncStorage.setItem(nudgeKey, String(value)).catch(() => undefined);
     }
   };
@@ -90,62 +90,8 @@ export default function SettingsScreen() {
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
   };
 
-  const exportData = async () => {
-    if (!expenses.length) {
-      Alert.alert("Nothing to export", "Add at least one expense before creating an export backup.");
-      return;
-    }
-
-    const escape = (value: string | number) => `"${String(value ?? "").replace(/"/g, '""')}"`;
-    const csv = [
-      "Date,Description,Category,Payment,Amount",
-      ...expenses.map((expense) =>
-        [expense.date, expense.description, expense.category, expense.payment, expense.amount].map(escape).join(",")
-      ),
-    ].join("\n");
-
-    const filename = `ledgerly-export-${new Date().toISOString().slice(0, 10)}.csv`;
-
-    if (Platform.OS === "web") {
-      try {
-        const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement("a");
-        link.setAttribute("href", url);
-        link.setAttribute("download", filename);
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(url);
-        Alert.alert("Export completed", "Your expense records have been downloaded as CSV.");
-        return;
-      } catch {
-        Alert.alert("Export failed", "Unable to download CSV in browser.");
-        return;
-      }
-    }
-
-    const baseDir = FileSystem.documentDirectory || FileSystem.cacheDirectory;
-    if (!baseDir) {
-      try {
-        await Share.share({ message: csv, title: "Ledgerly Expense CSV" });
-      } catch {
-        Alert.alert("Export failed", "The expense backup could not be shared.");
-      }
-      return;
-    }
-
-    const uri = `${baseDir}${filename}`;
-    try {
-      await FileSystem.writeAsStringAsync(uri, csv, { encoding: FileSystem.EncodingType.UTF8 });
-      if (await Sharing.isAvailableAsync()) {
-        await Sharing.shareAsync(uri, { mimeType: "text/csv", dialogTitle: "Export your expenses" });
-      } else {
-        await Share.share({ message: csv, title: "Ledgerly Expense CSV" });
-      }
-    } catch {
-      Alert.alert("Export failed", "The expense backup could not be created.");
-    }
+  const handleExport = async () => {
+    await exportExpensesToCsv(expenses);
   };
 
   return (
@@ -162,13 +108,11 @@ export default function SettingsScreen() {
           />
         }
       >
-        <Text style={styles.kicker}>MAKE IT YOURS</Text>
-        <Text style={[styles.title, { color: colors.foreground }]}>
-          Settings<Text style={styles.dot}>.</Text>
-        </Text>
-        <Text style={[styles.subtitle, { color: colors.muted }]}>
-          Shape the way you track, manage, and back up everyday spending.
-        </Text>
+        <ScreenHeader
+          kicker="MAKE IT YOURS"
+          title="Settings"
+          subtitle="Shape the way you track, manage, and back up everyday spending."
+        />
 
         {syncError && (
           <View style={styles.syncBanner}>
@@ -231,7 +175,7 @@ export default function SettingsScreen() {
           {/* Budget Presets */}
           <Text style={[styles.presetLabel, { color: colors.subtle }]}>QUICK PRESETS</Text>
           <View style={styles.presetRow}>
-            {budgetPresets.map((preset) => {
+            {BUDGET_PRESETS.map((preset) => {
               const active = budget === preset;
               return (
                 <Pressable
@@ -262,13 +206,13 @@ export default function SettingsScreen() {
           <SectionHeading
             icon={<Ionicons name="pricetag-outline" size={17} color={colors.primary} />}
             title="Active Categories"
-            copy={`${categories.length} standardized categories keep your records tidy.`}
+            copy={`${CATEGORIES.length} standardized categories keep your records tidy.`}
           />
           <View style={styles.pills}>
-            {categories.map((category) => (
-              <View key={category} style={[styles.pill, { backgroundColor: categoryMeta[category].soft }]}>
-                <View style={[styles.pillDot, { backgroundColor: categoryMeta[category].color }]} />
-                <Text style={[styles.pillText, { color: categoryMeta[category].color }]}>{category}</Text>
+            {CATEGORIES.map((category) => (
+              <View key={category} style={[styles.pill, { backgroundColor: CATEGORY_META[category].soft }]}>
+                <View style={[styles.pillDot, { backgroundColor: CATEGORY_META[category].color }]} />
+                <Text style={[styles.pillText, { color: CATEGORY_META[category].color }]}>{category}</Text>
               </View>
             ))}
           </View>
@@ -292,14 +236,14 @@ export default function SettingsScreen() {
 
         {/* Display & Notifications Group */}
         <View style={[styles.panel, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-          <Preference
+          <PreferenceRow
             icon={<Ionicons name="moon-outline" size={17} color={colors.muted} />}
             title="Dark mode"
             copy="Use a darker, high-contrast palette for late hours"
             value={dark}
             onChange={toggleDarkMode}
           />
-          <Preference
+          <PreferenceRow
             icon={<Ionicons name="notifications-outline" size={17} color={colors.muted} />}
             title="Budget nudges"
             copy="Receive visual warnings when reaching 80% and 100% of budget"
@@ -319,14 +263,18 @@ export default function SettingsScreen() {
           <View style={[styles.backupIcon, { backgroundColor: colors.primarySoft }]}>
             <Ionicons name="download-outline" size={20} color={colors.primary} />
           </View>
-          <Text style={styles.kicker}>YOUR DATA, YOUR SAY</Text>
+          <Text style={[styles.kicker, { color: colors.primary }]}>YOUR DATA, YOUR SAY</Text>
           <Text style={[styles.backupTitle, { color: colors.foreground }]}>Keep a copy close.</Text>
           <Text style={[styles.backupCopy, { color: colors.muted }]}>
             Export your {expenses.length} transactions anytime as a portable CSV backup file.
           </Text>
           <Pressable
-            style={({ pressed }) => [styles.exportButton, pressed && styles.pressed]}
-            onPress={exportData}
+            style={({ pressed }) => [
+              styles.exportButton,
+              { backgroundColor: colors.primary },
+              pressed && styles.pressed,
+            ]}
+            onPress={handleExport}
           >
             <Ionicons name="download-outline" size={16} color="#FFFFFF" />
             <Text style={styles.exportText}>Export as CSV</Text>
@@ -337,99 +285,202 @@ export default function SettingsScreen() {
   );
 }
 
-function SectionHeading({ icon, title, copy }: { icon: React.ReactNode; title: string; copy: string }) {
-  const { colors } = useTheme();
-  return (
-    <View style={styles.heading}>
-      <View style={[styles.headingIcon, { backgroundColor: colors.primarySoft }]}>{icon}</View>
-      <View style={styles.headingTextWrap}>
-        <Text style={[styles.headingTitle, { color: colors.foreground }]}>{title}</Text>
-        <Text style={[styles.headingCopy, { color: colors.muted }]}>{copy}</Text>
-      </View>
-    </View>
-  );
-}
-
-function Preference({
-  icon,
-  title,
-  copy,
-  value,
-  onChange,
-  last,
-}: {
-  icon: React.ReactNode;
-  title: string;
-  copy: string;
-  value: boolean;
-  onChange: (value: boolean) => void;
-  last?: boolean;
-}) {
-  const { colors } = useTheme();
-  return (
-    <View style={[styles.preference, !last && [styles.preferenceBorder, { borderBottomColor: colors.border }]]}>
-      <View style={[styles.preferenceIcon, { backgroundColor: colors.surfaceSubtle }]}>{icon}</View>
-      <View style={styles.preferenceBody}>
-        <Text style={[styles.preferenceTitle, { color: colors.foreground }]}>{title}</Text>
-        <Text style={[styles.preferenceCopy, { color: colors.muted }]}>{copy}</Text>
-      </View>
-      <Switch
-        value={value}
-        onValueChange={onChange}
-        trackColor={{ false: colors.border, true: colors.primary }}
-        thumbColor="#FFFFFF"
-      />
-    </View>
-  );
-}
-
 const styles = StyleSheet.create({
-  syncBanner: { flexDirection: "row", alignItems: "center", gap: 10, padding: 14, marginBottom: 16, borderRadius: 12, backgroundColor: "#FFF3EE", borderWidth: 1, borderColor: "#F4CBB5" },
-  syncBannerText: { flex: 1, color: "#B5502E", fontSize: 11, lineHeight: 16 },
-  accountRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 14 },
-  accountName: { fontSize: 14, fontWeight: "700" },
-  syncingText: { fontSize: 11 },
-  scroll: { paddingTop: 12, paddingBottom: 36 },
-  kicker: { color: "#EB6F61", fontSize: 10, fontWeight: "800", letterSpacing: 1.4 },
-  title: { fontFamily: "Fraunces_700Bold", fontSize: 32, fontWeight: "700", letterSpacing: -1.2, marginTop: 6 },
-  dot: { color: "#EB6F61" },
-  subtitle: { fontSize: 12, marginTop: 4, marginBottom: 20 },
-  panel: { padding: 18, marginBottom: 16, borderRadius: 16, borderWidth: 1 },
-  heading: { flexDirection: "row", alignItems: "flex-start", gap: 12, marginBottom: 16 },
-  headingIcon: { width: 34, height: 34, alignItems: "center", justifyContent: "center", borderRadius: 10 },
-  headingTextWrap: { flex: 1 },
-  headingTitle: { fontSize: 16, fontWeight: "700" },
-  headingCopy: { fontSize: 11, marginTop: 3 },
-  fieldLabel: { fontSize: 9, fontWeight: "800", letterSpacing: 1.1, marginTop: 8, marginBottom: 7 },
-  select: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", height: 44, paddingHorizontal: 14, borderRadius: 10, borderWidth: 1 },
-  selectText: { fontSize: 12, fontWeight: "600" },
-  inputWrap: { flexDirection: "row", alignItems: "center", height: 44, paddingHorizontal: 14, borderRadius: 10, borderWidth: 1 },
-  inputPrefix: { fontSize: 14, fontWeight: "700" },
-  input: { flex: 1, fontSize: 13, marginLeft: 8, fontWeight: "600" },
-  presetLabel: { fontSize: 9, fontWeight: "800", letterSpacing: 1, marginTop: 12, marginBottom: 8 },
-  presetRow: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
-  presetBtn: { paddingHorizontal: 11, paddingVertical: 6, borderRadius: 8, borderWidth: 1 },
-  presetBtnActive: { borderColor: "#F2B8B0", backgroundColor: "#FFF0ED" },
-  presetBtnText: { fontSize: 10, fontWeight: "600" },
-  presetBtnTextActive: { color: "#EB6F61", fontWeight: "700" },
-  divider: { height: 1, marginVertical: 20 },
-  pills: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
-  pill: { flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 10, paddingVertical: 7, borderRadius: 12 },
-  pillDot: { width: 6, height: 6, borderRadius: 3 },
-  pillText: { fontSize: 11, fontWeight: "700" },
-  outlineButton: { flexDirection: "row", alignItems: "center", alignSelf: "flex-start", gap: 6, height: 36, paddingHorizontal: 13, marginTop: 16, borderRadius: 9, borderWidth: 1 },
-  outlineText: { fontSize: 11, fontWeight: "700" },
-  preference: { flexDirection: "row", alignItems: "center", gap: 12, paddingVertical: 14 },
-  preferenceBorder: { borderBottomWidth: 1 },
-  preferenceIcon: { width: 34, height: 34, alignItems: "center", justifyContent: "center", borderRadius: 10 },
-  preferenceBody: { flex: 1 },
-  preferenceTitle: { fontSize: 13, fontWeight: "700" },
-  preferenceCopy: { fontSize: 10, lineHeight: 15, marginTop: 3 },
-  backup: { padding: 20, marginBottom: 16, borderRadius: 16, borderWidth: 1 },
-  backupIcon: { width: 40, height: 40, alignItems: "center", justifyContent: "center", marginBottom: 14, borderRadius: 12 },
-  backupTitle: { fontFamily: "Fraunces_700Bold", fontSize: 22, fontWeight: "700", marginTop: 6 },
-  backupCopy: { fontSize: 11, lineHeight: 17, marginTop: 6, marginBottom: 18 },
-  exportButton: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, height: 44, borderRadius: 10, backgroundColor: "#EB6F61" },
-  exportText: { color: "#FFFFFF", fontSize: 12, fontWeight: "700" },
-  pressed: { opacity: 0.8, transform: [{ scale: 0.98 }] },
+  scroll: {
+    paddingTop: 12,
+    paddingBottom: 36,
+  },
+  syncBanner: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    padding: 14,
+    marginBottom: 16,
+    borderRadius: 12,
+    backgroundColor: "#FFF3EE",
+    borderWidth: 1,
+    borderColor: "#F4CBB5",
+  },
+  syncBannerText: {
+    flex: 1,
+    color: "#B5502E",
+    fontSize: 11,
+    lineHeight: 16,
+  },
+  panel: {
+    padding: 18,
+    marginBottom: 16,
+    borderRadius: 16,
+    borderWidth: 1,
+  },
+  accountRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 14,
+  },
+  accountName: {
+    fontSize: 14,
+    fontWeight: "700",
+  },
+  syncingText: {
+    fontSize: 11,
+  },
+  fieldLabel: {
+    fontSize: 9,
+    fontWeight: "800",
+    letterSpacing: 1.1,
+    marginTop: 8,
+    marginBottom: 7,
+  },
+  select: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    height: 44,
+    paddingHorizontal: 14,
+    borderRadius: 10,
+    borderWidth: 1,
+  },
+  selectText: {
+    fontSize: 12,
+    fontWeight: "600",
+  },
+  inputWrap: {
+    flexDirection: "row",
+    alignItems: "center",
+    height: 44,
+    paddingHorizontal: 14,
+    borderRadius: 10,
+    borderWidth: 1,
+  },
+  inputPrefix: {
+    fontSize: 14,
+    fontWeight: "700",
+  },
+  input: {
+    flex: 1,
+    fontSize: 13,
+    marginLeft: 8,
+    fontWeight: "600",
+  },
+  presetLabel: {
+    fontSize: 9,
+    fontWeight: "800",
+    letterSpacing: 1,
+    marginTop: 12,
+    marginBottom: 8,
+  },
+  presetRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+  },
+  presetBtn: {
+    paddingHorizontal: 11,
+    paddingVertical: 6,
+    borderRadius: 8,
+    borderWidth: 1,
+  },
+  presetBtnActive: {
+    borderColor: "#F2B8B0",
+    backgroundColor: "#FFF0ED",
+  },
+  presetBtnText: {
+    fontSize: 10,
+    fontWeight: "600",
+  },
+  presetBtnTextActive: {
+    color: "#EB6F61",
+    fontWeight: "700",
+  },
+  divider: {
+    height: 1,
+    marginVertical: 20,
+  },
+  pills: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+  },
+  pill: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 7,
+    borderRadius: 12,
+  },
+  pillDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+  },
+  pillText: {
+    fontSize: 11,
+    fontWeight: "700",
+  },
+  outlineButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    alignSelf: "flex-start",
+    gap: 6,
+    height: 36,
+    paddingHorizontal: 13,
+    marginTop: 16,
+    borderRadius: 9,
+    borderWidth: 1,
+  },
+  outlineText: {
+    fontSize: 11,
+    fontWeight: "700",
+  },
+  backup: {
+    padding: 20,
+    marginBottom: 16,
+    borderRadius: 16,
+    borderWidth: 1,
+  },
+  backupIcon: {
+    width: 40,
+    height: 40,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 14,
+    borderRadius: 12,
+  },
+  kicker: {
+    fontSize: 10,
+    fontWeight: "800",
+    letterSpacing: 1.4,
+  },
+  backupTitle: {
+    fontFamily: "Fraunces_700Bold",
+    fontSize: 22,
+    fontWeight: "700",
+    marginTop: 6,
+  },
+  backupCopy: {
+    fontSize: 11,
+    lineHeight: 17,
+    marginTop: 6,
+    marginBottom: 18,
+  },
+  exportButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    height: 44,
+    borderRadius: 10,
+  },
+  exportText: {
+    color: "#FFFFFF",
+    fontSize: 12,
+    fontWeight: "700",
+  },
+  pressed: {
+    opacity: 0.8,
+    transform: [{ scale: 0.98 }],
+  },
 });

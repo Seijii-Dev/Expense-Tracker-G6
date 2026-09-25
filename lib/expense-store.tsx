@@ -2,40 +2,24 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/lib/auth-store";
 import { api } from "@/lib/api-client";
+import { Category, Expense, NewExpenseData, Payment } from "@/types/expense";
+import { CATEGORY_META } from "@/constants/categories";
+import { STORAGE_KEYS } from "@/constants/storage";
+import { getPhilippinesDate, getPhilippinesMonth, normalizeDate } from "@/utils/date";
 
-export type Category = "Food" | "Transport" | "School" | "Shopping" | "Bills" | "Fun" | "Health" | "Other";
-export type Payment = "Cash" | "GCash" | "Card" | "Bank";
-export type Expense = { id: string; amount: number; category: Category; date: string; description: string; payment: Payment };
+export type { Category, Payment, Expense };
+export const categoryMeta = CATEGORY_META;
+export { getPhilippinesDate, getPhilippinesMonth, normalizeDate };
 
-export const categoryMeta: Record<Category, { color: string; soft: string }> = {
-  Food: { color: "#EB6F61", soft: "#FFF0ED" },
-  Transport: { color: "#4D8AF0", soft: "#EEF4FF" },
-  School: { color: "#8A69DC", soft: "#F2EFFF" },
-  Shopping: { color: "#D18B38", soft: "#FFF5E6" },
-  Bills: { color: "#5A9E7E", soft: "#EDF8F1" },
-  Fun: { color: "#C45BA7", soft: "#FFF0FA" },
-  Health: { color: "#45A6AD", soft: "#EAF9FA" },
-  Other: { color: "#82908D", soft: "#F1F4F3" },
-};
-
-export const getPhilippinesDate = (date = new Date()) =>
-  new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Manila", year: "numeric", month: "2-digit", day: "2-digit" }).format(date);
-export const getPhilippinesMonth = (date = new Date()) => getPhilippinesDate(date).slice(0, 7);
-
-export const normalizeDate = (date?: string): string => {
-  if (!date || typeof date !== "string") return getPhilippinesDate();
-  return date.slice(0, 10);
-};
-
-type ExpenseContextValue = {
+export type ExpenseContextValue = {
   expenses: Expense[];
   hydrated: boolean;
   syncing: boolean;
   syncError: string | null;
   budget: number;
   setBudget: (value: number) => void;
-  addExpense: (expense: Omit<Expense, "id">) => void;
-  updateExpense: (id: string, expense: Omit<Expense, "id">) => void;
+  addExpense: (expense: NewExpenseData) => void;
+  updateExpense: (id: string, expense: NewExpenseData) => void;
   removeExpense: (id: string) => void;
   refreshExpenses: () => Promise<void>;
   monthTotal: number;
@@ -46,7 +30,14 @@ type ExpenseContextValue = {
 };
 
 const ExpenseContext = createContext<ExpenseContextValue | null>(null);
-const cacheKey = (email: string) => `expense-tracker:${email}:cache`;
+
+function sanitizeExpense(expense: NewExpenseData): NewExpenseData {
+  return {
+    ...expense,
+    amount: Math.max(0.01, isNaN(expense.amount) ? 0 : Math.round(expense.amount * 100) / 100),
+    date: normalizeDate(expense.date),
+  };
+}
 
 export function ExpenseProvider({ children }: { children: React.ReactNode }) {
   const { account, token, refreshAccount } = useAuth();
@@ -55,6 +46,7 @@ export function ExpenseProvider({ children }: { children: React.ReactNode }) {
   const [hydratedKey, setHydratedKey] = useState<string | null>(null);
   const [syncing, setSyncing] = useState(false);
   const [syncError, setSyncError] = useState<string | null>(null);
+
   const accountKey = account ? account.email : null;
   const hydrated = accountKey !== null && hydratedKey === accountKey;
 
@@ -74,7 +66,7 @@ export function ExpenseProvider({ children }: { children: React.ReactNode }) {
           payment: e.payment as Payment,
         }));
         setExpenses(remote);
-        AsyncStorage.setItem(cacheKey(account.email), JSON.stringify(remote)).catch(() => undefined);
+        AsyncStorage.setItem(STORAGE_KEYS.userCache(account.email), JSON.stringify(remote)).catch(() => undefined);
         setSyncError(null);
       } else {
         setSyncError(expensesResult.message);
@@ -107,7 +99,7 @@ export function ExpenseProvider({ children }: { children: React.ReactNode }) {
     (async () => {
       // 1. Read cached data first so UI renders instantly
       try {
-        const cached = await AsyncStorage.getItem(cacheKey(account.email));
+        const cached = await AsyncStorage.getItem(STORAGE_KEYS.userCache(account.email));
         if (mounted && cached) {
           try {
             const parsed = JSON.parse(cached);
@@ -142,7 +134,7 @@ export function ExpenseProvider({ children }: { children: React.ReactNode }) {
   // Keep the local cache fresh whenever expenses change after hydration
   useEffect(() => {
     if (hydrated && account) {
-      AsyncStorage.setItem(cacheKey(account.email), JSON.stringify(expenses)).catch(() => undefined);
+      AsyncStorage.setItem(STORAGE_KEYS.userCache(account.email), JSON.stringify(expenses)).catch(() => undefined);
     }
   }, [expenses, hydrated, account?.email]);
 
@@ -179,12 +171,8 @@ export function ExpenseProvider({ children }: { children: React.ReactNode }) {
         }
       },
 
-      addExpense: (expense: Omit<Expense, "id">) => {
-        const sanitized: Omit<Expense, "id"> = {
-          ...expense,
-          amount: Math.max(0.01, isNaN(expense.amount) ? 0 : Math.round(expense.amount * 100) / 100),
-          date: normalizeDate(expense.date),
-        };
+      addExpense: (expense: NewExpenseData) => {
+        const sanitized = sanitizeExpense(expense);
         const tempId = `temp-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
         setExpenses((current) => [{ ...sanitized, id: tempId }, ...current]);
         if (!token) return;
@@ -209,12 +197,8 @@ export function ExpenseProvider({ children }: { children: React.ReactNode }) {
         });
       },
 
-      updateExpense: (id: string, expense: Omit<Expense, "id">) => {
-        const sanitized: Omit<Expense, "id"> = {
-          ...expense,
-          amount: Math.max(0.01, isNaN(expense.amount) ? 0 : Math.round(expense.amount * 100) / 100),
-          date: normalizeDate(expense.date),
-        };
+      updateExpense: (id: string, expense: NewExpenseData) => {
+        const sanitized = sanitizeExpense(expense);
         let previous: Expense | undefined;
         setExpenses((current) => {
           previous = current.find((item) => item.id === id);

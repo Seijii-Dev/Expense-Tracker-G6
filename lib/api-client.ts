@@ -1,3 +1,7 @@
+import { ApiResult, RemoteAccount, RemoteExpense } from "@/types/api";
+
+export type { ApiResult, RemoteAccount, RemoteExpense };
+
 // The API URL is public and bundled into the app. The environment variable can
 // override it for alternate deployments; production has a safe default so a
 // build still works if the CI environment does not forward the variable.
@@ -9,9 +13,10 @@ if (!API_URL && __DEV__) {
   );
 }
 
-export type ApiResult<T> = { ok: true } & T | { ok: false; message: string };
-
-async function request<T>(path: string, options: { method?: string; token?: string | null; body?: unknown } = {}): Promise<ApiResult<T>> {
+async function request<T>(
+  path: string,
+  options: { method?: string; token?: string | null; body?: unknown } = {}
+): Promise<ApiResult<T>> {
   if (!API_URL) {
     return { ok: false, message: "The app isn't configured with a server address yet." };
   }
@@ -48,15 +53,18 @@ async function request<T>(path: string, options: { method?: string; token?: stri
   }
 }
 
-export type RemoteAccount = { id: string; name: string; email: string; budget: number };
-export type RemoteExpense = { id: string; amount: number; category: string; payment: string; description: string; date: string };
-
 export const api = {
   register: (name: string, email: string, password: string) =>
-    request<{ token: string; account: RemoteAccount }>("/api/auth/register", { method: "POST", body: { name, email, password } }),
+    request<{ token: string; account: RemoteAccount }>("/api/auth/register", {
+      method: "POST",
+      body: { name, email, password },
+    }),
 
   login: (email: string, password: string) =>
-    request<{ token: string; account: RemoteAccount }>("/api/auth/login", { method: "POST", body: { email, password } }),
+    request<{ token: string; account: RemoteAccount }>("/api/auth/login", {
+      method: "POST",
+      body: { email, password },
+    }),
 
   me: (token: string) => request<{ account: RemoteAccount }>("/api/auth/me", { token }),
 
@@ -70,5 +78,6 @@ export const api = {
 
   deleteExpense: (token: string, id: string) => request<{}>(`/api/expenses/${id}`, { method: "DELETE", token }),
 
-  updateBudget: (token: string, budget: number) => request<{ budget: number }>("/api/budget", { method: "PUT", token, body: { budget } }),
+  updateBudget: (token: string, budget: number) =>
+    request<{ budget: number }>("/api/budget", { method: "PUT", token, body: { budget } }),
 };

@@ -13,30 +13,16 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
-import {
-  Category,
-  Expense,
-  Payment,
-  categoryMeta,
-  getPhilippinesDate,
-  normalizeDate,
-} from "@/lib/expense-store";
+import { Category, Expense, NewExpenseData, Payment } from "@/types/expense";
+import { CATEGORIES, CATEGORY_META, PAYMENT_METHODS } from "@/constants/categories";
+import { getPhilippinesDate, getYesterdayDate, normalizeDate } from "@/utils/date";
 import { useTheme } from "@/lib/theme-store";
-
-const categories: Category[] = ["Food", "Transport", "School", "Shopping", "Bills", "Fun", "Health", "Other"];
-const payments: Payment[] = ["Cash", "GCash", "Card", "Bank"];
 
 interface ExpenseModalProps {
   visible: boolean;
   initialExpense?: Expense | null;
   onClose: () => void;
-  onSubmit: (expenseData: {
-    amount: number;
-    description: string;
-    category: Category;
-    payment: Payment;
-    date: string;
-  }) => void;
+  onSubmit: (expenseData: NewExpenseData) => void;
 }
 
 export function ExpenseModal({ visible, initialExpense, onClose, onSubmit }: ExpenseModalProps) {
@@ -92,9 +78,7 @@ export function ExpenseModal({ visible, initialExpense, onClose, onSubmit }: Exp
   };
 
   const today = getPhilippinesDate();
-  const yesterdayDate = new Date();
-  yesterdayDate.setDate(yesterdayDate.getDate() - 1);
-  const yesterday = getPhilippinesDate(yesterdayDate);
+  const yesterday = getYesterdayDate();
 
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
@@ -107,7 +91,7 @@ export function ExpenseModal({ visible, initialExpense, onClose, onSubmit }: Exp
           {/* Header */}
           <View style={styles.header}>
             <View>
-              <Text style={styles.kicker}>{isEditing ? "UPDATE RECORD" : "NEW RECORD"}</Text>
+              <Text style={[styles.kicker, { color: colors.primary }]}>{isEditing ? "UPDATE RECORD" : "NEW RECORD"}</Text>
               <Text style={[styles.title, { color: colors.foreground }]}>
                 {isEditing ? "Edit expense" : "Add an expense"}
               </Text>
@@ -136,7 +120,7 @@ export function ExpenseModal({ visible, initialExpense, onClose, onSubmit }: Exp
                 },
               ]}
             >
-              <Text style={styles.currencySymbol}>₱</Text>
+              <Text style={[styles.currencySymbol, { color: colors.primary }]}>₱</Text>
               <TextInput
                 value={amount}
                 onChangeText={setAmount}
@@ -175,7 +159,7 @@ export function ExpenseModal({ visible, initialExpense, onClose, onSubmit }: Exp
                 <Ionicons
                   name="calendar-outline"
                   size={13}
-                  color={date === today ? "#EB6F61" : colors.muted}
+                  color={date === today ? colors.primary : colors.muted}
                 />
                 <Text
                   style={[
@@ -199,7 +183,7 @@ export function ExpenseModal({ visible, initialExpense, onClose, onSubmit }: Exp
                 <Ionicons
                   name="time-outline"
                   size={13}
-                  color={date === yesterday ? "#EB6F61" : colors.muted}
+                  color={date === yesterday ? colors.primary : colors.muted}
                 />
                 <Text
                   style={[
@@ -216,8 +200,8 @@ export function ExpenseModal({ visible, initialExpense, onClose, onSubmit }: Exp
             {/* Category selection */}
             <Text style={[styles.label, { color: colors.subtle }]}>CATEGORY</Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipRow}>
-              {categories.map((item) => {
-                const meta = categoryMeta[item];
+              {CATEGORIES.map((item) => {
+                const meta = CATEGORY_META[item];
                 const active = category === item;
                 return (
                   <Pressable
@@ -253,7 +237,7 @@ export function ExpenseModal({ visible, initialExpense, onClose, onSubmit }: Exp
             {/* Payment method selection */}
             <Text style={[styles.label, { color: colors.subtle }]}>PAYMENT METHOD</Text>
             <View style={styles.chipRow}>
-              {payments.map((item) => {
+              {PAYMENT_METHODS.map((item) => {
                 const active = payment === item;
                 return (
                   <Pressable
@@ -284,7 +268,7 @@ export function ExpenseModal({ visible, initialExpense, onClose, onSubmit }: Exp
 
             {/* Submit button */}
             <Pressable
-              style={({ pressed }) => [styles.submitBtn, pressed && styles.submitPressed]}
+              style={({ pressed }) => [styles.submitBtn, { backgroundColor: colors.primary }, pressed && styles.submitPressed]}
               onPress={handleSave}
             >
               <Text style={styles.submitBtnText}>{isEditing ? "Save changes" : "Save expense"}</Text>
@@ -325,7 +309,6 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   kicker: {
-    color: "#EB6F61",
     fontSize: 10,
     fontWeight: "800",
     letterSpacing: 1.4,
@@ -364,7 +347,6 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
   },
   currencySymbol: {
-    color: "#EB6F61",
     fontSize: 26,
     fontWeight: "700",
     marginRight: 6,
@@ -446,7 +428,6 @@ const styles = StyleSheet.create({
     marginTop: 24,
     marginBottom: 6,
     borderRadius: 12,
-    backgroundColor: "#EB6F61",
     shadowColor: "#EB6F61",
     shadowOpacity: 0.3,
     shadowRadius: 10,

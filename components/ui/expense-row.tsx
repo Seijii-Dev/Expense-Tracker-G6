@@ -2,9 +2,10 @@ import React from "react";
 import { Alert, Pressable, StyleSheet, Text, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
-import { Expense, categoryMeta } from "@/lib/expense-store";
+import { Expense } from "@/types/expense";
+import { CATEGORY_META, DEFAULT_CATEGORY_STYLE } from "@/constants/categories";
 import { useTheme } from "@/lib/theme-store";
-import { formatDate, formatMoney } from "@/lib/formatters";
+import { formatDate, formatMoney } from "@/utils/formatters";
 
 interface ExpenseRowProps {
   expense: Expense;
@@ -16,7 +17,7 @@ interface ExpenseRowProps {
 
 export function ExpenseRow({ expense, onPress, onEdit, onDelete, showActions = true }: ExpenseRowProps) {
   const { colors, dark } = useTheme();
-  const meta = categoryMeta[expense.category] || categoryMeta.Other;
+  const meta = CATEGORY_META[expense.category] || DEFAULT_CATEGORY_STYLE;
 
   const handleDelete = () => {
     Alert.alert("Delete Expense", `Remove "${expense.description}" from your ledger?`, [
