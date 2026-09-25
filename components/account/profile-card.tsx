@@ -7,9 +7,10 @@ import { useTheme } from "@/lib/theme-store";
 interface ProfileCardProps {
   account: Account | null;
   syncing: boolean;
+  syncError?: string | null;
 }
 
-export function ProfileCard({ account, syncing }: ProfileCardProps) {
+export function ProfileCard({ account, syncing, syncError }: ProfileCardProps) {
   const { colors } = useTheme();
 
   const initials =
@@ -21,6 +22,18 @@ export function ProfileCard({ account, syncing }: ProfileCardProps) {
       .join("")
       .slice(0, 2)
       .toUpperCase() || "U";
+
+  const getStatusText = () => {
+    if (syncing) return "Syncing your ledger…";
+    if (syncError) return "Saved locally (offline mode)";
+    return "Connected & Synced";
+  };
+
+  const getStatusColor = () => {
+    if (syncing) return colors.warning;
+    if (syncError) return colors.muted;
+    return colors.success;
+  };
 
   return (
     <View style={[styles.profileCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
@@ -34,20 +47,24 @@ export function ProfileCard({ account, syncing }: ProfileCardProps) {
           <View
             style={[
               styles.statusDot,
-              { backgroundColor: syncing ? colors.warning : colors.success },
+              { backgroundColor: getStatusColor() },
             ]}
           />
           <Text
             style={[
               styles.statusText,
-              { color: syncing ? colors.warning : colors.success },
+              { color: getStatusColor() },
             ]}
           >
-            {syncing ? "Syncing your ledger…" : "Connected & Synced"}
+            {getStatusText()}
           </Text>
         </View>
       </View>
-      <Ionicons name="shield-checkmark" size={20} color={colors.success} />
+      <Ionicons
+        name={syncError ? "cloud-offline-outline" : "shield-checkmark"}
+        size={20}
+        color={getStatusColor()}
+      />
     </View>
   );
 }

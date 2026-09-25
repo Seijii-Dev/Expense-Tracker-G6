@@ -29,6 +29,11 @@ export type ExpenseContextValue = {
   sortedExpenses: Expense[];
 };
 
+type PendingSyncItem =
+  | { action: "create"; tempId: string; data: NewExpenseData }
+  | { action: "update"; id: string; data: NewExpenseData }
+  | { action: "delete"; id: string };
+
 const ExpenseContext = createContext<ExpenseContextValue | null>(null);
 
 function sanitizeExpense(expense: NewExpenseData): NewExpenseData {
@@ -37,6 +42,33 @@ function sanitizeExpense(expense: NewExpenseData): NewExpenseData {
     amount: Math.max(0.01, isNaN(expense.amount) ? 0 : Math.round(expense.amount * 100) / 100),
     date: normalizeDate(expense.date),
   };
+}
+
+async function getSyncQueue(email: string): Promise<PendingSyncItem[]> {
+  try {
+    const raw = await AsyncStorage.getItem(STORAGE_KEYS.syncQueue(email));
+    return raw ? (JSON.parse(raw) as PendingSyncItem[]) : [];
+  } catch {
+    return [];
+  }
+}
+
+async function saveSyncQueue(email: string, queue: PendingSyncItem[]): Promise<void> {
+  try {
+    if (queue.length === 0) {
+      await AsyncStorage.removeItem(STORAGE_KEYS.syncQueue(email));
+    } else {
+      await AsyncStorage.setItem(STORAGE_KEYS.syncQueue(email), JSON.stringify(queue));
+    }
+  } catch {
+    // Ignore storage write error
+  }
+}
+
+async function addToSyncQueue(email: string, item: PendingSyncItem): Promise<void> {
+  const queue = await getSyncQueue(email);
+  queue.push(item);
+  await saveSyncQueue(email, queue);
 }
 
 export function ExpenseProvider({ children }: { children: React.ReactNode }) {
@@ -50,14 +82,58 @@ export function ExpenseProvider({ children }: { children: React.ReactNode }) {
   const accountKey = account ? account.email : null;
   const hydrated = accountKey !== null && hydratedKey === accountKey;
 
+  // Process any pending offline changes and fetch fresh records from server
   const refreshExpenses = async () => {
-    if (!token || !account) return;
+    if (!token || !account || token.startsWith("local-token-")) {
+      return;
+    }
+
     setSyncing(true);
     try {
+      // 1. Process pending offline sync queue
+      const queue = await getSyncQueue(account.email);
+      if (queue.length > 0) {
+        const remainingQueue: PendingSyncItem[] = [];
+        for (const item of queue) {
+          try {
+            if (item.action === "create") {
+              const res = await api.createExpense(token, item.data);
+              if (res.ok) {
+                setExpenses((curr) =>
+                  curr.map((e) =>
+                    e.id === item.tempId
+                      ? {
+                          ...res.expense,
+                          date: normalizeDate(res.expense.date),
+                          category: res.expense.category as Category,
+                          payment: res.expense.payment as Payment,
+                        }
+                      : e
+                  )
+                );
+              } else {
+                remainingQueue.push(item);
+              }
+            } else if (item.action === "update") {
+              const res = await api.updateExpense(token, item.id, item.data);
+              if (!res.ok) remainingQueue.push(item);
+            } else if (item.action === "delete") {
+              const res = await api.deleteExpense(token, item.id);
+              if (!res.ok) remainingQueue.push(item);
+            }
+          } catch {
+            remainingQueue.push(item);
+          }
+        }
+        await saveSyncQueue(account.email, remainingQueue);
+      }
+
+      // 2. Fetch fresh list from server
       const [expensesResult, meResult] = await Promise.all([
         api.listExpenses(token),
         api.me(token),
       ]);
+
       if (expensesResult.ok) {
         const remote: Expense[] = expensesResult.expenses.map((e) => ({
           ...e,
@@ -65,63 +141,91 @@ export function ExpenseProvider({ children }: { children: React.ReactNode }) {
           category: e.category as Category,
           payment: e.payment as Payment,
         }));
-        setExpenses(remote);
-        AsyncStorage.setItem(STORAGE_KEYS.userCache(account.email), JSON.stringify(remote)).catch(() => undefined);
+
+        // Preserve any local un-synced expenses (starting with local-)
+        setExpenses((current) => {
+          const localOnly = current.filter((e) => e.id.startsWith("local-"));
+          const merged = [...remote];
+          for (const local of localOnly) {
+            if (!merged.some((r) => r.id === local.id)) {
+              merged.push(local);
+            }
+          }
+          AsyncStorage.setItem(STORAGE_KEYS.userCache(account.email), JSON.stringify(merged)).catch(() => undefined);
+          return merged;
+        });
         setSyncError(null);
       } else {
+        // If server call fails, do NOT erase local expenses
         setSyncError(expensesResult.message);
       }
 
       if (meResult.ok) {
         setBudgetState(meResult.account.budget);
         refreshAccount(meResult.account);
+        AsyncStorage.setItem(STORAGE_KEYS.userBudget(account.email), String(meResult.account.budget)).catch(() => undefined);
       }
     } catch {
-      setSyncError("Unable to refresh latest expenses from server.");
+      // Offline fallback: keep local records intact
+      setSyncError("Working offline. Records are saved locally.");
     } finally {
       setSyncing(false);
     }
   };
 
-  // On login (or account switch): load cache first, then sync fresh data from server
+  // On login or account switch: load offline cache FIRST so user sees data immediately
   useEffect(() => {
     let mounted = true;
     setHydratedKey(null);
     setSyncError(null);
-    if (!account || !token) {
+
+    if (!account) {
       setExpenses([]);
       setBudgetState(5000);
       return;
     }
 
-    setBudgetState(account.budget);
-
     (async () => {
-      // 1. Read cached data first so UI renders instantly
+      // 1. Read cached budget & expenses
       try {
-        const cached = await AsyncStorage.getItem(STORAGE_KEYS.userCache(account.email));
-        if (mounted && cached) {
-          try {
-            const parsed = JSON.parse(cached);
-            if (Array.isArray(parsed)) {
-              setExpenses(
-                parsed.map((item) => ({
-                  ...item,
-                  date: normalizeDate(item.date),
-                }))
-              );
+        const [cachedExpenses, cachedBudget] = await Promise.all([
+          AsyncStorage.getItem(STORAGE_KEYS.userCache(account.email)),
+          AsyncStorage.getItem(STORAGE_KEYS.userBudget(account.email)),
+        ]);
+
+        if (mounted) {
+          if (cachedBudget) {
+            const parsedBudget = Number(cachedBudget);
+            if (!isNaN(parsedBudget) && parsedBudget >= 0) {
+              setBudgetState(parsedBudget);
             }
-          } catch {
-            // Ignore corrupted cache
+          } else if (account.budget !== undefined) {
+            setBudgetState(account.budget);
+          }
+
+          if (cachedExpenses) {
+            try {
+              const parsed = JSON.parse(cachedExpenses);
+              if (Array.isArray(parsed)) {
+                setExpenses(
+                  parsed.map((item) => ({
+                    ...item,
+                    date: normalizeDate(item.date),
+                  }))
+                );
+              }
+            } catch {
+              // Ignore corrupted cache
+            }
           }
         }
       } catch {
-        // Disk read error fallback
+        // Disk read fallback
       } finally {
         if (mounted) setHydratedKey(account.email);
       }
 
-      // 2. Fetch latest state from server in background without being overwritten by cache
+      // 2. Sync with remote server if online
       if (!mounted) return;
       await refreshExpenses();
     })();
@@ -131,7 +235,7 @@ export function ExpenseProvider({ children }: { children: React.ReactNode }) {
     };
   }, [account?.email, token]);
 
-  // Keep the local cache fresh whenever expenses change after hydration
+  // Persist local expenses to AsyncStorage whenever they change
   useEffect(() => {
     if (hydrated && account) {
       AsyncStorage.setItem(STORAGE_KEYS.userCache(account.email), JSON.stringify(expenses)).catch(() => undefined);
@@ -164,23 +268,36 @@ export function ExpenseProvider({ children }: { children: React.ReactNode }) {
       setBudget: (value: number) => {
         const safeValue = Math.max(0, isNaN(value) ? 0 : Math.round(value));
         setBudgetState(safeValue);
-        if (token) {
-          api.updateBudget(token, safeValue).then((result) => {
-            if (!result.ok) setSyncError(result.message);
-          });
+
+        if (account) {
+          AsyncStorage.setItem(STORAGE_KEYS.userBudget(account.email), String(safeValue)).catch(() => undefined);
+          refreshAccount({ ...account, budget: safeValue });
+        }
+
+        if (token && !token.startsWith("local-token-")) {
+          api.updateBudget(token, safeValue).catch(() => undefined);
         }
       },
 
       addExpense: (expense: NewExpenseData) => {
         const sanitized = sanitizeExpense(expense);
-        const tempId = `temp-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-        setExpenses((current) => [{ ...sanitized, id: tempId }, ...current]);
-        if (!token) return;
+        const localId = `local-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+        const newExpense: Expense = { ...sanitized, id: localId };
+
+        // 1. Immediately save to local state and disk (NEVER revert)
+        setExpenses((current) => [newExpense, ...current]);
+
+        // If local-only token or no token, record stays local
+        if (!token || !account || token.startsWith("local-token-")) {
+          return;
+        }
+
+        // 2. Attempt remote sync in background
         api.createExpense(token, sanitized).then((result) => {
           if (result.ok) {
             setExpenses((current) =>
               current.map((item) =>
-                item.id === tempId
+                item.id === localId
                   ? {
                       ...result.expense,
                       date: normalizeDate(result.expense.date),
@@ -191,53 +308,70 @@ export function ExpenseProvider({ children }: { children: React.ReactNode }) {
               )
             );
           } else {
-            setExpenses((current) => current.filter((item) => item.id !== tempId));
-            setSyncError(result.message);
+            // Server sync failed: KEEP the expense locally, queue it for next sync!
+            addToSyncQueue(account.email, { action: "create", tempId: localId, data: sanitized });
           }
+        }).catch(() => {
+          // Network failed: KEEP the expense locally, queue it for next sync!
+          addToSyncQueue(account.email, { action: "create", tempId: localId, data: sanitized });
         });
       },
 
       updateExpense: (id: string, expense: NewExpenseData) => {
         const sanitized = sanitizeExpense(expense);
-        let previous: Expense | undefined;
-        setExpenses((current) => {
-          previous = current.find((item) => item.id === id);
-          return current.map((item) => (item.id === id ? { ...sanitized, id } : item));
-        });
-        if (!token) return;
+
+        // 1. Immediately update locally (NEVER revert)
+        setExpenses((current) => current.map((item) => (item.id === id ? { ...sanitized, id } : item)));
+
+        if (!token || !account || token.startsWith("local-token-")) {
+          return;
+        }
+
+        // 2. If it's still a local un-synced item, update its queue data
+        if (id.startsWith("local-")) {
+          getSyncQueue(account.email).then((queue) => {
+            const updated = queue.map((q) =>
+              q.action === "create" && q.tempId === id ? { ...q, data: sanitized } : q
+            );
+            saveSyncQueue(account.email, updated);
+          });
+          return;
+        }
+
+        // 3. Attempt remote update
         api.updateExpense(token, id, sanitized).then((result) => {
           if (!result.ok) {
-            setSyncError(result.message);
-            if (previous) {
-              setExpenses((current) => current.map((item) => (item.id === id ? previous! : item)));
-            }
+            addToSyncQueue(account.email, { action: "update", id, data: sanitized });
           }
+        }).catch(() => {
+          addToSyncQueue(account.email, { action: "update", id, data: sanitized });
         });
       },
 
       removeExpense: (id: string) => {
-        let previousItem: Expense | undefined;
-        let previousIndex = -1;
-        setExpenses((current) => {
-          previousIndex = current.findIndex((item) => item.id === id);
-          previousItem = current[previousIndex];
-          return current.filter((expense) => expense.id !== id);
-        });
-        if (!token) return;
+        // 1. Immediately remove locally (NEVER revert)
+        setExpenses((current) => current.filter((expense) => expense.id !== id));
+
+        if (!token || !account || token.startsWith("local-token-")) {
+          return;
+        }
+
+        // 2. If it was a local un-synced item, just remove it from queue
+        if (id.startsWith("local-")) {
+          getSyncQueue(account.email).then((queue) => {
+            const updated = queue.filter((q) => !(q.action === "create" && q.tempId === id));
+            saveSyncQueue(account.email, updated);
+          });
+          return;
+        }
+
+        // 3. Attempt remote delete
         api.deleteExpense(token, id).then((result) => {
           if (!result.ok) {
-            setSyncError(result.message);
-            if (previousItem) {
-              setExpenses((current) => {
-                const next = [...current];
-                if (previousIndex >= 0 && previousIndex <= next.length) {
-                  next.splice(previousIndex, 0, previousItem!);
-                  return next;
-                }
-                return [previousItem!, ...current];
-              });
-            }
+            addToSyncQueue(account.email, { action: "delete", id });
           }
+        }).catch(() => {
+          addToSyncQueue(account.email, { action: "delete", id });
         });
       },
 
@@ -248,7 +382,7 @@ export function ExpenseProvider({ children }: { children: React.ReactNode }) {
       sortedExpenses,
       refreshExpenses,
     }),
-    [expenses, hydrated, syncing, syncError, budget, token, monthTotal, todayTotal, remaining, budgetPercent, sortedExpenses, refreshExpenses]
+    [expenses, hydrated, syncing, syncError, budget, token, account, monthTotal, todayTotal, remaining, budgetPercent, sortedExpenses, refreshExpenses]
   );
 
   return <ExpenseContext.Provider value={value}>{children}</ExpenseContext.Provider>;

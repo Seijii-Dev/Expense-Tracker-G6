@@ -24,7 +24,7 @@ import { formatMoney } from "@/utils/formatters";
 
 export default function AccountScreen() {
   const { account, logout } = useAuth();
-  const { expenses, budget, syncing, refreshExpenses } = useExpenses();
+  const { expenses, budget, syncing, syncError, refreshExpenses } = useExpenses();
   const { colors } = useTheme();
   const [showSignOut, setShowSignOut] = useState(false);
 
@@ -65,7 +65,7 @@ export default function AccountScreen() {
         />
 
         {/* Profile Card */}
-        <ProfileCard account={account} syncing={syncing} />
+        <ProfileCard account={account} syncing={syncing} syncError={syncError} />
 
         {/* Stats Row */}
         <View style={styles.statsRow}>
