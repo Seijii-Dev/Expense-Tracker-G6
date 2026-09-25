@@ -36,7 +36,9 @@ jobs:
     env:
       EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
       EXPO_PUBLIC_API_URL: ${{ secrets.EXPO_PUBLIC_API_URL }}
-      GRADLE_OPTS: "-Dorg.gradle.jvmargs=-Xmx3072m -XX:MaxMetaspaceSize=512m"
+      EAS_LOCAL_BUILD_SKIP_CLEANUP: "1"
+      GRADLE_OPTS: "-Dorg.gradle.jvmargs=-Xmx4096m -XX:MaxMetaspaceSize=1024m -XX:+UseG1GC -Dorg.gradle.workers.max=2 -Dorg.gradle.parallel=false"
+      _JAVA_OPTIONS: "-Xmx4096m"
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -48,9 +50,15 @@ jobs:
             exit 1
           fi
 
+      - name: Expand swap space for Android build
+        if: ${{ inputs.build_mode == 'local' }}
+        uses: pierotofy/set-swap-space@master
+        with:
+          swap-size-gb: 10
+
       - name: Setup Java
         if: ${{ inputs.build_mode == 'local' }}
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: "temurin"
           java-version: "17"
@@ -71,14 +79,17 @@ jobs:
           node-version: 22
           cache: pnpm
 
+      - name: Setup EAS CLI
+        uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
       - name: Check Expo configuration
         run: pnpm typecheck && npx expo config --type public
-
-      - name: Install EAS CLI
-        run: npm install -g eas-cli
 
       - name: Build Android app locally on GitHub runner (No EAS quota used)
         if: ${{ inputs.build_mode == 'local' }}
@@ -94,6 +105,39 @@ jobs:
             --local \
             --non-interactive \
             --output="./build-output/app-${{ inputs.profile }}.${EXT}"
+
+      - name: Output failure diagnostics and logs
+        if: ${{ failure() && inputs.build_mode == 'local' }}
+        run: |
+          echo "::group::EAS Local Build Logs"
+          find ~/.eas-build-local -type f 2>/dev/null | while read -r f; do
+            echo "--- $f ---"
+            tail -n 150 "$f"
+          done || true
+          echo "::endgroup::"
+
+          echo "::group::Gradle Daemon Logs"
+          find ~/.gradle/daemon -name "*.log" 2>/dev/null | while read -r f; do
+            echo "--- $f ---"
+            tail -n 100 "$f"
+          done || true
+          echo "::endgroup::"
+
+          echo "::group::System Memory and Dmesg (OOM check)"
+          free -h
+          dmesg -T | grep -iE 'killed process|oom|out of memory' | tail -n 20 || true
+          echo "::endgroup::"
+
+      - name: Upload build failure logs
+        if: ${{ failure() && inputs.build_mode == 'local' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-failure-logs
+          path: |
+            ~/.eas-build-local/**
+            ~/.gradle/daemon/**/*.log
+          if-no-files-found: ignore
+          retention-days: 7
 
       - name: Build native app with EAS Cloud
         if: ${{ inputs.build_mode == 'cloud' }}
