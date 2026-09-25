@@ -69,7 +69,7 @@ export default function AccountScreen() {
           Account<Text style={styles.dot}>.</Text>
         </Text>
         <Text style={[styles.subtitle, { color: colors.muted }]}>
-          Your profile, preferences, and spending snapshot.
+          Your profile, preferences, and spending.
         </Text>
 
         {/* Profile Card */}
@@ -146,10 +146,6 @@ export default function AccountScreen() {
           <Ionicons name="log-out-outline" size={17} color={colors.primary} />
           <Text style={[styles.signOutText, { color: colors.primary }]}>Sign out</Text>
         </Pressable>
-
-        <Text style={[styles.footer, { color: colors.subtle }]}>
-          Your account is protected with secure cloud authentication and offline caching.
-        </Text>
       </ScrollView>
 
       {/* Sign Out Confirmation Modal */}
@@ -279,7 +275,6 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   signOutText: { fontSize: 12, fontWeight: "700" },
-  footer: { textAlign: "center", fontSize: 10, lineHeight: 15, marginTop: 18, paddingHorizontal: 12 },
   pressed: { opacity: 0.75, transform: [{ scale: 0.98 }] },
   backdrop: { flex: 1, justifyContent: "center", padding: 24 },
   dialog: { padding: 24, borderRadius: 24, maxWidth: 360, alignSelf: "center", width: "100%" },
