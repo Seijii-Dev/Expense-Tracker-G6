@@ -18,6 +18,8 @@ import { CATEGORIES, CATEGORY_META, PAYMENT_METHODS } from "@/constants/categori
 import { getPhilippinesDate, getYesterdayDate, normalizeDate } from "@/utils/date";
 import { useTheme } from "@/lib/theme-store";
 import { GlassSurface } from "@/components/ui/glass-surface";
+import { CategoryIcon } from "@/components/ui/category-icon";
+import { PaymentIcon } from "@/components/ui/payment-icon";
 
 interface ExpenseModalProps {
   visible: boolean;
@@ -228,7 +230,7 @@ export function ExpenseModal({ visible, initialExpense, onClose, onSubmit }: Exp
                       },
                     ]}
                   >
-                    <View style={[styles.dot, { backgroundColor: meta.color }]} />
+                    <CategoryIcon category={item} size={16} />
                     <Text
                       style={[
                         styles.chipText,
@@ -261,6 +263,7 @@ export function ExpenseModal({ visible, initialExpense, onClose, onSubmit }: Exp
                       active && styles.paymentActive,
                     ]}
                   >
+                    <PaymentIcon payment={item} size={16} />
                     <Text
                       style={[
                         styles.chipText,

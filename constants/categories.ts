@@ -31,3 +31,21 @@ export const CATEGORY_META: CategoryMeta = {
 
 // Default fallback styling for categories
 export const DEFAULT_CATEGORY_STYLE = CATEGORY_META.Other;
+
+export const CATEGORY_ICONS: Record<Category, any> = {
+  Food: require("@/assets/icons/categories/food.png"),
+  Transport: require("@/assets/icons/categories/transport.png"),
+  School: require("@/assets/icons/categories/school.png"),
+  Shopping: require("@/assets/icons/categories/shopping.png"),
+  Bills: require("@/assets/icons/categories/bills.png"),
+  Fun: require("@/assets/icons/categories/fun.png"),
+  Health: require("@/assets/icons/categories/health.png"),
+  Other: require("@/assets/icons/categories/other.png"),
+};
+
+export const PAYMENT_ICONS: Record<Payment, any> = {
+  Cash: require("@/assets/icons/payments/cash.png"),
+  GCash: require("@/assets/icons/payments/gcash.png"),
+  Card: require("@/assets/icons/payments/card.png"),
+  Bank: require("@/assets/icons/payments/bank.png"),
+};

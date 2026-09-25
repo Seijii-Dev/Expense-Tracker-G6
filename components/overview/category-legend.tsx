@@ -1,7 +1,8 @@
 import React, { useMemo } from "react";
 import { StyleSheet, Text, View } from "react-native";
 import { Expense } from "@/types/expense";
-import { CATEGORIES, CATEGORY_META } from "@/constants/categories";
+import { CATEGORIES } from "@/constants/categories";
+import { CategoryIcon } from "@/components/ui/category-icon";
 import { useTheme } from "@/lib/theme-store";
 import { formatMoney } from "@/utils/formatters";
 
@@ -39,7 +40,7 @@ export function CategoryLegend({ expenses }: CategoryLegendProps) {
       {totals.map(({ category, total }) => (
         <View style={styles.legendRow} key={category}>
           <View style={styles.legendName}>
-            <View style={[styles.legendDot, { backgroundColor: CATEGORY_META[category].color }]} />
+            <CategoryIcon category={category} size={16} />
             <Text style={[styles.legendText, { color: colors.muted }]}>{category}</Text>
           </View>
           <Text style={[styles.legendAmount, { color: colors.foreground }]}>{formatMoney(total)}</Text>

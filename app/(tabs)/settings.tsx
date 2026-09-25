@@ -17,6 +17,7 @@ import { ScreenContainer } from "@/components/screen-container";
 import { ScreenHeader } from "@/components/common/screen-header";
 import { SectionHeading } from "@/components/settings/section-heading";
 import { PreferenceRow } from "@/components/settings/preference-row";
+import { CategoryIcon } from "@/components/ui/category-icon";
 import { CATEGORIES, CATEGORY_META } from "@/constants/categories";
 import { STORAGE_KEYS } from "@/constants/storage";
 import { useExpenses } from "@/lib/expense-store";
@@ -212,8 +213,14 @@ export default function SettingsScreen() {
           />
           <View style={styles.pills}>
             {CATEGORIES.map((category) => (
-              <View key={category} style={[styles.pill, { backgroundColor: CATEGORY_META[category].soft }]}>
-                <View style={[styles.pillDot, { backgroundColor: CATEGORY_META[category].color }]} />
+              <View
+                key={category}
+                style={[
+                  styles.pill,
+                  { backgroundColor: dark ? `${CATEGORY_META[category].color}25` : CATEGORY_META[category].soft },
+                ]}
+              >
+                <CategoryIcon category={category} size={15} />
                 <Text style={[styles.pillText, { color: CATEGORY_META[category].color }]}>{category}</Text>
               </View>
             ))}

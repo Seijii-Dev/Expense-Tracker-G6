@@ -2,6 +2,7 @@ import React from "react";
 import { Alert, Pressable, StyleSheet, Text, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
+import { CategoryIcon } from "@/components/ui/category-icon";
 import { Expense } from "@/types/expense";
 import { CATEGORY_META, DEFAULT_CATEGORY_STYLE } from "@/constants/categories";
 import { useTheme } from "@/lib/theme-store";
@@ -43,7 +44,7 @@ export function ExpenseRow({ expense, onPress, onEdit, onDelete, showActions = t
           },
         ]}
       >
-        <Ionicons name="card-outline" size={16} color={meta.color} />
+        <CategoryIcon category={expense.category} size={22} />
       </View>
 
       <Pressable style={styles.body} onPress={onPress || onEdit}>

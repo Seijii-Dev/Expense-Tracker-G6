@@ -2,6 +2,7 @@ import React from "react";
 import { StyleSheet, Text, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { EmptyState } from "@/components/ui/empty-state";
+import { CategoryIcon } from "@/components/ui/category-icon";
 import { CATEGORY_META } from "@/constants/categories";
 import { CategoryTotal } from "@/hooks/useReportMetrics";
 import { useTheme } from "@/lib/theme-store";
@@ -46,7 +47,7 @@ export function CategoryBreakdown({
               <View key={category} style={styles.barRow}>
                 <View style={styles.barLabels}>
                   <View style={styles.labelLeft}>
-                    <View style={[styles.dotMark, { backgroundColor: meta.color }]} />
+                    <CategoryIcon category={category} size={18} />
                     <Text style={[styles.categoryLabel, { color: colors.foreground }]}>{category}</Text>
                     <Text style={[styles.categoryPct, { color: colors.subtle }]}>
                       ({formatPercent(total, monthTotal)})

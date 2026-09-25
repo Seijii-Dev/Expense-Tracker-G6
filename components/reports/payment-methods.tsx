@@ -1,6 +1,7 @@
 import React from "react";
 import { StyleSheet, Text, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { PaymentIcon } from "@/components/ui/payment-icon";
 import { PaymentTotal } from "@/hooks/useReportMetrics";
 import { useTheme } from "@/lib/theme-store";
 import { formatMoney, formatPercent } from "@/utils/formatters";
@@ -31,7 +32,10 @@ export function PaymentMethods({ paymentTotals, monthTotal }: PaymentMethodsProp
             key={payment}
             style={[styles.paymentCard, { backgroundColor: colors.surfaceSubtle, borderColor: colors.border }]}
           >
-            <Text style={[styles.paymentMethod, { color: colors.foreground }]}>{payment}</Text>
+            <View style={styles.paymentCardHeader}>
+              <PaymentIcon payment={payment} size={22} />
+              <Text style={[styles.paymentMethod, { color: colors.foreground }]}>{payment}</Text>
+            </View>
             <Text style={[styles.paymentAmount, { color: colors.primary }]}>{formatMoney(total)}</Text>
             <Text style={[styles.paymentPct, { color: colors.subtle }]}>
               {formatPercent(total, monthTotal)} of total
@@ -80,6 +84,12 @@ const styles = StyleSheet.create({
     padding: 14,
     borderRadius: 12,
     borderWidth: 1,
+  },
+  paymentCardHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginBottom: 4,
   },
   paymentMethod: {
     fontSize: 12,
