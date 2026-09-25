@@ -1,6 +1,7 @@
 import * as SecureStore from "expo-secure-store";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
+import { Platform } from "react-native";
 import { api, RemoteAccount } from "@/lib/api-client";
 import { Account, AuthContextValue } from "@/types/auth";
 import { STORAGE_KEYS } from "@/constants/storage";
@@ -8,6 +9,48 @@ import { STORAGE_KEYS } from "@/constants/storage";
 export type { Account, AuthContextValue };
 
 const AuthContext = createContext<AuthContextValue | null>(null);
+
+async function safeSecureSet(key: string, value: string): Promise<void> {
+  if (Platform.OS === "web") {
+    await AsyncStorage.setItem(key, value);
+    return;
+  }
+  try {
+    await SecureStore.setItemAsync(key, value);
+  } catch {
+    await AsyncStorage.setItem(key, value);
+  }
+}
+
+async function safeSecureGet(key: string): Promise<string | null> {
+  if (Platform.OS === "web") {
+    return AsyncStorage.getItem(key);
+  }
+  try {
+    const val = await SecureStore.getItemAsync(key);
+    if (val !== null) return val;
+    return await AsyncStorage.getItem(key);
+  } catch {
+    return AsyncStorage.getItem(key);
+  }
+}
+
+async function safeSecureDelete(key: string): Promise<void> {
+  if (Platform.OS === "web") {
+    await AsyncStorage.removeItem(key);
+    return;
+  }
+  try {
+    await SecureStore.deleteItemAsync(key);
+  } catch {
+    // Ignore error
+  }
+  try {
+    await AsyncStorage.removeItem(key);
+  } catch {
+    // Ignore error
+  }
+}
 
 function isNetworkError(message?: string): boolean {
   if (!message) return false;
@@ -34,7 +77,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     (async () => {
       try {
         const [savedToken, cachedAccountStr] = await Promise.all([
-          SecureStore.getItemAsync(STORAGE_KEYS.authToken),
+          safeSecureGet(STORAGE_KEYS.authToken),
           AsyncStorage.getItem(STORAGE_KEYS.cachedAccount),
         ]);
 
@@ -79,7 +122,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           // If server explicitly rejected token (not a network error), clear session
           if (!isNetworkError(result.message)) {
             await Promise.all([
-              SecureStore.deleteItemAsync(STORAGE_KEYS.authToken),
+              safeSecureDelete(STORAGE_KEYS.authToken),
               AsyncStorage.removeItem(STORAGE_KEYS.cachedAccount),
             ]);
             setToken(null);
@@ -107,9 +150,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const result = await api.register(cleanName, cleanEmail, password);
       if (result.ok) {
         await Promise.all([
-          SecureStore.setItemAsync(STORAGE_KEYS.authToken, result.token),
+          safeSecureSet(STORAGE_KEYS.authToken, result.token),
           AsyncStorage.setItem(STORAGE_KEYS.cachedAccount, JSON.stringify(result.account)),
-          SecureStore.setItemAsync(STORAGE_KEYS.userPassword(cleanEmail), password),
+          safeSecureSet(STORAGE_KEYS.userPassword(cleanEmail), password),
         ]);
         setToken(result.token);
         setAccount(result.account);
@@ -126,9 +169,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         };
         const localToken = `local-token-${Date.now()}`;
         await Promise.all([
-          SecureStore.setItemAsync(STORAGE_KEYS.authToken, localToken),
+          safeSecureSet(STORAGE_KEYS.authToken, localToken),
           AsyncStorage.setItem(STORAGE_KEYS.cachedAccount, JSON.stringify(localAccount)),
-          SecureStore.setItemAsync(STORAGE_KEYS.userPassword(cleanEmail), password),
+          safeSecureSet(STORAGE_KEYS.userPassword(cleanEmail), password),
         ]);
         setToken(localToken);
         setAccount(localAccount);
@@ -146,9 +189,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       };
       const localToken = `local-token-${Date.now()}`;
       await Promise.all([
-        SecureStore.setItemAsync(STORAGE_KEYS.authToken, localToken),
+        safeSecureSet(STORAGE_KEYS.authToken, localToken),
         AsyncStorage.setItem(STORAGE_KEYS.cachedAccount, JSON.stringify(localAccount)),
-        SecureStore.setItemAsync(STORAGE_KEYS.userPassword(cleanEmail), password),
+        safeSecureSet(STORAGE_KEYS.userPassword(cleanEmail), password),
       ]);
       setToken(localToken);
       setAccount(localAccount);
@@ -163,9 +206,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const result = await api.login(cleanEmail, password);
       if (result.ok) {
         await Promise.all([
-          SecureStore.setItemAsync(STORAGE_KEYS.authToken, result.token),
+          safeSecureSet(STORAGE_KEYS.authToken, result.token),
           AsyncStorage.setItem(STORAGE_KEYS.cachedAccount, JSON.stringify(result.account)),
-          SecureStore.setItemAsync(STORAGE_KEYS.userPassword(cleanEmail), password),
+          safeSecureSet(STORAGE_KEYS.userPassword(cleanEmail), password),
         ]);
         setToken(result.token);
         setAccount(result.account);
@@ -174,7 +217,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       // If server unreachable, check offline credentials
       if (isNetworkError(result.message)) {
-        const savedPassword = await SecureStore.getItemAsync(STORAGE_KEYS.userPassword(cleanEmail));
+        const savedPassword = await safeSecureGet(STORAGE_KEYS.userPassword(cleanEmail));
         const cachedAccountStr = await AsyncStorage.getItem(STORAGE_KEYS.cachedAccount);
         const cached = cachedAccountStr ? (JSON.parse(cachedAccountStr) as Account) : null;
 
@@ -190,7 +233,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 };
           const localToken = `local-token-${cleanEmail}`;
           await Promise.all([
-            SecureStore.setItemAsync(STORAGE_KEYS.authToken, localToken),
+            safeSecureSet(STORAGE_KEYS.authToken, localToken),
             AsyncStorage.setItem(STORAGE_KEYS.cachedAccount, JSON.stringify(localAccount)),
           ]);
           setToken(localToken);
@@ -208,7 +251,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return { ok: false, message: result.message };
     } catch {
       // Local check fallback
-      const savedPassword = await SecureStore.getItemAsync(STORAGE_KEYS.userPassword(cleanEmail));
+      const savedPassword = await safeSecureGet(STORAGE_KEYS.userPassword(cleanEmail));
       if (savedPassword && savedPassword === password) {
         const cachedAccountStr = await AsyncStorage.getItem(STORAGE_KEYS.cachedAccount);
         const cached = cachedAccountStr ? (JSON.parse(cachedAccountStr) as Account) : null;
@@ -223,7 +266,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               };
         const localToken = `local-token-${cleanEmail}`;
         await Promise.all([
-          SecureStore.setItemAsync(STORAGE_KEYS.authToken, localToken),
+          safeSecureSet(STORAGE_KEYS.authToken, localToken),
           AsyncStorage.setItem(STORAGE_KEYS.cachedAccount, JSON.stringify(localAccount)),
         ]);
         setToken(localToken);
@@ -236,7 +279,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const logout = async () => {
     await Promise.all([
-      SecureStore.deleteItemAsync(STORAGE_KEYS.authToken),
+      safeSecureDelete(STORAGE_KEYS.authToken),
       AsyncStorage.removeItem(STORAGE_KEYS.cachedAccount),
     ]);
     setToken(null);

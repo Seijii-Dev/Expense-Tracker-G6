@@ -30,12 +30,19 @@ function validateAuthInput(
 }
 
 export default function AuthScreen() {
-  const { register, login } = useAuth();
+  const { register, login, account } = useAuth();
   const { colors } = useTheme();
 
   const [mode, setMode] = useState<"welcome" | "login" | "register">("welcome");
   const [busy, setBusy] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  // If already authenticated or just authenticated, route to dashboard automatically
+  React.useEffect(() => {
+    if (account) {
+      router.replace("/(tabs)");
+    }
+  }, [account]);
 
   const handleSubmit = async (values: { name: string; email: string; password: string }) => {
     const activeMode = mode === "welcome" ? "register" : mode;
@@ -57,9 +64,16 @@ export default function AuthScreen() {
         setErrorMessage(result.message || "Please check your details and try again.");
         return;
       }
-      await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+
+      try {
+        await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      } catch {
+        // Non-fatal if platform lacks haptic hardware
+      }
+
       router.replace("/(tabs)");
-    } catch {
+    } catch (err) {
+      console.warn("Auth submit exception:", err);
       setErrorMessage("We couldn’t complete your request. Please check your connection and try again.");
     } finally {
       setBusy(false);
