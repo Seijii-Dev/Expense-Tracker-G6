@@ -50,11 +50,29 @@ jobs:
             exit 1
           fi
 
+      - name: Free runner disk space for Android build
+        if: ${{ inputs.build_mode == 'local' }}
+        run: |
+          echo "::group::Disk space before cleanup"
+          df -h
+          echo "::endgroup::"
+
+          sudo rm -rf /usr/share/dotnet
+          sudo rm -rf /opt/ghc
+          sudo rm -rf /usr/local/share/boost
+          sudo rm -rf /opt/hostedtoolcache/CodeQL
+          sudo rm -rf "$AGENT_TOOLSDIRECTORY"
+          sudo docker image prune --all --force 2>/dev/null || true
+
+          echo "::group::Disk space after cleanup"
+          df -h
+          echo "::endgroup::"
+
       - name: Expand swap space for Android build
         if: ${{ inputs.build_mode == 'local' }}
         uses: pierotofy/set-swap-space@master
         with:
-          swap-size-gb: 10
+          swap-size-gb: 6
 
       - name: Setup Java
         if: ${{ inputs.build_mode == 'local' }}
