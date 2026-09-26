@@ -393,6 +393,10 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     borderWidth: 1,
   },
+  presetText: {
+    fontSize: 11,
+    fontWeight: "600",
+  },
   chipRow: {
     flexDirection: "row",
     gap: 7,
