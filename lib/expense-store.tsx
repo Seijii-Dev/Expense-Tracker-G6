@@ -1,5 +1,5 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/lib/auth-store";
 import { api } from "@/lib/api-client";
 import { Category, Expense, NewExpenseData, Payment } from "@/types/expense";
@@ -83,7 +83,7 @@ export function ExpenseProvider({ children }: { children: React.ReactNode }) {
   const hydrated = accountKey !== null && hydratedKey === accountKey;
 
   // Process any pending offline changes and fetch fresh records from server
-  const refreshExpenses = async () => {
+  const refreshExpenses = useCallback(async () => {
     if (!token || !account || token.startsWith("local-token-")) {
       return;
     }
@@ -171,7 +171,7 @@ export function ExpenseProvider({ children }: { children: React.ReactNode }) {
     } finally {
       setSyncing(false);
     }
-  };
+  }, [token, account, refreshAccount]);
 
   // On login or account switch: load offline cache FIRST so user sees data immediately
   useEffect(() => {
@@ -233,7 +233,7 @@ export function ExpenseProvider({ children }: { children: React.ReactNode }) {
     return () => {
       mounted = false;
     };
-  }, [account?.email, token]);
+  }, [account?.email, token, refreshExpenses]);
 
   // Persist local expenses to AsyncStorage whenever they change
   useEffect(() => {
@@ -242,58 +242,75 @@ export function ExpenseProvider({ children }: { children: React.ReactNode }) {
     }
   }, [expenses, hydrated, account?.email]);
 
-  const currentDate = getPhilippinesDate();
-  const currentMonth = getPhilippinesMonth();
-  const monthExpenses = expenses.filter((expense) => normalizeDate(expense.date).startsWith(currentMonth));
-  const monthTotal = monthExpenses.reduce((sum, expense) => sum + (expense.amount || 0), 0);
-  const todayTotal = expenses
-    .filter((expense) => normalizeDate(expense.date) === currentDate)
-    .reduce((sum, expense) => sum + (expense.amount || 0), 0);
-  const remaining = Math.max(0, budget - monthTotal);
-  const budgetPercent = budget > 0 ? Math.min(100, Math.round((monthTotal / budget) * 100)) : 0;
-  const sortedExpenses = [...expenses].sort((a, b) => {
-    const dateComp = (b.date || "").localeCompare(a.date || "");
-    if (dateComp !== 0) return dateComp;
-    return (b.id || "").localeCompare(a.id || "");
-  });
+  const { monthTotal, todayTotal, remaining, budgetPercent, sortedExpenses } = useMemo(() => {
+    const currentDate = getPhilippinesDate();
+    const currentMonth = getPhilippinesMonth();
+    let mTotal = 0;
+    let tTotal = 0;
 
-  const value = useMemo(
-    () => ({
-      expenses,
-      hydrated,
-      syncing,
-      syncError,
-      budget,
+    for (const expense of expenses) {
+      const normDate = normalizeDate(expense.date);
+      const amt = expense.amount || 0;
+      if (normDate.startsWith(currentMonth)) {
+        mTotal += amt;
+      }
+      if (normDate === currentDate) {
+        tTotal += amt;
+      }
+    }
 
-      setBudget: (value: number) => {
-        const safeValue = Math.max(0, isNaN(value) ? 0 : Math.round(value));
-        setBudgetState(safeValue);
+    const rem = Math.max(0, budget - mTotal);
+    const bPercent = budget > 0 ? Math.min(100, Math.round((mTotal / budget) * 100)) : 0;
+    const sorted = [...expenses].sort((a, b) => {
+      const dateComp = (b.date || "").localeCompare(a.date || "");
+      if (dateComp !== 0) return dateComp;
+      return (b.id || "").localeCompare(a.id || "");
+    });
 
-        if (account) {
-          AsyncStorage.setItem(STORAGE_KEYS.userBudget(account.email), String(safeValue)).catch(() => undefined);
-          refreshAccount({ ...account, budget: safeValue });
-        }
+    return {
+      monthTotal: mTotal,
+      todayTotal: tTotal,
+      remaining: rem,
+      budgetPercent: bPercent,
+      sortedExpenses: sorted,
+    };
+  }, [expenses, budget]);
 
-        if (token && !token.startsWith("local-token-")) {
-          api.updateBudget(token, safeValue).catch(() => undefined);
-        }
-      },
+  const setBudget = useCallback(
+    (value: number) => {
+      const safeValue = Math.max(0, isNaN(value) ? 0 : Math.round(value));
+      setBudgetState(safeValue);
 
-      addExpense: (expense: NewExpenseData) => {
-        const sanitized = sanitizeExpense(expense);
-        const localId = `local-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-        const newExpense: Expense = { ...sanitized, id: localId };
+      if (account) {
+        AsyncStorage.setItem(STORAGE_KEYS.userBudget(account.email), String(safeValue)).catch(() => undefined);
+        refreshAccount({ ...account, budget: safeValue });
+      }
 
-        // 1. Immediately save to local state and disk (NEVER revert)
-        setExpenses((current) => [newExpense, ...current]);
+      if (token && !token.startsWith("local-token-")) {
+        api.updateBudget(token, safeValue).catch(() => undefined);
+      }
+    },
+    [account, token, refreshAccount]
+  );
 
-        // If local-only token or no token, record stays local
-        if (!token || !account || token.startsWith("local-token-")) {
-          return;
-        }
+  const addExpense = useCallback(
+    (expense: NewExpenseData) => {
+      const sanitized = sanitizeExpense(expense);
+      const localId = `local-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+      const newExpense: Expense = { ...sanitized, id: localId };
 
-        // 2. Attempt remote sync in background
-        api.createExpense(token, sanitized).then((result) => {
+      // 1. Immediately save to local state and disk (NEVER revert)
+      setExpenses((current) => [newExpense, ...current]);
+
+      // If local-only token or no token, record stays local
+      if (!token || !account || token.startsWith("local-token-")) {
+        return;
+      }
+
+      // 2. Attempt remote sync in background
+      api
+        .createExpense(token, sanitized)
+        .then((result) => {
           if (result.ok) {
             setExpenses((current) =>
               current.map((item) =>
@@ -311,78 +328,120 @@ export function ExpenseProvider({ children }: { children: React.ReactNode }) {
             // Server sync failed: KEEP the expense locally, queue it for next sync!
             addToSyncQueue(account.email, { action: "create", tempId: localId, data: sanitized });
           }
-        }).catch(() => {
+        })
+        .catch(() => {
           // Network failed: KEEP the expense locally, queue it for next sync!
           addToSyncQueue(account.email, { action: "create", tempId: localId, data: sanitized });
         });
-      },
+    },
+    [token, account]
+  );
 
-      updateExpense: (id: string, expense: NewExpenseData) => {
-        const sanitized = sanitizeExpense(expense);
+  const updateExpense = useCallback(
+    (id: string, expense: NewExpenseData) => {
+      const sanitized = sanitizeExpense(expense);
 
-        // 1. Immediately update locally (NEVER revert)
-        setExpenses((current) => current.map((item) => (item.id === id ? { ...sanitized, id } : item)));
+      // 1. Immediately update locally (NEVER revert)
+      setExpenses((current) => current.map((item) => (item.id === id ? { ...sanitized, id } : item)));
 
-        if (!token || !account || token.startsWith("local-token-")) {
-          return;
-        }
+      if (!token || !account || token.startsWith("local-token-")) {
+        return;
+      }
 
-        // 2. If it's still a local un-synced item, update its queue data
-        if (id.startsWith("local-")) {
-          getSyncQueue(account.email).then((queue) => {
-            const updated = queue.map((q) =>
-              q.action === "create" && q.tempId === id ? { ...q, data: sanitized } : q
-            );
-            saveSyncQueue(account.email, updated);
-          });
-          return;
-        }
+      // 2. If it's still a local un-synced item, update its queue data
+      if (id.startsWith("local-")) {
+        getSyncQueue(account.email).then((queue) => {
+          const updated = queue.map((q) =>
+            q.action === "create" && q.tempId === id ? { ...q, data: sanitized } : q
+          );
+          saveSyncQueue(account.email, updated);
+        });
+        return;
+      }
 
-        // 3. Attempt remote update
-        api.updateExpense(token, id, sanitized).then((result) => {
+      // 3. Attempt remote update
+      api
+        .updateExpense(token, id, sanitized)
+        .then((result) => {
           if (!result.ok) {
             addToSyncQueue(account.email, { action: "update", id, data: sanitized });
           }
-        }).catch(() => {
+        })
+        .catch(() => {
           addToSyncQueue(account.email, { action: "update", id, data: sanitized });
         });
-      },
+    },
+    [token, account]
+  );
 
-      removeExpense: (id: string) => {
-        // 1. Immediately remove locally (NEVER revert)
-        setExpenses((current) => current.filter((expense) => expense.id !== id));
+  const removeExpense = useCallback(
+    (id: string) => {
+      // 1. Immediately remove locally (NEVER revert)
+      setExpenses((current) => current.filter((expense) => expense.id !== id));
 
-        if (!token || !account || token.startsWith("local-token-")) {
-          return;
-        }
+      if (!token || !account || token.startsWith("local-token-")) {
+        return;
+      }
 
-        // 2. If it was a local un-synced item, just remove it from queue
-        if (id.startsWith("local-")) {
-          getSyncQueue(account.email).then((queue) => {
-            const updated = queue.filter((q) => !(q.action === "create" && q.tempId === id));
-            saveSyncQueue(account.email, updated);
-          });
-          return;
-        }
+      // 2. If it was a local un-synced item, just remove it from queue
+      if (id.startsWith("local-")) {
+        getSyncQueue(account.email).then((queue) => {
+          const updated = queue.filter((q) => !(q.action === "create" && q.tempId === id));
+          saveSyncQueue(account.email, updated);
+        });
+        return;
+      }
 
-        // 3. Attempt remote delete
-        api.deleteExpense(token, id).then((result) => {
+      // 3. Attempt remote delete
+      api
+        .deleteExpense(token, id)
+        .then((result) => {
           if (!result.ok) {
             addToSyncQueue(account.email, { action: "delete", id });
           }
-        }).catch(() => {
+        })
+        .catch(() => {
           addToSyncQueue(account.email, { action: "delete", id });
         });
-      },
+    },
+    [token, account]
+  );
 
+  const value = useMemo(
+    () => ({
+      expenses,
+      hydrated,
+      syncing,
+      syncError,
+      budget,
+      setBudget,
+      addExpense,
+      updateExpense,
+      removeExpense,
+      refreshExpenses,
       monthTotal,
       todayTotal,
       remaining,
       budgetPercent,
       sortedExpenses,
-      refreshExpenses,
     }),
-    [expenses, hydrated, syncing, syncError, budget, token, account, monthTotal, todayTotal, remaining, budgetPercent, sortedExpenses, refreshExpenses]
+    [
+      expenses,
+      hydrated,
+      syncing,
+      syncError,
+      budget,
+      setBudget,
+      addExpense,
+      updateExpense,
+      removeExpense,
+      refreshExpenses,
+      monthTotal,
+      todayTotal,
+      remaining,
+      budgetPercent,
+      sortedExpenses,
+    ]
   );
 
   return <ExpenseContext.Provider value={value}>{children}</ExpenseContext.Provider>;

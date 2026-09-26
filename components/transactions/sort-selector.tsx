@@ -34,14 +34,17 @@ export function SortSelector({ selected, onSelect }: SortSelectorProps) {
             style={[
               styles.sortChip,
               { borderColor: colors.border, backgroundColor: colors.surface },
-              isActive && styles.sortChipActive,
+              isActive && {
+                borderColor: colors.primary,
+                backgroundColor: colors.primarySoft,
+              },
             ]}
           >
             <Text
               style={[
                 styles.sortChipText,
                 { color: colors.muted },
-                isActive && styles.sortChipTextActive,
+                isActive && { color: colors.primary, fontWeight: "700" },
               ]}
             >
               {opt.label}
@@ -75,16 +78,8 @@ const styles = StyleSheet.create({
     borderRadius: 7,
     borderWidth: 1,
   },
-  sortChipActive: {
-    borderColor: "#F2B8B0",
-    backgroundColor: "#FFF0ED",
-  },
   sortChipText: {
     fontSize: 10,
     fontWeight: "600",
-  },
-  sortChipTextActive: {
-    color: "#EB6F61",
-    fontWeight: "700",
   },
 });

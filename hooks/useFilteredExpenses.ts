@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { Category, Expense } from "@/types/expense";
 
 export type SortOption = "newest" | "oldest" | "highest" | "lowest";
@@ -11,13 +11,16 @@ export function useFilteredExpenses(expenses: Expense[]) {
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     const result = expenses.filter((expense) => {
-      const matchSearch =
-        !q ||
-        `${expense.description || ""} ${expense.category || ""} ${expense.payment || ""} ${expense.amount || ""}`
-          .toLowerCase()
-          .includes(q);
       const matchCategory = category === "All" || expense.category === category;
-      return matchSearch && matchCategory;
+      if (!matchCategory) return false;
+      if (!q) return true;
+
+      return (
+        (expense.description && expense.description.toLowerCase().includes(q)) ||
+        (expense.category && expense.category.toLowerCase().includes(q)) ||
+        (expense.payment && expense.payment.toLowerCase().includes(q)) ||
+        String(expense.amount).includes(q)
+      );
     });
 
     return result.sort((a, b) => {
@@ -40,10 +43,10 @@ export function useFilteredExpenses(expenses: Expense[]) {
     [filtered]
   );
 
-  const resetFilters = () => {
+  const resetFilters = useCallback(() => {
     setQuery("");
     setCategory("All");
-  };
+  }, []);
 
   const hasActiveFilters = query.length > 0 || category !== "All";
 

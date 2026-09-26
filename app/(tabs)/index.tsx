@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useCallback, useMemo, useState } from "react";
 import {
   Pressable,
   RefreshControl,
@@ -17,7 +17,7 @@ import { DonutChart } from "@/components/overview/donut-chart";
 import { CategoryLegend } from "@/components/overview/category-legend";
 import { DailyRhythm } from "@/components/overview/daily-rhythm";
 import { SpendingInsight } from "@/components/overview/spending-insight";
-import { Expense } from "@/types/expense";
+import { Expense, NewExpenseData } from "@/types/expense";
 import { PulseDialog } from "@/components/common/pulse-dialog";
 import * as Haptics from "expo-haptics";
 import { useExpenses } from "@/lib/expense-store";
@@ -64,6 +64,8 @@ export default function OverviewScreen() {
     [sortedExpenses, currentMonth]
   );
 
+  const recentExpenses = useMemo(() => sortedExpenses.slice(0, 5), [sortedExpenses]);
+
   const topCategorySummary = useMemo(() => {
     const totals = monthExpenses.reduce<Record<string, number>>(
       (map, exp) => ({ ...map, [exp.category]: (map[exp.category] || 0) + (exp.amount || 0) }),
@@ -74,10 +76,30 @@ export default function OverviewScreen() {
     return `${top[0]}  ${formatMoney(top[1])}`;
   }, [monthExpenses]);
 
-  const showPulseAlert = () => {
+  const showPulseAlert = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     setShowPulseModal(true);
-  };
+  }, []);
+
+  const handleClosePulse = useCallback(() => {
+    setShowPulseModal(false);
+  }, []);
+
+  const handleCloseModal = useCallback(() => {
+    setShowAddModal(false);
+    setEditingExpense(null);
+  }, []);
+
+  const handleModalSubmit = useCallback(
+    (data: NewExpenseData) => {
+      if (editingExpense) {
+        updateExpense(editingExpense.id, data);
+      } else {
+        addExpense(data);
+      }
+    },
+    [editingExpense, updateExpense, addExpense]
+  );
 
   if (!hydrated) {
     return (
@@ -204,21 +226,19 @@ export default function OverviewScreen() {
             <Ionicons name="arrow-up" size={17} color={colors.primary} />
           </View>
 
-          {sortedExpenses.length === 0 ? (
+          {recentExpenses.length === 0 ? (
             <View style={styles.emptyRecent}>
               <Text style={[styles.emptyRecentText, { color: colors.muted }]}>No transactions yet</Text>
             </View>
           ) : (
-            sortedExpenses
-              .slice(0, 5)
-              .map((expense) => (
-                <ExpenseRow
-                  key={expense.id}
-                  expense={expense}
-                  onEdit={() => setEditingExpense(expense)}
-                  onDelete={() => removeExpense(expense.id)}
-                />
-              ))
+            recentExpenses.map((expense) => (
+              <ExpenseRow
+                key={expense.id}
+                expense={expense}
+                onEdit={() => setEditingExpense(expense)}
+                onDelete={() => removeExpense(expense.id)}
+              />
+            ))
           )}
         </GlassSurface>
 
@@ -230,28 +250,18 @@ export default function OverviewScreen() {
       <ExpenseModal
         visible={showAddModal || editingExpense !== null}
         initialExpense={editingExpense}
-        onClose={() => {
-          setShowAddModal(false);
-          setEditingExpense(null);
-        }}
-        onSubmit={(data) => {
-          if (editingExpense) {
-            updateExpense(editingExpense.id, data);
-          } else {
-            addExpense(data);
-          }
-        }}
+        onClose={handleCloseModal}
+        onSubmit={handleModalSubmit}
       />
 
       {/* Spending Pulse Notification Modal */}
       <PulseDialog
         visible={showPulseModal}
-        onClose={() => setShowPulseModal(false)}
+        onClose={handleClosePulse}
         budgetPercent={budgetPercent}
         monthTotal={monthTotal}
         budget={budget}
         remaining={remaining}
-        formatMoney={formatMoney}
       />
     </ScreenContainer>
   );

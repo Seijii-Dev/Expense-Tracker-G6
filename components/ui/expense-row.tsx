@@ -16,11 +16,17 @@ interface ExpenseRowProps {
   showActions?: boolean;
 }
 
-export function ExpenseRow({ expense, onPress, onEdit, onDelete, showActions = true }: ExpenseRowProps) {
+export const ExpenseRow = React.memo(function ExpenseRow({
+  expense,
+  onPress,
+  onEdit,
+  onDelete,
+  showActions = true,
+}: ExpenseRowProps) {
   const { colors, dark } = useTheme();
   const meta = CATEGORY_META[expense.category] || DEFAULT_CATEGORY_STYLE;
 
-  const handleDelete = () => {
+  const handleDelete = React.useCallback(() => {
     Alert.alert("Delete Expense", `Remove "${expense.description}" from your ledger?`, [
       { text: "Cancel", style: "cancel" },
       {
@@ -32,7 +38,7 @@ export function ExpenseRow({ expense, onPress, onEdit, onDelete, showActions = t
         },
       },
     ]);
-  };
+  }, [expense.description, onDelete]);
 
   return (
     <View style={[styles.row, { borderBottomColor: colors.border }]}>
@@ -47,7 +53,12 @@ export function ExpenseRow({ expense, onPress, onEdit, onDelete, showActions = t
         <CategoryIcon category={expense.category} size={22} />
       </View>
 
-      <Pressable style={styles.body} onPress={onPress || onEdit}>
+      <Pressable
+        style={styles.body}
+        onPress={onPress || onEdit}
+        accessibilityRole="button"
+        accessibilityLabel={`${expense.description}, ${formatMoney(expense.amount)}, ${expense.category}, ${formatDate(expense.date)}`}
+      >
         <Text style={[styles.title, { color: colors.foreground }]} numberOfLines={1}>
           {expense.description}
         </Text>
@@ -71,6 +82,8 @@ export function ExpenseRow({ expense, onPress, onEdit, onDelete, showActions = t
                   Haptics.selectionAsync();
                   onEdit();
                 }}
+                accessibilityRole="button"
+                accessibilityLabel={`Edit ${expense.description}`}
                 style={({ pressed }) => [styles.actionButton, pressed && styles.actionPressed]}
               >
                 <Ionicons name="create-outline" size={15} color={colors.muted} />
@@ -80,6 +93,8 @@ export function ExpenseRow({ expense, onPress, onEdit, onDelete, showActions = t
               <Pressable
                 hitSlop={8}
                 onPress={handleDelete}
+                accessibilityRole="button"
+                accessibilityLabel={`Delete ${expense.description}`}
                 style={({ pressed }) => [styles.actionButton, pressed && styles.actionPressed]}
               >
                 <Ionicons name="trash-outline" size={15} color={colors.subtle} />
@@ -90,7 +105,7 @@ export function ExpenseRow({ expense, onPress, onEdit, onDelete, showActions = t
       </View>
     </View>
   );
-}
+});
 
 const styles = StyleSheet.create({
   row: {

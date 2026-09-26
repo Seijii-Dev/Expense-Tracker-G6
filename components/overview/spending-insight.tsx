@@ -18,9 +18,9 @@ function getTopCategoryName(expenses: Expense[]): string {
   return top ? top[0] : "No spending yet";
 }
 
-export function SpendingInsight({ expenses }: SpendingInsightProps) {
+export const SpendingInsight = React.memo(function SpendingInsight({ expenses }: SpendingInsightProps) {
   const hasExpenses = expenses.length > 0;
-  const topName = getTopCategoryName(expenses);
+  const topName = React.useMemo(() => getTopCategoryName(expenses), [expenses]);
 
   return (
     <GlassSurface radius={24} style={styles.wrap} contentStyle={styles.insight}>
@@ -43,7 +43,7 @@ export function SpendingInsight({ expenses }: SpendingInsightProps) {
       </Text>
     </GlassSurface>
   );
-}
+});
 
 const styles = StyleSheet.create({
   wrap: {

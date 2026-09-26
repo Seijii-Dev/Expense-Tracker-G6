@@ -1,8 +1,8 @@
-import React, { useState } from "react";
+import React, { useCallback, useMemo, useState } from "react";
 import {
+  FlatList,
   Pressable,
   RefreshControl,
-  ScrollView,
   StyleSheet,
   Text,
   View,
@@ -15,7 +15,7 @@ import { ExpenseModal } from "@/components/expense-modal";
 import { SearchBar } from "@/components/transactions/search-bar";
 import { SortSelector } from "@/components/transactions/sort-selector";
 import { CategoryChips } from "@/components/transactions/category-chips";
-import { Expense } from "@/types/expense";
+import { Expense, NewExpenseData } from "@/types/expense";
 import { useExpenses } from "@/lib/expense-store";
 import { useTheme } from "@/lib/theme-store";
 import { formatMoney } from "@/utils/formatters";
@@ -40,20 +40,57 @@ export default function TransactionsScreen() {
     hasActiveFilters,
   } = useFilteredExpenses(sortedExpenses);
 
-  return (
-    <ScreenContainer>
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.scroll}
-        refreshControl={
-          <RefreshControl
-            refreshing={syncing}
-            onRefresh={refreshExpenses}
-            tintColor={colors.primary}
-            colors={[colors.primary]}
+  const handleModalSubmit = useCallback(
+    (data: NewExpenseData) => {
+      if (editingExpense) {
+        updateExpense(editingExpense.id, data);
+      }
+    },
+    [editingExpense, updateExpense]
+  );
+
+  const handleCloseModal = useCallback(() => {
+    setEditingExpense(null);
+  }, []);
+
+  const renderItem = useCallback(
+    ({ item, index }: { item: Expense; index: number }) => {
+      const isFirst = index === 0;
+      const isLast = index === filtered.length - 1;
+      return (
+        <View
+          style={[
+            styles.listItem,
+            {
+              backgroundColor: colors.surface,
+              borderColor: colors.border,
+              borderTopWidth: isFirst ? 1 : 0,
+              borderBottomWidth: 1,
+              borderLeftWidth: 1,
+              borderRightWidth: 1,
+              borderTopLeftRadius: isFirst ? 16 : 0,
+              borderTopRightRadius: isFirst ? 16 : 0,
+              borderBottomLeftRadius: isLast ? 16 : 0,
+              borderBottomRightRadius: isLast ? 16 : 0,
+            },
+          ]}
+        >
+          <ExpenseRow
+            expense={item}
+            onEdit={() => setEditingExpense(item)}
+            onDelete={() => removeExpense(item.id)}
           />
-        }
-      >
+        </View>
+      );
+    },
+    [colors.border, colors.surface, filtered.length, removeExpense]
+  );
+
+  const keyExtractor = useCallback((item: Expense) => item.id, []);
+
+  const ListHeader = useMemo(
+    () => (
+      <View>
         <ScreenHeader
           kicker="YOUR MONEY TRAIL"
           title="Transactions"
@@ -82,48 +119,64 @@ export default function TransactionsScreen() {
         {/* Category Filter Chips */}
         <CategoryChips selected={category} onSelect={setCategory} />
 
-        {/* Transactions List */}
-        {filtered.length > 0 ? (
-          <View style={[styles.list, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-            {filtered.map((expense) => (
-              <ExpenseRow
-                key={expense.id}
-                expense={expense}
-                onEdit={() => setEditingExpense(expense)}
-                onDelete={() => removeExpense(expense.id)}
-              />
-            ))}
-          </View>
-        ) : (
-          <View style={[styles.emptyContainer, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-            <EmptyState
-              icon="receipt-outline"
-              title="No records found"
-              description={
-                hasActiveFilters
-                  ? "No transactions match your search or filter. Try clearing filters."
-                  : "You haven't logged any transactions yet."
-              }
-            />
-            {hasActiveFilters && (
-              <Pressable onPress={resetFilters} style={[styles.resetBtn, { backgroundColor: colors.primarySoft }]}>
-                <Text style={[styles.resetBtnText, { color: colors.primary }]}>Clear all filters</Text>
-              </Pressable>
-            )}
-          </View>
+        {filtered.length > 0 && <View style={styles.listHeaderGap} />}
+      </View>
+    ),
+    [category, colors, filtered.length, query, setCategory, setQuery, setSortBy, sortBy, total]
+  );
+
+  const ListEmpty = useMemo(
+    () => (
+      <View style={[styles.emptyContainer, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+        <EmptyState
+          icon="receipt-outline"
+          title="No records found"
+          description={
+            hasActiveFilters
+              ? "No transactions match your search or filter. Try clearing filters."
+              : "You haven't logged any transactions yet."
+          }
+        />
+        {hasActiveFilters && (
+          <Pressable onPress={resetFilters} style={[styles.resetBtn, { backgroundColor: colors.primarySoft }]}>
+            <Text style={[styles.resetBtnText, { color: colors.primary }]}>Clear all filters</Text>
+          </Pressable>
         )}
-      </ScrollView>
+      </View>
+    ),
+    [colors.border, colors.primary, colors.primarySoft, colors.surface, hasActiveFilters, resetFilters]
+  );
+
+  return (
+    <ScreenContainer>
+      <FlatList
+        data={filtered}
+        renderItem={renderItem}
+        keyExtractor={keyExtractor}
+        ListHeaderComponent={ListHeader}
+        ListEmptyComponent={ListEmpty}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.scroll}
+        initialNumToRender={12}
+        maxToRenderPerBatch={10}
+        windowSize={7}
+        removeClippedSubviews
+        refreshControl={
+          <RefreshControl
+            refreshing={syncing}
+            onRefresh={refreshExpenses}
+            tintColor={colors.primary}
+            colors={[colors.primary]}
+          />
+        }
+      />
 
       {/* Edit Expense Modal */}
       <ExpenseModal
         visible={editingExpense !== null}
         initialExpense={editingExpense}
-        onClose={() => setEditingExpense(null)}
-        onSubmit={(data) => {
-          if (editingExpense) {
-            updateExpense(editingExpense.id, data);
-          }
-        }}
+        onClose={handleCloseModal}
+        onSubmit={handleModalSubmit}
       />
     </ScreenContainer>
   );
@@ -161,6 +214,12 @@ const styles = StyleSheet.create({
   divider: {
     width: 1,
     height: 32,
+  },
+  listHeaderGap: {
+    height: 14,
+  },
+  listItem: {
+    paddingHorizontal: 16,
   },
   list: {
     marginTop: 14,

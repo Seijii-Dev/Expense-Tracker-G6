@@ -29,14 +29,17 @@ export function CategoryChips({ selected, onSelect }: CategoryChipsProps) {
             style={[
               styles.chip,
               { borderColor: colors.border, backgroundColor: colors.surface },
-              isActive && styles.chipActive,
+              isActive && {
+                borderColor: colors.primary,
+                backgroundColor: colors.primarySoft,
+              },
             ]}
           >
             <Text
               style={[
                 styles.chipText,
                 { color: colors.muted },
-                isActive && styles.chipTextActive,
+                isActive && { color: colors.primary, fontWeight: "700" },
               ]}
             >
               {item}
@@ -61,16 +64,8 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     borderWidth: 1,
   },
-  chipActive: {
-    borderColor: "#F2B8B0",
-    backgroundColor: "#FFF0ED",
-  },
   chipText: {
     fontSize: 11,
     fontWeight: "500",
-  },
-  chipTextActive: {
-    color: "#EB6F61",
-    fontWeight: "700",
   },
 });

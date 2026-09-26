@@ -1,11 +1,8 @@
+import type { Account } from "./auth";
+
 export type ApiResult<T> = ({ ok: true } & T) | { ok: false; message: string };
 
-export type RemoteAccount = {
-  id: string;
-  name: string;
-  email: string;
-  budget: number;
-};
+export type RemoteAccount = Account;
 
 export type RemoteExpense = {
   id: string;

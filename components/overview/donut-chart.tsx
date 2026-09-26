@@ -11,15 +11,21 @@ interface DonutChartProps {
   expenses: Expense[];
 }
 
-export function DonutChart({ total, expenses }: DonutChartProps) {
+export const DonutChart = React.memo(function DonutChart({ total, expenses }: DonutChartProps) {
   const { colors } = useTheme();
 
-  const totals = CATEGORIES.map((category) => ({
-    category,
-    total: expenses
-      .filter((expense) => expense.category === category)
-      .reduce((sum, expense) => sum + (expense.amount || 0), 0),
-  })).filter((item) => item.total > 0);
+  const totals = React.useMemo(() => {
+    const map = new Map<string, number>();
+    for (const exp of expenses) {
+      if (exp.category) {
+        map.set(exp.category, (map.get(exp.category) || 0) + (exp.amount || 0));
+      }
+    }
+    return CATEGORIES.map((category) => ({
+      category,
+      total: map.get(category) || 0,
+    })).filter((item) => item.total > 0);
+  }, [expenses]);
 
   const radius = 55;
   const circumference = 2 * Math.PI * radius;
@@ -37,7 +43,7 @@ export function DonutChart({ total, expenses }: DonutChartProps) {
               cx="67.5"
               cy="67.5"
               r={radius}
-              stroke={CATEGORY_META[category].color}
+              stroke={CATEGORY_META[category]?.color || colors.primary}
               strokeWidth="24"
               fill="none"
               strokeDasharray={[length, Math.max(0, circumference - length)]}
@@ -55,7 +61,7 @@ export function DonutChart({ total, expenses }: DonutChartProps) {
       </View>
     </View>
   );
-}
+});
 
 const styles = StyleSheet.create({
   donutWrap: {

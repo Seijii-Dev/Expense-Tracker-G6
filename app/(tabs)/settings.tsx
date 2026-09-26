@@ -187,14 +187,17 @@ export default function SettingsScreen() {
                   style={[
                     styles.presetBtn,
                     { borderColor: colors.border, backgroundColor: colors.surfaceSubtle },
-                    active && styles.presetBtnActive,
+                    active && {
+                      borderColor: colors.primary,
+                      backgroundColor: colors.primarySoft,
+                    },
                   ]}
                 >
                   <Text
                     style={[
                       styles.presetBtnText,
                       { color: colors.muted },
-                      active && styles.presetBtnTextActive,
+                      active && { color: colors.primary, fontWeight: "700" },
                     ]}
                   >
                     {formatMoney(preset)}
@@ -414,17 +417,9 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     borderWidth: 1,
   },
-  presetBtnActive: {
-    borderColor: "#F2B8B0",
-    backgroundColor: "#FFF0ED",
-  },
   presetBtnText: {
     fontSize: 10,
     fontWeight: "600",
-  },
-  presetBtnTextActive: {
-    color: "#EB6F61",
-    fontWeight: "700",
   },
   divider: {
     height: 1,

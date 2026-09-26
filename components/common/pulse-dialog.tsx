@@ -11,6 +11,8 @@ import * as Haptics from "expo-haptics";
 import { useTheme } from "@/lib/theme-store";
 import { GlassSurface } from "@/components/ui/glass-surface";
 
+import { formatMoney as defaultFormatMoney } from "@/utils/formatters";
+
 interface PulseDialogProps {
   visible: boolean;
   onClose: () => void;
@@ -18,7 +20,7 @@ interface PulseDialogProps {
   monthTotal: number;
   budget: number;
   remaining: number;
-  formatMoney: (amount: number) => string;
+  formatMoney?: (amount: number) => string;
 }
 
 export function PulseDialog({
@@ -28,7 +30,7 @@ export function PulseDialog({
   monthTotal,
   budget,
   remaining,
-  formatMoney,
+  formatMoney = defaultFormatMoney,
 }: PulseDialogProps) {
   const { colors, dark } = useTheme();
 

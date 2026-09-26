@@ -10,22 +10,25 @@ interface CategoryLegendProps {
   expenses: Expense[];
 }
 
-export function CategoryLegend({ expenses }: CategoryLegendProps) {
+export const CategoryLegend = React.memo(function CategoryLegend({ expenses }: CategoryLegendProps) {
   const { colors } = useTheme();
 
-  const totals = useMemo(
-    () =>
-      CATEGORIES.map((category) => ({
-        category,
-        total: expenses
-          .filter((expense) => expense.category === category)
-          .reduce((sum, expense) => sum + (expense.amount || 0), 0),
-      }))
-        .filter((item) => item.total > 0)
-        .sort((a, b) => b.total - a.total)
-        .slice(0, 5),
-    [expenses]
-  );
+  const totals = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const exp of expenses) {
+      if (exp.category) {
+        map.set(exp.category, (map.get(exp.category) || 0) + (exp.amount || 0));
+      }
+    }
+
+    return CATEGORIES.map((category) => ({
+      category,
+      total: map.get(category) || 0,
+    }))
+      .filter((item) => item.total > 0)
+      .sort((a, b) => b.total - a.total)
+      .slice(0, 5);
+  }, [expenses]);
 
   if (totals.length === 0) {
     return (

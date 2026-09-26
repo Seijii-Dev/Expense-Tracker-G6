@@ -11,26 +11,44 @@ interface DailyRhythmProps {
   expenses: Expense[];
 }
 
-export function DailyRhythm({ expenses }: DailyRhythmProps) {
+export const DailyRhythm = React.memo(function DailyRhythm({ expenses }: DailyRhythmProps) {
   const { colors } = useTheme();
 
-  const anchor = new Date(`${getPhilippinesDate()}T12:00:00Z`);
-  const days = Array.from({ length: 7 }, (_, index) => {
-    const date = new Date(anchor);
-    date.setUTCDate(anchor.getUTCDate() - (6 - index));
-    const key = getPhilippinesDate(date);
-    return {
-      key,
-      dayName: getWeekdayShort(date),
-      label: key.slice(8).replace(/^0/, ""),
-      total: expenses
-        .filter((expense) => normalizeDate(expense.date) === key)
-        .reduce((sum, expense) => sum + (expense.amount || 0), 0),
-    };
-  });
+  const { days, max, weekTotal } = React.useMemo(() => {
+    const anchor = new Date(`${getPhilippinesDate()}T12:00:00Z`);
+    const dayList = Array.from({ length: 7 }, (_, index) => {
+      const date = new Date(anchor);
+      date.setUTCDate(anchor.getUTCDate() - (6 - index));
+      const key = getPhilippinesDate(date);
+      return {
+        key,
+        dayName: getWeekdayShort(date),
+        label: key.slice(8).replace(/^0/, ""),
+        total: 0,
+      };
+    });
 
-  const max = Math.max(...days.map((day) => day.total), 1);
-  const weekTotal = days.reduce((sum, day) => sum + day.total, 0);
+    const dayMap = new Map<string, number>();
+    for (const d of dayList) {
+      dayMap.set(d.key, 0);
+    }
+
+    for (const exp of expenses) {
+      const k = normalizeDate(exp.date);
+      if (dayMap.has(k)) {
+        dayMap.set(k, (dayMap.get(k) || 0) + (exp.amount || 0));
+      }
+    }
+
+    let wTotal = 0;
+    for (const d of dayList) {
+      d.total = dayMap.get(d.key) || 0;
+      wTotal += d.total;
+    }
+
+    const m = Math.max(...dayList.map((day) => day.total), 1);
+    return { days: dayList, max: m, weekTotal: wTotal };
+  }, [expenses]);
 
   return (
     <GlassSurface style={styles.panel} contentStyle={styles.panelInner}>

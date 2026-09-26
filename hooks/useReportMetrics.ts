@@ -26,29 +26,38 @@ export function useReportMetrics(expenses: Expense[]) {
     [monthExpenses]
   );
 
-  const categoryTotals: CategoryTotal[] = useMemo(
-    () =>
-      CATEGORIES.map((category) => {
-        const total = monthExpenses
-          .filter((expense) => expense.category === category)
-          .reduce((sum, expense) => sum + (expense.amount || 0), 0);
-        return { category, total };
-      }).sort((a, b) => b.total - a.total),
-    [monthExpenses]
-  );
+  const { categoryTotals, paymentTotals } = useMemo(() => {
+    const catMap = new Map<Category, number>();
+    for (const cat of CATEGORIES) {
+      catMap.set(cat, 0);
+    }
 
-  const paymentTotals: PaymentTotal[] = useMemo(
-    () =>
-      PAYMENT_METHODS.map((payment) => {
-        const total = monthExpenses
-          .filter((expense) => expense.payment === payment)
-          .reduce((sum, expense) => sum + (expense.amount || 0), 0);
-        return { payment, total };
-      })
-        .filter((item) => item.total > 0)
-        .sort((a, b) => b.total - a.total),
-    [monthExpenses]
-  );
+    const payMap = new Map<Payment, number>();
+    for (const pay of PAYMENT_METHODS) {
+      payMap.set(pay, 0);
+    }
+
+    for (const expense of monthExpenses) {
+      const amount = expense.amount || 0;
+      if (expense.category && catMap.has(expense.category)) {
+        catMap.set(expense.category, (catMap.get(expense.category) || 0) + amount);
+      }
+      if (expense.payment && payMap.has(expense.payment)) {
+        payMap.set(expense.payment, (payMap.get(expense.payment) || 0) + amount);
+      }
+    }
+
+    const cats: CategoryTotal[] = Array.from(catMap.entries())
+      .map(([category, total]) => ({ category, total }))
+      .sort((a, b) => b.total - a.total);
+
+    const pays: PaymentTotal[] = Array.from(payMap.entries())
+      .filter(([, total]) => total > 0)
+      .map(([payment, total]) => ({ payment, total }))
+      .sort((a, b) => b.total - a.total);
+
+    return { categoryTotals: cats, paymentTotals: pays };
+  }, [monthExpenses]);
 
   const activeCategoryCount = useMemo(
     () => categoryTotals.filter((item) => item.total > 0).length,

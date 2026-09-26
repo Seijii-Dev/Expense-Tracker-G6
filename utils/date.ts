@@ -1,15 +1,42 @@
 export const MANILA_TIMEZONE = "Asia/Manila";
 
+// Cached DateTimeFormat singletons to avoid costly ICU table re-parsing
+const PH_DATE_FORMATTER = new Intl.DateTimeFormat("en-CA", {
+  timeZone: MANILA_TIMEZONE,
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit",
+});
+
+const PH_HOUR_FORMATTER = new Intl.DateTimeFormat("en-US", {
+  timeZone: MANILA_TIMEZONE,
+  hour: "numeric",
+  hour12: false,
+});
+
+const PH_TODAY_HEADER_FORMATTER = new Intl.DateTimeFormat("en-US", {
+  timeZone: MANILA_TIMEZONE,
+  weekday: "long",
+  month: "long",
+  day: "numeric",
+});
+
+const PH_MONTH_HEADER_FORMATTER = new Intl.DateTimeFormat("en-US", {
+  timeZone: MANILA_TIMEZONE,
+  month: "long",
+  year: "numeric",
+});
+
+const PH_WEEKDAY_SHORT_FORMATTER = new Intl.DateTimeFormat("en-US", {
+  weekday: "short",
+  timeZone: MANILA_TIMEZONE,
+});
+
 /**
  * Returns ISO date format YYYY-MM-DD in Asia/Manila timezone
  */
 export function getPhilippinesDate(date = new Date()): string {
-  return new Intl.DateTimeFormat("en-CA", {
-    timeZone: MANILA_TIMEZONE,
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  }).format(date);
+  return PH_DATE_FORMATTER.format(date);
 }
 
 /**
@@ -40,13 +67,7 @@ export function normalizeDate(date?: string): string {
  * Gets the current hour in Asia/Manila (0-23)
  */
 export function getPhilippinesHour(date = new Date()): number {
-  return Number(
-    new Intl.DateTimeFormat("en-US", {
-      timeZone: MANILA_TIMEZONE,
-      hour: "numeric",
-      hour12: false,
-    }).format(date)
-  );
+  return Number(PH_HOUR_FORMATTER.format(date));
 }
 
 /**
@@ -63,33 +84,19 @@ export function getTimeGreeting(date = new Date()): string {
  * Header date format (e.g., "FRIDAY, SEPTEMBER 25")
  */
 export function getFormattedTodayHeader(date = new Date()): string {
-  return new Intl.DateTimeFormat("en-US", {
-    timeZone: MANILA_TIMEZONE,
-    weekday: "long",
-    month: "long",
-    day: "numeric",
-  })
-    .format(date)
-    .toUpperCase();
+  return PH_TODAY_HEADER_FORMATTER.format(date).toUpperCase();
 }
 
 /**
  * Month header format (e.g., "September 2026")
  */
 export function getFormattedMonthHeader(date = new Date()): string {
-  return new Intl.DateTimeFormat("en-US", {
-    timeZone: MANILA_TIMEZONE,
-    month: "long",
-    year: "numeric",
-  }).format(date);
+  return PH_MONTH_HEADER_FORMATTER.format(date);
 }
 
 /**
  * Returns 3-letter weekday name in Asia/Manila
  */
 export function getWeekdayShort(date: Date): string {
-  return new Intl.DateTimeFormat("en-US", {
-    weekday: "short",
-    timeZone: MANILA_TIMEZONE,
-  }).format(date);
+  return PH_WEEKDAY_SHORT_FORMATTER.format(date);
 }

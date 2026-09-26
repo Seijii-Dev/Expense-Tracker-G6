@@ -93,7 +93,7 @@ export function ExpenseModal({ visible, initialExpense, onClose, onSubmit }: Exp
         <GlassSurface
           variant="sheet"
           radius={28}
-          contentStyle={[styles.card, { backgroundColor: dark ? "#14222A" : "#FFFFFF" }]}
+          contentStyle={[styles.card, { backgroundColor: colors.card }]}
         >
           {/* Header */}
           <View style={styles.header}>
@@ -109,6 +109,8 @@ export function ExpenseModal({ visible, initialExpense, onClose, onSubmit }: Exp
             <Pressable
               hitSlop={10}
               onPress={onClose}
+              accessibilityRole="button"
+              accessibilityLabel="Close expense modal"
               style={[styles.closeBtn, { backgroundColor: colors.surfaceSubtle }]}
             >
               <Ionicons name="close" size={18} color={colors.muted} />
@@ -164,7 +166,10 @@ export function ExpenseModal({ visible, initialExpense, onClose, onSubmit }: Exp
                 style={[
                   styles.presetChip,
                   { borderColor: colors.border, backgroundColor: dark ? "rgba(255,255,255,0.06)" : "#F6FAFC" },
-                  date === today && styles.presetActive,
+                  date === today && {
+                    borderColor: colors.primary,
+                    backgroundColor: colors.primarySoft,
+                  },
                 ]}
               >
                 <Ionicons
@@ -176,7 +181,7 @@ export function ExpenseModal({ visible, initialExpense, onClose, onSubmit }: Exp
                   style={[
                     styles.presetText,
                     { color: colors.muted },
-                    date === today && styles.presetTextActive,
+                    date === today && { color: colors.primary, fontWeight: "700" },
                   ]}
                 >
                   Today
@@ -188,7 +193,10 @@ export function ExpenseModal({ visible, initialExpense, onClose, onSubmit }: Exp
                 style={[
                   styles.presetChip,
                   { borderColor: colors.border, backgroundColor: dark ? "rgba(255,255,255,0.06)" : "#F6FAFC" },
-                  date === yesterday && styles.presetActive,
+                  date === yesterday && {
+                    borderColor: colors.primary,
+                    backgroundColor: colors.primarySoft,
+                  },
                 ]}
               >
                 <Ionicons
@@ -200,7 +208,7 @@ export function ExpenseModal({ visible, initialExpense, onClose, onSubmit }: Exp
                   style={[
                     styles.presetText,
                     { color: colors.muted },
-                    date === yesterday && styles.presetTextActive,
+                    date === yesterday && { color: colors.primary, fontWeight: "700" },
                   ]}
                 >
                   Yesterday
@@ -260,7 +268,10 @@ export function ExpenseModal({ visible, initialExpense, onClose, onSubmit }: Exp
                     style={[
                       styles.chip,
                       { borderColor: colors.border, backgroundColor: dark ? "rgba(255,255,255,0.06)" : "#F6FAFC" },
-                      active && styles.paymentActive,
+                      active && {
+                        borderColor: colors.primary,
+                        backgroundColor: colors.primarySoft,
+                      },
                     ]}
                   >
                     <PaymentIcon payment={item} size={16} color={active ? colors.primary : colors.muted} />
@@ -268,7 +279,7 @@ export function ExpenseModal({ visible, initialExpense, onClose, onSubmit }: Exp
                       style={[
                         styles.chipText,
                         { color: colors.muted },
-                        active && styles.paymentTextActive,
+                        active && { color: colors.primary, fontWeight: "700" },
                       ]}
                     >
                       {item}
@@ -382,18 +393,6 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     borderWidth: 1,
   },
-  presetActive: {
-    borderColor: "#F2B8B0",
-    backgroundColor: "#FFF0ED",
-  },
-  presetText: {
-    fontSize: 11,
-    fontWeight: "600",
-  },
-  presetTextActive: {
-    color: "#EB6F61",
-    fontWeight: "700",
-  },
   chipRow: {
     flexDirection: "row",
     gap: 7,
@@ -407,22 +406,9 @@ const styles = StyleSheet.create({
     borderRadius: 9,
     borderWidth: 1,
   },
-  dot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-  },
   chipText: {
     fontSize: 11,
     fontWeight: "600",
-  },
-  paymentActive: {
-    borderColor: "#F2B8B0",
-    backgroundColor: "#FFF0ED",
-  },
-  paymentTextActive: {
-    color: "#EB6F61",
-    fontWeight: "700",
   },
   submitBtn: {
     flexDirection: "row",

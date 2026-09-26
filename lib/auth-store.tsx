@@ -1,6 +1,6 @@
 import * as SecureStore from "expo-secure-store";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { Platform } from "react-native";
 import { api, RemoteAccount } from "@/lib/api-client";
 import { Account, AuthContextValue } from "@/types/auth";
@@ -142,7 +142,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
   }, []);
 
-  const register = async (name: string, email: string, password: string) => {
+  const register = useCallback(async (name: string, email: string, password: string) => {
     const cleanEmail = email.trim().toLowerCase();
     const cleanName = name.trim();
 
@@ -197,9 +197,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setAccount(localAccount);
       return { ok: true };
     }
-  };
+  }, []);
 
-  const login = async (email: string, password: string) => {
+  const login = useCallback(async (email: string, password: string) => {
     const cleanEmail = email.trim().toLowerCase();
 
     try {
@@ -275,25 +275,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
       return { ok: false, message: "Couldn't reach the server. Please check your connection and try again." };
     }
-  };
+  }, []);
 
-  const logout = async () => {
+  const logout = useCallback(async () => {
     await Promise.all([
       safeSecureDelete(STORAGE_KEYS.authToken),
       AsyncStorage.removeItem(STORAGE_KEYS.cachedAccount),
     ]);
     setToken(null);
     setAccount(null);
-  };
+  }, []);
 
-  const refreshAccount = (updated: RemoteAccount) => {
+  const refreshAccount = useCallback((updated: RemoteAccount) => {
     setAccount(updated);
     AsyncStorage.setItem(STORAGE_KEYS.cachedAccount, JSON.stringify(updated)).catch(() => undefined);
-  };
+  }, []);
 
   const value = useMemo(
     () => ({ account, token, loading, register, login, logout, refreshAccount }),
-    [account, token, loading]
+    [account, token, loading, register, login, logout, refreshAccount]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

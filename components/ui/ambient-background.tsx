@@ -3,7 +3,7 @@ import React from "react";
 import { StyleSheet, View } from "react-native";
 import { useTheme } from "@/lib/theme-store";
 
-export function AmbientBackground() {
+export const AmbientBackground = React.memo(function AmbientBackground() {
   const { dark, colors } = useTheme();
 
   return (
