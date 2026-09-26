@@ -5,6 +5,12 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTheme } from "@/lib/theme-store";
 import { GlassSurface } from "@/components/ui/glass-surface";
 
+type TabBarIconProps = {
+  color: string;
+  size?: number;
+  focused: boolean;
+};
+
 export default function TabsLayout() {
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
@@ -46,7 +52,7 @@ export default function TabsLayout() {
         name="index"
         options={{
           title: "Overview",
-          tabBarIcon: ({ color, focused }) => (
+          tabBarIcon: ({ color, focused }: TabBarIconProps) => (
             <View style={focused ? styles.activeIcon : undefined}>
               <Ionicons name={focused ? "grid" : "grid-outline"} color={color} size={20} />
             </View>
@@ -57,7 +63,7 @@ export default function TabsLayout() {
         name="transactions"
         options={{
           title: "Records",
-          tabBarIcon: ({ color, focused }) => (
+          tabBarIcon: ({ color, focused }: TabBarIconProps) => (
             <View style={focused ? styles.activeIcon : undefined}>
               <Ionicons name={focused ? "list" : "list-outline"} color={color} size={20} />
             </View>
@@ -68,7 +74,7 @@ export default function TabsLayout() {
         name="reports"
         options={{
           title: "Reports",
-          tabBarIcon: ({ color, focused }) => (
+          tabBarIcon: ({ color, focused }: TabBarIconProps) => (
             <View style={focused ? styles.activeIcon : undefined}>
               <Ionicons name={focused ? "bar-chart" : "bar-chart-outline"} color={color} size={20} />
             </View>
@@ -79,7 +85,7 @@ export default function TabsLayout() {
         name="settings"
         options={{
           title: "Settings",
-          tabBarIcon: ({ color, focused }) => (
+          tabBarIcon: ({ color, focused }: TabBarIconProps) => (
             <View style={focused ? styles.activeIcon : undefined}>
               <Ionicons name={focused ? "settings" : "settings-outline"} color={color} size={20} />
             </View>
@@ -90,7 +96,7 @@ export default function TabsLayout() {
         name="account"
         options={{
           title: "Account",
-          tabBarIcon: ({ color, focused }) => (
+          tabBarIcon: ({ color, focused }: TabBarIconProps) => (
             <View style={focused ? styles.activeIcon : undefined}>
               <Ionicons name={focused ? "person-circle" : "person-circle-outline"} color={color} size={20} />
             </View>
