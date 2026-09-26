@@ -42,10 +42,11 @@ export function GlassSurface({
           overflow: "hidden",
           borderWidth: 1,
           borderColor: colors.glassBorder,
-          shadowColor: dark ? "#000814" : "#6A8494",
-          shadowOpacity: dark ? 0.3 : 0.08,
-          shadowRadius: variant === "pill" ? 8 : 16,
-          shadowOffset: { width: 0, height: variant === "pill" ? 2 : 8 },
+          backgroundColor: dark ? "rgba(18, 28, 36, 0.92)" : "rgba(255, 255, 255, 0.94)",
+          shadowColor: dark ? "#000000" : "#4A6272",
+          shadowOpacity: dark ? 0.35 : 0.08,
+          shadowRadius: variant === "pill" ? 6 : 14,
+          shadowOffset: { width: 0, height: variant === "pill" ? 2 : 6 },
           elevation: variant === "pill" ? 2 : 4,
         },
         style,
@@ -56,27 +57,19 @@ export function GlassSurface({
         tint={tint}
         style={StyleSheet.absoluteFill}
       />
+      {/* Clean high-contrast glass fill */}
       <View pointerEvents="none" style={[StyleSheet.absoluteFill, { backgroundColor: colors.glassFill }]} />
+      {/* Delicate specular glass rim highlight along top edge */}
       <LinearGradient
         pointerEvents="none"
-        colors={
-          dark
-            ? ["rgba(255,255,255,0.2)", "rgba(255,255,255,0.03)", "rgba(120,175,255,0.1)"]
-            : ["rgba(255,255,255,0.78)", "rgba(255,255,255,0.16)", "rgba(165,210,255,0.18)"]
-        }
-        locations={[0, 0.45, 1]}
-        start={{ x: 0.02, y: 0 }}
-        end={{ x: 0.98, y: 1 }}
-        style={StyleSheet.absoluteFill}
-      />
-      <LinearGradient
-        pointerEvents="none"
-        colors={[colors.glassRim, "rgba(255,255,255,0)", "rgba(160,210,255,0.35)"]}
+        colors={[
+          dark ? "rgba(255,255,255,0.22)" : "rgba(255,255,255,0.95)",
+          "rgba(255,255,255,0)",
+        ]}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 0 }}
         style={styles.rim}
       />
-      <View pointerEvents="none" style={[styles.innerHighlight, { borderColor: colors.glassRim }]} />
       <View style={[styles.content, contentStyle]}>{children}</View>
     </View>
   );
@@ -89,12 +82,6 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     height: 1.5,
-  },
-  innerHighlight: {
-    ...StyleSheet.absoluteFillObject,
-    borderWidth: 1,
-    borderRadius: 21,
-    opacity: 0.35,
   },
   content: {
     position: "relative",

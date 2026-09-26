@@ -12,8 +12,8 @@ export function AmbientBackground() {
       <LinearGradient
         colors={
           dark
-            ? ["#060E14", "#0A161E", "#081016"]
-            : ["#E4EDF3", "#DBE7E4", "#E5E1F0"]
+            ? ["#070E14", "#0A141C", "#081016"]
+            : ["#EDF3F7", "#E6EFF4", "#ECF0F5"]
         }
         start={{ x: 0.1, y: 0 }}
         end={{ x: 0.9, y: 1 }}

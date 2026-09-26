@@ -263,7 +263,7 @@ export function ExpenseModal({ visible, initialExpense, onClose, onSubmit }: Exp
                       active && styles.paymentActive,
                     ]}
                   >
-                    <PaymentIcon payment={item} size={16} />
+                    <PaymentIcon payment={item} size={16} color={active ? colors.primary : colors.muted} />
                     <Text
                       style={[
                         styles.chipText,

@@ -32,20 +32,29 @@ export const CATEGORY_META: CategoryMeta = {
 // Default fallback styling for categories
 export const DEFAULT_CATEGORY_STYLE = CATEGORY_META.Other;
 
-export const CATEGORY_ICONS: Record<Category, any> = {
-  Food: require("@/assets/icons/categories/food.png"),
-  Transport: require("@/assets/icons/categories/transport.png"),
-  School: require("@/assets/icons/categories/school.png"),
-  Shopping: require("@/assets/icons/categories/shopping.png"),
-  Bills: require("@/assets/icons/categories/bills.png"),
-  Fun: require("@/assets/icons/categories/fun.png"),
-  Health: require("@/assets/icons/categories/health.png"),
-  Other: require("@/assets/icons/categories/other.png"),
+import { Ionicons } from "@expo/vector-icons";
+
+export const CATEGORY_ICON_NAMES: Record<Category, keyof typeof Ionicons.glyphMap> = {
+  Food: "restaurant-outline",
+  Transport: "car-outline",
+  School: "school-outline",
+  Shopping: "cart-outline",
+  Bills: "receipt-outline",
+  Fun: "game-controller-outline",
+  Health: "heart-outline",
+  Other: "grid-outline",
 };
 
-export const PAYMENT_ICONS: Record<Payment, any> = {
-  Cash: require("@/assets/icons/payments/cash.png"),
-  GCash: require("@/assets/icons/payments/gcash.png"),
-  Card: require("@/assets/icons/payments/card.png"),
-  Bank: require("@/assets/icons/payments/bank.png"),
+export const PAYMENT_ICON_NAMES: Record<Payment, keyof typeof Ionicons.glyphMap> = {
+  Cash: "cash-outline",
+  GCash: "phone-portrait-outline",
+  Card: "card-outline",
+  Bank: "business-outline",
+};
+
+export const PAYMENT_ICON_COLORS: Record<Payment, string> = {
+  Cash: "#3F8F74",
+  GCash: "#007DFE",
+  Card: "#EB6F61",
+  Bank: "#4D8AF0",
 };

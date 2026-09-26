@@ -26,7 +26,7 @@ export function SpendingInsight({ expenses }: SpendingInsightProps) {
     <GlassSurface radius={24} style={styles.wrap} contentStyle={styles.insight}>
       <LinearGradient
         pointerEvents="none"
-        colors={["rgba(39,69,63,0.55)", "rgba(235,111,97,0.28)"]}
+        colors={["#1B332F", "#172A2D"]}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={StyleSheet.absoluteFill}
@@ -64,7 +64,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#EB6F61",
   },
   kickerLight: {
-    color: "#A4C8BA",
+    color: "#BCEAD9",
     fontSize: 10,
     fontWeight: "800",
     letterSpacing: 1.4,
@@ -78,8 +78,8 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   insightCopy: {
-    color: "#B8CEC5",
-    fontSize: 11,
+    color: "#D8ECE4",
+    fontSize: 12,
     lineHeight: 18,
     marginTop: 8,
     maxWidth: 290,
