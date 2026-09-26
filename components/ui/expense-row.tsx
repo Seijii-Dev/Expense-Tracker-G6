@@ -4,7 +4,7 @@ import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { CategoryIcon } from "@/components/ui/category-icon";
 import { Expense } from "@/types/expense";
-import { CATEGORY_META, DEFAULT_CATEGORY_STYLE } from "@/constants/categories";
+import { getCategoryStyle } from "@/constants/categories";
 import { useTheme } from "@/lib/theme-store";
 import { formatDate, formatMoney } from "@/utils/formatters";
 
@@ -24,7 +24,7 @@ export const ExpenseRow = React.memo(function ExpenseRow({
   showActions = true,
 }: ExpenseRowProps) {
   const { colors, dark } = useTheme();
-  const meta = CATEGORY_META[expense.category] || DEFAULT_CATEGORY_STYLE;
+  const meta = getCategoryStyle(expense.category);
 
   const handleDelete = React.useCallback(() => {
     Alert.alert("Delete Expense", `Remove "${expense.description}" from your ledger?`, [

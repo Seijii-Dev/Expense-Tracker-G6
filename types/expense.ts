@@ -1,4 +1,4 @@
-export type Category =
+export type StandardCategory =
   | "Food"
   | "Transport"
   | "School"
@@ -7,6 +7,8 @@ export type Category =
   | "Fun"
   | "Health"
   | "Other";
+
+export type Category = StandardCategory | (string & {});
 
 export type Payment = "Cash" | "GCash" | "Card" | "Bank";
 
@@ -24,6 +26,15 @@ export type CategoryStyle = {
   soft: string;
 };
 
-export type CategoryMeta = Record<Category, CategoryStyle>;
+export type CustomCategory = {
+  id: string;
+  name: string;
+  color: string;
+  soft: string;
+  icon: string;
+  createdAt?: string;
+};
+
+export type CategoryMeta = Record<string, CategoryStyle>;
 
 export type NewExpenseData = Omit<Expense, "id">;

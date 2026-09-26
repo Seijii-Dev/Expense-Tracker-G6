@@ -1,6 +1,6 @@
 import React from "react";
 import { Tabs } from "expo-router";
-import { StyleSheet, View, useWindowDimensions } from "react-native";
+import { Platform, StyleSheet, View, useWindowDimensions } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTheme } from "@/lib/theme-store";
@@ -8,18 +8,18 @@ import { GlassSurface } from "@/components/ui/glass-surface";
 
 type TabBarIconProps = {
   color: string;
-  size?: number;
   focused: boolean;
 };
 
 export default function TabsLayout() {
-  const { colors } = useTheme();
+  const { colors, dark } = useTheme();
   const insets = useSafeAreaInsets();
   const { width: windowWidth } = useWindowDimensions();
 
-  // Compress width and center floating pill navigation bar on wider screens
-  const maxBarWidth = 380;
-  const horizontalInset = Math.max(28, Math.floor((windowWidth - maxBarWidth) / 2));
+  // Balanced floating pill navigation bar on all screen sizes
+  const maxBarWidth = 420;
+  const horizontalInset = Math.max(16, Math.floor((windowWidth - maxBarWidth) / 2));
+  const bottomInset = Math.max(insets.bottom + 6, Platform.OS === "ios" ? 16 : 14);
 
   return (
     <Tabs
@@ -27,24 +27,40 @@ export default function TabsLayout() {
         headerShown: false,
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.muted,
-        tabBarLabelStyle: { fontSize: 9.5, fontWeight: "700", marginTop: 1, marginBottom: 2 },
-        tabBarItemStyle: { paddingTop: 3, paddingBottom: 2 },
+        tabBarLabelStyle: {
+          fontSize: 10,
+          fontWeight: "600",
+          letterSpacing: 0.15,
+          marginTop: 2,
+          marginBottom: 2,
+        },
+        tabBarItemStyle: {
+          paddingTop: 5,
+          paddingBottom: 4,
+          height: 62,
+          justifyContent: "center",
+          alignItems: "center",
+        },
         tabBarBackground: () => (
-          <GlassSurface variant="nav" radius={24} style={StyleSheet.absoluteFill} />
+          <GlassSurface variant="nav" radius={28} style={StyleSheet.absoluteFill} />
         ),
         tabBarStyle: {
           position: "absolute",
           left: horizontalInset,
           right: horizontalInset,
-          bottom: Math.max(insets.bottom, 10),
-          height: 58,
-          paddingTop: 2,
-          paddingBottom: 2,
+          bottom: bottomInset,
+          height: 64,
+          paddingTop: 0,
+          paddingBottom: 0,
           borderTopWidth: 0,
           backgroundColor: "transparent",
-          elevation: 0,
-          borderRadius: 24,
+          elevation: 8,
+          borderRadius: 28,
           overflow: "hidden",
+          shadowColor: dark ? "#000000" : "#2C3E50",
+          shadowOffset: { width: 0, height: 6 },
+          shadowOpacity: dark ? 0.45 : 0.12,
+          shadowRadius: 16,
         },
         tabBarHideOnKeyboard: true,
       }}
@@ -54,8 +70,16 @@ export default function TabsLayout() {
         options={{
           title: "Overview",
           tabBarIcon: ({ color, focused }: TabBarIconProps) => (
-            <View style={focused ? styles.activeIcon : undefined}>
-              <Ionicons name={focused ? "grid" : "grid-outline"} color={color} size={20} />
+            <View
+              style={[
+                styles.iconWrap,
+                focused && [
+                  styles.activeIconWrap,
+                  { backgroundColor: dark ? `${colors.primary}25` : colors.primarySoft },
+                ],
+              ]}
+            >
+              <Ionicons name={focused ? "grid" : "grid-outline"} color={color} size={21} />
             </View>
           ),
         }}
@@ -65,8 +89,16 @@ export default function TabsLayout() {
         options={{
           title: "Records",
           tabBarIcon: ({ color, focused }: TabBarIconProps) => (
-            <View style={focused ? styles.activeIcon : undefined}>
-              <Ionicons name={focused ? "list" : "list-outline"} color={color} size={20} />
+            <View
+              style={[
+                styles.iconWrap,
+                focused && [
+                  styles.activeIconWrap,
+                  { backgroundColor: dark ? `${colors.primary}25` : colors.primarySoft },
+                ],
+              ]}
+            >
+              <Ionicons name={focused ? "receipt" : "receipt-outline"} color={color} size={22} />
             </View>
           ),
         }}
@@ -76,8 +108,16 @@ export default function TabsLayout() {
         options={{
           title: "Reports",
           tabBarIcon: ({ color, focused }: TabBarIconProps) => (
-            <View style={focused ? styles.activeIcon : undefined}>
-              <Ionicons name={focused ? "bar-chart" : "bar-chart-outline"} color={color} size={20} />
+            <View
+              style={[
+                styles.iconWrap,
+                focused && [
+                  styles.activeIconWrap,
+                  { backgroundColor: dark ? `${colors.primary}25` : colors.primarySoft },
+                ],
+              ]}
+            >
+              <Ionicons name={focused ? "bar-chart" : "bar-chart-outline"} color={color} size={22} />
             </View>
           ),
         }}
@@ -87,8 +127,16 @@ export default function TabsLayout() {
         options={{
           title: "Settings",
           tabBarIcon: ({ color, focused }: TabBarIconProps) => (
-            <View style={focused ? styles.activeIcon : undefined}>
-              <Ionicons name={focused ? "settings" : "settings-outline"} color={color} size={20} />
+            <View
+              style={[
+                styles.iconWrap,
+                focused && [
+                  styles.activeIconWrap,
+                  { backgroundColor: dark ? `${colors.primary}25` : colors.primarySoft },
+                ],
+              ]}
+            >
+              <Ionicons name={focused ? "settings" : "settings-outline"} color={color} size={22} />
             </View>
           ),
         }}
@@ -98,8 +146,20 @@ export default function TabsLayout() {
         options={{
           title: "Account",
           tabBarIcon: ({ color, focused }: TabBarIconProps) => (
-            <View style={focused ? styles.activeIcon : undefined}>
-              <Ionicons name={focused ? "person-circle" : "person-circle-outline"} color={color} size={20} />
+            <View
+              style={[
+                styles.iconWrap,
+                focused && [
+                  styles.activeIconWrap,
+                  { backgroundColor: dark ? `${colors.primary}25` : colors.primarySoft },
+                ],
+              ]}
+            >
+              <Ionicons
+                name={focused ? "person-circle" : "person-circle-outline"}
+                color={color}
+                size={23}
+              />
             </View>
           ),
         }}
@@ -109,7 +169,16 @@ export default function TabsLayout() {
 }
 
 const styles = StyleSheet.create({
-  activeIcon: {
+  iconWrap: {
+    height: 28,
+    paddingHorizontal: 10,
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: 14,
+  },
+  activeIconWrap: {
+    paddingHorizontal: 12,
     transform: [{ scale: 1.05 }],
   },
 });
+

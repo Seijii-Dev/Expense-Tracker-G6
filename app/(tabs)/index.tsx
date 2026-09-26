@@ -24,6 +24,7 @@ import { useExpenses } from "@/lib/expense-store";
 import { useAuth } from "@/lib/auth-store";
 import { useTheme } from "@/lib/theme-store";
 import { formatMoney } from "@/utils/formatters";
+import { DashboardSkeleton } from "@/components/ui/dashboard-skeleton";
 import {
   getFormattedMonthHeader,
   getFormattedTodayHeader,
@@ -104,11 +105,7 @@ export default function OverviewScreen() {
   if (!hydrated) {
     return (
       <ScreenContainer>
-        <View style={styles.loadingState}>
-          <Ionicons name="sync-outline" size={26} color={colors.primary} />
-          <Text style={[styles.loadingTitle, { color: colors.foreground }]}>Loading your ledger</Text>
-          <Text style={[styles.loadingCopy, { color: colors.muted }]}>Restoring your saved expenses…</Text>
-        </View>
+        <DashboardSkeleton />
       </ScreenContainer>
     );
   }

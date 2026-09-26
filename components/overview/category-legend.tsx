@@ -21,10 +21,11 @@ export const CategoryLegend = React.memo(function CategoryLegend({ expenses }: C
       }
     }
 
-    return CATEGORIES.map((category) => ({
-      category,
-      total: map.get(category) || 0,
-    }))
+    return Array.from(map.entries())
+      .map(([category, total]) => ({
+        category,
+        total,
+      }))
       .filter((item) => item.total > 0)
       .sort((a, b) => b.total - a.total)
       .slice(0, 5);

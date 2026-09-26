@@ -18,7 +18,7 @@ import { ScreenHeader } from "@/components/common/screen-header";
 import { SectionHeading } from "@/components/settings/section-heading";
 import { PreferenceRow } from "@/components/settings/preference-row";
 import { CategoryIcon } from "@/components/ui/category-icon";
-import { CATEGORIES, CATEGORY_META } from "@/constants/categories";
+import { CATEGORIES, CATEGORY_META, getCategoryStyle } from "@/constants/categories";
 import { STORAGE_KEYS } from "@/constants/storage";
 import { useExpenses } from "@/lib/expense-store";
 import { useTheme } from "@/lib/theme-store";
@@ -26,17 +26,30 @@ import { useAuth } from "@/lib/auth-store";
 import { formatMoney } from "@/utils/formatters";
 import { exportExpensesToCsv } from "@/utils/export-csv";
 import { StoragePermissionDialog } from "@/components/common/storage-permission-dialog";
+import { CustomCategoryModal } from "@/components/settings/custom-category-modal";
 
 const BUDGET_PRESETS = [3000, 5000, 10000, 15000, 20000] as const;
 
 export default function SettingsScreen() {
-  const { budget, setBudget, expenses, syncing, syncError, refreshExpenses } = useExpenses();
+  const {
+    budget,
+    setBudget,
+    expenses,
+    syncing,
+    syncError,
+    refreshExpenses,
+    customCategories,
+    allCategories,
+    addCustomCategory,
+    deleteCustomCategory,
+  } = useExpenses();
   const { dark, setDark, colors } = useTheme();
   const { account, logout } = useAuth();
 
   const [budgetText, setBudgetText] = useState(String(budget));
   const [budgetNudges, setBudgetNudges] = useState(true);
   const [showStorageDialog, setShowStorageDialog] = useState(false);
+  const [showCategoryModal, setShowCategoryModal] = useState(false);
 
   useEffect(() => {
     setBudgetText(String(budget));
@@ -212,21 +225,56 @@ export default function SettingsScreen() {
           <SectionHeading
             icon={<Ionicons name="pricetag-outline" size={17} color={colors.primary} />}
             title="Active Categories"
-            copy={`${CATEGORIES.length} standardized categories keep your records tidy.`}
+            copy={`${allCategories.length} categories active across your records.`}
           />
           <View style={styles.pills}>
-            {CATEGORIES.map((category) => (
-              <View
-                key={category}
-                style={[
-                  styles.pill,
-                  { backgroundColor: dark ? `${CATEGORY_META[category].color}25` : CATEGORY_META[category].soft },
-                ]}
-              >
-                <CategoryIcon category={category} size={15} />
-                <Text style={[styles.pillText, { color: CATEGORY_META[category].color }]}>{category}</Text>
-              </View>
-            ))}
+            {allCategories.map((category) => {
+              const catStyle = getCategoryStyle(category, customCategories);
+              const isCustom = customCategories.some(
+                (c) => c.name.toLowerCase() === category.toLowerCase()
+              );
+              return (
+                <Pressable
+                  key={category}
+                  onPress={() => {
+                    if (isCustom) {
+                      Alert.alert(
+                        "Custom Category",
+                        `"${category}" is a custom category. Do you want to remove it?`,
+                        [
+                          { text: "Cancel", style: "cancel" },
+                          {
+                            text: "Delete category",
+                            style: "destructive",
+                            onPress: () => {
+                              deleteCustomCategory(category);
+                              Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+                            },
+                          },
+                        ]
+                      );
+                    }
+                  }}
+                  style={[
+                    styles.pill,
+                    {
+                      backgroundColor: dark ? `${catStyle.color}25` : catStyle.soft,
+                    },
+                  ]}
+                >
+                  <CategoryIcon category={category} size={15} customCategories={customCategories} />
+                  <Text style={[styles.pillText, { color: catStyle.color }]}>{category}</Text>
+                  {isCustom && (
+                    <Ionicons
+                      name="close-circle"
+                      size={13}
+                      color={catStyle.color}
+                      style={{ opacity: 0.65, marginLeft: 2 }}
+                    />
+                  )}
+                </Pressable>
+              );
+            })}
           </View>
           <Pressable
             style={({ pressed }) => [
@@ -234,12 +282,10 @@ export default function SettingsScreen() {
               { borderColor: colors.border },
               pressed && styles.pressed,
             ]}
-            onPress={() =>
-              Alert.alert(
-                "Custom Categories",
-                "Custom categories are in development. Your standard categories are currently active and synced."
-              )
-            }
+            onPress={() => {
+              Haptics.selectionAsync();
+              setShowCategoryModal(true);
+            }}
           >
             <Ionicons name="add" size={15} color={colors.primary} />
             <Text style={[styles.outlineText, { color: colors.primary }]}>Add custom category</Text>
@@ -315,6 +361,14 @@ export default function SettingsScreen() {
       <StoragePermissionDialog
         visible={showStorageDialog}
         onClose={() => setShowStorageDialog(false)}
+      />
+
+      {/* Custom Category Modal */}
+      <CustomCategoryModal
+        visible={showCategoryModal}
+        onClose={() => setShowCategoryModal(false)}
+        onSave={addCustomCategory}
+        existingCategories={allCategories}
       />
     </ScreenContainer>
   );

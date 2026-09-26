@@ -20,9 +20,10 @@ import { useExpenses } from "@/lib/expense-store";
 import { useTheme } from "@/lib/theme-store";
 import { formatMoney } from "@/utils/formatters";
 import { useFilteredExpenses } from "@/hooks/useFilteredExpenses";
+import { TransactionsSkeleton } from "@/components/ui/transactions-skeleton";
 
 export default function TransactionsScreen() {
-  const { sortedExpenses, removeExpense, updateExpense, refreshExpenses, syncing } = useExpenses();
+  const { sortedExpenses, removeExpense, updateExpense, refreshExpenses, syncing, hydrated } = useExpenses();
   const { colors } = useTheme();
 
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
@@ -146,6 +147,14 @@ export default function TransactionsScreen() {
     ),
     [colors.border, colors.primary, colors.primarySoft, colors.surface, hasActiveFilters, resetFilters]
   );
+
+  if (!hydrated) {
+    return (
+      <ScreenContainer>
+        <TransactionsSkeleton />
+      </ScreenContainer>
+    );
+  }
 
   return (
     <ScreenContainer>

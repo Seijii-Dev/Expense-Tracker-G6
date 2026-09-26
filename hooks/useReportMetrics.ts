@@ -13,7 +13,7 @@ export type PaymentTotal = {
   total: number;
 };
 
-export function useReportMetrics(expenses: Expense[]) {
+export function useReportMetrics(expenses: Expense[], customCategoryList?: string[]) {
   const currentMonth = getPhilippinesMonth();
 
   const monthExpenses = useMemo(
@@ -28,7 +28,8 @@ export function useReportMetrics(expenses: Expense[]) {
 
   const { categoryTotals, paymentTotals } = useMemo(() => {
     const catMap = new Map<Category, number>();
-    for (const cat of CATEGORIES) {
+    const baseCats = customCategoryList && customCategoryList.length > 0 ? customCategoryList : CATEGORIES;
+    for (const cat of baseCats) {
       catMap.set(cat, 0);
     }
 
@@ -39,7 +40,7 @@ export function useReportMetrics(expenses: Expense[]) {
 
     for (const expense of monthExpenses) {
       const amount = expense.amount || 0;
-      if (expense.category && catMap.has(expense.category)) {
+      if (expense.category) {
         catMap.set(expense.category, (catMap.get(expense.category) || 0) + amount);
       }
       if (expense.payment && payMap.has(expense.payment)) {
@@ -57,7 +58,7 @@ export function useReportMetrics(expenses: Expense[]) {
       .sort((a, b) => b.total - a.total);
 
     return { categoryTotals: cats, paymentTotals: pays };
-  }, [monthExpenses]);
+  }, [monthExpenses, customCategoryList]);
 
   const activeCategoryCount = useMemo(
     () => categoryTotals.filter((item) => item.total > 0).length,

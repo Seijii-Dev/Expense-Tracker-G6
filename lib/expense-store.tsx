@@ -2,8 +2,8 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/lib/auth-store";
 import { api } from "@/lib/api-client";
-import { Category, Expense, NewExpenseData, Payment } from "@/types/expense";
-import { CATEGORY_META } from "@/constants/categories";
+import { Category, CustomCategory, Expense, NewExpenseData, Payment } from "@/types/expense";
+import { CATEGORIES, CATEGORY_META } from "@/constants/categories";
 import { STORAGE_KEYS } from "@/constants/storage";
 import { getPhilippinesDate, getPhilippinesMonth, normalizeDate } from "@/utils/date";
 
@@ -27,6 +27,10 @@ export type ExpenseContextValue = {
   remaining: number;
   budgetPercent: number;
   sortedExpenses: Expense[];
+  customCategories: CustomCategory[];
+  allCategories: string[];
+  addCustomCategory: (category: { name: string; color: string; soft?: string; icon: string }) => Promise<boolean>;
+  deleteCustomCategory: (nameOrId: string) => Promise<boolean>;
 };
 
 type PendingSyncItem =
@@ -75,6 +79,7 @@ export function ExpenseProvider({ children }: { children: React.ReactNode }) {
   const { account, token, refreshAccount } = useAuth();
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [budget, setBudgetState] = useState(5000);
+  const [customCategories, setCustomCategories] = useState<CustomCategory[]>([]);
   const [hydratedKey, setHydratedKey] = useState<string | null>(null);
   const [syncing, setSyncing] = useState(false);
   const [syncError, setSyncError] = useState<string | null>(null);
@@ -182,15 +187,18 @@ export function ExpenseProvider({ children }: { children: React.ReactNode }) {
     if (!account) {
       setExpenses([]);
       setBudgetState(5000);
+      setCustomCategories([]);
       return;
     }
 
     (async () => {
-      // 1. Read cached budget & expenses
+      // 1. Read cached budget, expenses & custom categories
       try {
-        const [cachedExpenses, cachedBudget] = await Promise.all([
+        const catKey = STORAGE_KEYS.userCustomCategories(account.email);
+        const [cachedExpenses, cachedBudget, cachedCustomCats] = await Promise.all([
           AsyncStorage.getItem(STORAGE_KEYS.userCache(account.email)),
           AsyncStorage.getItem(STORAGE_KEYS.userBudget(account.email)),
+          AsyncStorage.getItem(catKey),
         ]);
 
         if (mounted) {
@@ -213,6 +221,17 @@ export function ExpenseProvider({ children }: { children: React.ReactNode }) {
                     date: normalizeDate(item.date),
                   }))
                 );
+              }
+            } catch {
+              // Ignore corrupted cache
+            }
+          }
+
+          if (cachedCustomCats) {
+            try {
+              const parsedCats = JSON.parse(cachedCustomCats);
+              if (Array.isArray(parsedCats)) {
+                setCustomCategories(parsedCats);
               }
             } catch {
               // Ignore corrupted cache
@@ -407,6 +426,77 @@ export function ExpenseProvider({ children }: { children: React.ReactNode }) {
     [token, account]
   );
 
+  const allCategories = useMemo(() => {
+    const list = [...CATEGORIES];
+    for (const custom of customCategories) {
+      if (custom.name && !list.some((c) => c.toLowerCase() === custom.name.toLowerCase())) {
+        list.push(custom.name);
+      }
+    }
+    return list;
+  }, [customCategories]);
+
+  const addCustomCategory = useCallback(
+    async (catData: { name: string; color: string; soft?: string; icon: string }): Promise<boolean> => {
+      const trimmedName = catData.name.trim();
+      if (!trimmedName) return false;
+
+      const exists = allCategories.some((c) => c.toLowerCase() === trimmedName.toLowerCase());
+      if (exists) return false;
+
+      const newCat: CustomCategory = {
+        id: `custom-cat-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+        name: trimmedName,
+        color: catData.color,
+        soft: catData.soft || `${catData.color}22`,
+        icon: catData.icon,
+        createdAt: new Date().toISOString(),
+      };
+
+      const updated = [...customCategories, newCat];
+      setCustomCategories(updated);
+
+      if (account) {
+        await AsyncStorage.setItem(
+          STORAGE_KEYS.userCustomCategories(account.email),
+          JSON.stringify(updated)
+        ).catch(() => undefined);
+      } else {
+        await AsyncStorage.setItem(
+          STORAGE_KEYS.globalCustomCategories,
+          JSON.stringify(updated)
+        ).catch(() => undefined);
+      }
+
+      return true;
+    },
+    [allCategories, customCategories, account]
+  );
+
+  const deleteCustomCategory = useCallback(
+    async (nameOrId: string): Promise<boolean> => {
+      const updated = customCategories.filter(
+        (c) => c.id !== nameOrId && c.name.toLowerCase() !== nameOrId.toLowerCase()
+      );
+      setCustomCategories(updated);
+
+      if (account) {
+        await AsyncStorage.setItem(
+          STORAGE_KEYS.userCustomCategories(account.email),
+          JSON.stringify(updated)
+        ).catch(() => undefined);
+      } else {
+        await AsyncStorage.setItem(
+          STORAGE_KEYS.globalCustomCategories,
+          JSON.stringify(updated)
+        ).catch(() => undefined);
+      }
+
+      return true;
+    },
+    [customCategories, account]
+  );
+
   const value = useMemo(
     () => ({
       expenses,
@@ -424,6 +514,10 @@ export function ExpenseProvider({ children }: { children: React.ReactNode }) {
       remaining,
       budgetPercent,
       sortedExpenses,
+      customCategories,
+      allCategories,
+      addCustomCategory,
+      deleteCustomCategory,
     }),
     [
       expenses,
@@ -441,6 +535,10 @@ export function ExpenseProvider({ children }: { children: React.ReactNode }) {
       remaining,
       budgetPercent,
       sortedExpenses,
+      customCategories,
+      allCategories,
+      addCustomCategory,
+      deleteCustomCategory,
     ]
   );
 

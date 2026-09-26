@@ -2,7 +2,7 @@ import React from "react";
 import { StyleSheet, Text, View } from "react-native";
 import Svg, { Circle } from "react-native-svg";
 import { Expense } from "@/types/expense";
-import { CATEGORIES, CATEGORY_META } from "@/constants/categories";
+import { getCategoryStyle } from "@/constants/categories";
 import { useTheme } from "@/lib/theme-store";
 import { formatMoney } from "@/utils/formatters";
 
@@ -21,10 +21,10 @@ export const DonutChart = React.memo(function DonutChart({ total, expenses }: Do
         map.set(exp.category, (map.get(exp.category) || 0) + (exp.amount || 0));
       }
     }
-    return CATEGORIES.map((category) => ({
-      category,
-      total: map.get(category) || 0,
-    })).filter((item) => item.total > 0);
+    return Array.from(map.entries())
+      .map(([category, total]) => ({ category, total }))
+      .filter((item) => item.total > 0)
+      .sort((a, b) => b.total - a.total);
   }, [expenses]);
 
   const radius = 55;
@@ -43,7 +43,7 @@ export const DonutChart = React.memo(function DonutChart({ total, expenses }: Do
               cx="67.5"
               cy="67.5"
               r={radius}
-              stroke={CATEGORY_META[category]?.color || colors.primary}
+              stroke={getCategoryStyle(category).color || colors.primary}
               strokeWidth="24"
               fill="none"
               strokeDasharray={[length, Math.max(0, circumference - length)]}

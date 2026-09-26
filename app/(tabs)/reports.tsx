@@ -10,9 +10,10 @@ import { useExpenses } from "@/lib/expense-store";
 import { useTheme } from "@/lib/theme-store";
 import { formatMoney, formatPercent } from "@/utils/formatters";
 import { useReportMetrics } from "@/hooks/useReportMetrics";
+import { ReportsSkeleton } from "@/components/ui/reports-skeleton";
 
 export default function ReportsScreen() {
-  const { expenses, refreshExpenses, syncing } = useExpenses();
+  const { expenses, refreshExpenses, syncing, hydrated, allCategories, customCategories } = useExpenses();
   const { colors } = useTheme();
 
   const {
@@ -23,11 +24,19 @@ export default function ReportsScreen() {
     activeCategoryCount,
     maxCategorySpend,
     topCategory,
-  } = useReportMetrics(expenses);
+  } = useReportMetrics(expenses, allCategories);
 
   const averageExpenseSize = monthExpenses.length
     ? formatMoney(monthTotal / monthExpenses.length)
     : "₱0";
+
+  if (!hydrated) {
+    return (
+      <ScreenContainer>
+        <ReportsSkeleton />
+      </ScreenContainer>
+    );
+  }
 
   return (
     <ScreenContainer>
@@ -74,6 +83,7 @@ export default function ReportsScreen() {
           monthTotal={monthTotal}
           maxCategorySpend={maxCategorySpend}
           activeCount={activeCategoryCount}
+          customCategories={customCategories}
         />
 
         {/* Payment Methods Panel */}

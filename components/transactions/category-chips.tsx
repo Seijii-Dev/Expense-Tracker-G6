@@ -1,8 +1,8 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { Pressable, ScrollView, StyleSheet, Text } from "react-native";
 import * as Haptics from "expo-haptics";
 import { Category } from "@/types/expense";
-import { CATEGORIES } from "@/constants/categories";
+import { useExpenses } from "@/lib/expense-store";
 import { useTheme } from "@/lib/theme-store";
 
 interface CategoryChipsProps {
@@ -10,14 +10,18 @@ interface CategoryChipsProps {
   onSelect: (category: "All" | Category) => void;
 }
 
-const ALL_CATEGORIES: ("All" | Category)[] = ["All", ...CATEGORIES];
-
 export function CategoryChips({ selected, onSelect }: CategoryChipsProps) {
   const { colors } = useTheme();
+  const { allCategories } = useExpenses();
+
+  const options: ("All" | Category)[] = useMemo(
+    () => ["All", ...allCategories],
+    [allCategories]
+  );
 
   return (
     <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chips}>
-      {ALL_CATEGORIES.map((item) => {
+      {options.map((item) => {
         const isActive = selected === item;
         return (
           <Pressable

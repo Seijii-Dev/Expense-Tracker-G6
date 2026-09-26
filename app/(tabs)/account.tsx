@@ -17,6 +17,7 @@ import { AboutDialog } from "@/components/common/about-dialog";
 import { ProfileCard } from "@/components/account/profile-card";
 import { StatCard } from "@/components/account/stat-card";
 import { AccountRow } from "@/components/account/account-row";
+import { AccountSkeleton } from "@/components/ui/account-skeleton";
 import { useAuth } from "@/lib/auth-store";
 import { useExpenses } from "@/lib/expense-store";
 import { useTheme } from "@/lib/theme-store";
@@ -24,7 +25,7 @@ import { formatMoney } from "@/utils/formatters";
 
 export default function AccountScreen() {
   const { account, logout } = useAuth();
-  const { expenses, budget, syncing, syncError, refreshExpenses } = useExpenses();
+  const { expenses, budget, syncing, syncError, refreshExpenses, hydrated } = useExpenses();
   const { colors } = useTheme();
   const [showSignOut, setShowSignOut] = useState(false);
   const [showAboutModal, setShowAboutModal] = useState(false);
@@ -41,6 +42,14 @@ export default function AccountScreen() {
     Haptics.selectionAsync();
     setShowAboutModal(true);
   };
+
+  if (!hydrated) {
+    return (
+      <ScreenContainer>
+        <AccountSkeleton />
+      </ScreenContainer>
+    );
+  }
 
   return (
     <ScreenContainer>

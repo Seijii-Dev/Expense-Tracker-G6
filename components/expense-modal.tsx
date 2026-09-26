@@ -14,12 +14,14 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { Category, Expense, NewExpenseData, Payment } from "@/types/expense";
-import { CATEGORIES, CATEGORY_META, PAYMENT_METHODS } from "@/constants/categories";
+import { getCategoryStyle, PAYMENT_METHODS } from "@/constants/categories";
 import { getPhilippinesDate, getYesterdayDate, normalizeDate } from "@/utils/date";
 import { useTheme } from "@/lib/theme-store";
+import { useExpenses } from "@/lib/expense-store";
 import { GlassSurface } from "@/components/ui/glass-surface";
 import { CategoryIcon } from "@/components/ui/category-icon";
 import { PaymentIcon } from "@/components/ui/payment-icon";
+import { CustomCategoryModal } from "@/components/settings/custom-category-modal";
 
 interface ExpenseModalProps {
   visible: boolean;
@@ -30,6 +32,7 @@ interface ExpenseModalProps {
 
 export function ExpenseModal({ visible, initialExpense, onClose, onSubmit }: ExpenseModalProps) {
   const { colors, dark } = useTheme();
+  const { allCategories, customCategories, addCustomCategory } = useExpenses();
 
   const isEditing = Boolean(initialExpense);
 
@@ -38,6 +41,7 @@ export function ExpenseModal({ visible, initialExpense, onClose, onSubmit }: Exp
   const [category, setCategory] = useState<Category>("Food");
   const [payment, setPayment] = useState<Payment>("Cash");
   const [date, setDate] = useState(getPhilippinesDate());
+  const [showAddCustomModal, setShowAddCustomModal] = useState(false);
 
   // Reset or initialize values when modal opens
   useEffect(() => {
@@ -219,8 +223,8 @@ export function ExpenseModal({ visible, initialExpense, onClose, onSubmit }: Exp
             {/* Category selection */}
             <Text style={[styles.label, { color: colors.subtle }]}>CATEGORY</Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipRow}>
-              {CATEGORIES.map((item) => {
-                const meta = CATEGORY_META[item];
+              {allCategories.map((item) => {
+                const meta = getCategoryStyle(item, customCategories);
                 const active = category === item;
                 return (
                   <Pressable
@@ -238,7 +242,7 @@ export function ExpenseModal({ visible, initialExpense, onClose, onSubmit }: Exp
                       },
                     ]}
                   >
-                    <CategoryIcon category={item} size={16} />
+                    <CategoryIcon category={item} size={16} customCategories={customCategories} />
                     <Text
                       style={[
                         styles.chipText,
@@ -251,6 +255,23 @@ export function ExpenseModal({ visible, initialExpense, onClose, onSubmit }: Exp
                   </Pressable>
                 );
               })}
+              <Pressable
+                onPress={() => {
+                  Haptics.selectionAsync();
+                  setShowAddCustomModal(true);
+                }}
+                style={[
+                  styles.chip,
+                  {
+                    borderColor: colors.border,
+                    borderStyle: "dashed",
+                    backgroundColor: dark ? "rgba(255,255,255,0.04)" : "#FAFCFB",
+                  },
+                ]}
+              >
+                <Ionicons name="add" size={15} color={colors.primary} />
+                <Text style={[styles.chipText, { color: colors.primary, fontWeight: "600" }]}>Add</Text>
+              </Pressable>
             </ScrollView>
 
             {/* Payment method selection */}
@@ -300,6 +321,20 @@ export function ExpenseModal({ visible, initialExpense, onClose, onSubmit }: Exp
           </ScrollView>
         </GlassSurface>
       </KeyboardAvoidingView>
+
+      {/* Inline Custom Category Creator */}
+      <CustomCategoryModal
+        visible={showAddCustomModal}
+        onClose={() => setShowAddCustomModal(false)}
+        onSave={async (cat) => {
+          const success = await addCustomCategory(cat);
+          if (success) {
+            setCategory(cat.name);
+          }
+          return success;
+        }}
+        existingCategories={allCategories}
+      />
     </Modal>
   );
 }
