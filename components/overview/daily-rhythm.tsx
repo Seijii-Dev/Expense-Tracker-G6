@@ -95,7 +95,7 @@ export const DailyRhythm = React.memo(function DailyRhythm({ expenses }: DailyRh
       </View>
     </GlassSurface>
   );
-}
+});
 
 const styles = StyleSheet.create({
   panel: {

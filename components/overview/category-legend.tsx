@@ -51,7 +51,7 @@ export const CategoryLegend = React.memo(function CategoryLegend({ expenses }: C
       ))}
     </View>
   );
-}
+});
 
 const styles = StyleSheet.create({
   legend: {

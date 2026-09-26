@@ -75,7 +75,7 @@ export const AmbientBackground = React.memo(function AmbientBackground() {
       />
     </View>
   );
-}
+});
 
 const styles = StyleSheet.create({
   blob: {
