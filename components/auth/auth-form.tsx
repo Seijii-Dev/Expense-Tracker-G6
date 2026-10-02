@@ -59,7 +59,9 @@ export function AuthForm({ mode, onModeChange, onBack, onSubmit, busy }: AuthFor
 
         {/* Brand Header */}
         <View style={styles.formHeader}>
-          <Image source={require("@/assets/images/icon.png")} style={styles.formLogo} />
+          <View style={[styles.logoPlate, { backgroundColor: colors.primarySoft }]}>
+            <Image source={require("@/assets/images/icon.png")} style={styles.formLogo} />
+          </View>
           <Text style={[styles.formTitle, { color: colors.foreground }]}>
             {isRegister ? "Start your ledger" : "Welcome back"}
             <Text style={[styles.dot, { color: colors.primary }]}>.</Text>
@@ -242,7 +244,15 @@ const styles = StyleSheet.create({
     width: 54,
     height: 54,
     borderRadius: 16,
-    marginBottom: 14,
+    marginBottom: 0,
+  },
+  logoPlate: {
+    width: 68,
+    height: 68,
+    borderRadius: 22,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 16,
   },
   formTitle: {
     fontFamily: "Fraunces_700Bold",
@@ -299,9 +309,9 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 10,
-    height: 48,
+    height: 54,
     paddingHorizontal: 14,
-    borderRadius: 12,
+    borderRadius: 15,
     borderWidth: 1,
   },
   input: {
@@ -313,13 +323,13 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     gap: 8,
-    height: 52,
-    borderRadius: 14,
+    height: 56,
+    borderRadius: 16,
     shadowColor: "#EB6F61",
-    shadowOpacity: 0.35,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 5 },
-    elevation: 5,
+    shadowOpacity: 0.28,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 7 },
+    elevation: 6,
   },
   primaryCtaText: {
     color: "#FFFFFF",

@@ -36,8 +36,8 @@ export default function TabsLayout() {
         },
         tabBarItemStyle: {
           paddingTop: 5,
-          paddingBottom: 4,
-          height: 62,
+          paddingBottom: 6,
+          height: 64,
           justifyContent: "center",
           alignItems: "center",
         },
@@ -49,18 +49,18 @@ export default function TabsLayout() {
           left: horizontalInset,
           right: horizontalInset,
           bottom: bottomInset,
-          height: 64,
+          height: 68,
           paddingTop: 0,
           paddingBottom: 0,
           borderTopWidth: 0,
           backgroundColor: "transparent",
           elevation: 8,
-          borderRadius: 28,
+          borderRadius: 30,
           overflow: "hidden",
           shadowColor: dark ? "#000000" : "#2C3E50",
           shadowOffset: { width: 0, height: 6 },
-          shadowOpacity: dark ? 0.45 : 0.12,
-          shadowRadius: 16,
+          shadowOpacity: dark ? 0.42 : 0.10,
+          shadowRadius: 20,
         },
         tabBarHideOnKeyboard: true,
       }}
@@ -181,4 +181,3 @@ const styles = StyleSheet.create({
     transform: [{ scale: 1.05 }],
   },
 });
-

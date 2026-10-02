@@ -80,5 +80,6 @@ export const AmbientBackground = React.memo(function AmbientBackground() {
 const styles = StyleSheet.create({
   blob: {
     position: "absolute",
+    opacity: 0.8,
   },
 });
