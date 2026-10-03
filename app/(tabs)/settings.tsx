@@ -28,6 +28,7 @@ import { formatMoney } from "@/utils/formatters";
 import { exportExpensesToCsv } from "@/utils/export-csv";
 import { StoragePermissionDialog } from "@/components/common/storage-permission-dialog";
 import { CustomCategoryModal } from "@/components/settings/custom-category-modal";
+import { ConfirmDialog } from "@/components/common/confirm-dialog";
 
 const BUDGET_PRESETS = [3000, 5000, 10000, 15000, 20000] as const;
 
@@ -51,6 +52,14 @@ export default function SettingsScreen() {
   const [budgetNudges, setBudgetNudges] = useState(true);
   const [showStorageDialog, setShowStorageDialog] = useState(false);
   const [showCategoryModal, setShowCategoryModal] = useState(false);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const [categoryToDelete, setCategoryToDelete] = useState<string | null>(null);
+  const [budgetNotice, setBudgetNotice] = useState<string | null>(null);
+  const [exportNotice, setExportNotice] = useState<{
+    title: string;
+    message: string;
+    variant: "success" | "danger" | "warning";
+  } | null>(null);
 
   useEffect(() => {
     setBudgetText(String(budget));
@@ -89,23 +98,13 @@ export default function SettingsScreen() {
   };
 
   const handleLogout = () => {
-    Alert.alert("Sign out?", "You can sign back in any time to pick up where you left off.", [
-      { text: "Cancel", style: "cancel" },
-      {
-        text: "Sign out",
-        style: "destructive",
-        onPress: async () => {
-          await logout();
-          router.replace("/auth");
-        },
-      },
-    ]);
+    setShowLogoutConfirm(true);
   };
 
   const commitBudget = (amount?: number) => {
     const target = amount !== undefined ? amount : parseFloat(budgetText);
     if (isNaN(target) || target < 0) {
-      Alert.alert("Invalid Budget", "Please enter a valid monthly budget amount (0 or greater).");
+      setBudgetNotice("Please enter a valid monthly budget amount (₱0 or greater).");
       setBudgetText(String(budget));
       return;
     }
@@ -120,7 +119,17 @@ export default function SettingsScreen() {
   };
 
   const handleExport = async () => {
-    await exportExpensesToCsv(expenses);
+    try {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    } catch {
+      // Non-fatal
+    }
+    const res = await exportExpensesToCsv(expenses, false);
+    setExportNotice({
+      title: res.title,
+      message: res.message,
+      variant: res.success ? "success" : "danger",
+    });
   };
 
   return (
@@ -290,25 +299,7 @@ export default function SettingsScreen() {
                   key={category}
                   onPress={() => {
                     if (isCustom) {
-                      Alert.alert(
-                        "Custom Category",
-                        `"${category}" is a custom category. Do you want to remove it?`,
-                        [
-                          { text: "Cancel", style: "cancel" },
-                          {
-                            text: "Delete category",
-                            style: "destructive",
-                            onPress: () => {
-                              deleteCustomCategory(category);
-                              try {
-                                Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-                              } catch {
-                                // Non-fatal
-                              }
-                            },
-                          },
-                        ]
-                      );
+                      setCategoryToDelete(category);
                     }
                   }}
                   style={({ pressed }) => [
@@ -476,6 +467,64 @@ export default function SettingsScreen() {
         onClose={() => setShowCategoryModal(false)}
         onSave={addCustomCategory}
         existingCategories={allCategories}
+      />
+
+      {/* Sign Out Confirmation Dialog */}
+      <ConfirmDialog
+        visible={showLogoutConfirm}
+        title="Sign out of Ledgerly?"
+        message="You can sign back in any time. Your saved transactions remain safely synced in your account."
+        variant="danger"
+        icon="log-out-outline"
+        confirmText="Sign out"
+        cancelText="Cancel"
+        destructive
+        onConfirm={async () => {
+          setShowLogoutConfirm(false);
+          await logout();
+          router.replace("/auth");
+        }}
+        onCancel={() => setShowLogoutConfirm(false)}
+      />
+
+      {/* Delete Custom Category Dialog */}
+      <ConfirmDialog
+        visible={Boolean(categoryToDelete)}
+        title="Delete Custom Category"
+        message={`Are you sure you want to remove "${categoryToDelete}"? Past transactions categorized under it will remain in your records.`}
+        variant="danger"
+        icon="trash-outline"
+        confirmText="Delete category"
+        cancelText="Cancel"
+        destructive
+        onConfirm={() => {
+          if (categoryToDelete) {
+            deleteCustomCategory(categoryToDelete);
+            setCategoryToDelete(null);
+          }
+        }}
+        onCancel={() => setCategoryToDelete(null)}
+      />
+
+      {/* Invalid Budget Notice Dialog */}
+      <ConfirmDialog
+        visible={Boolean(budgetNotice)}
+        title="Invalid Budget"
+        message={budgetNotice || ""}
+        variant="warning"
+        icon="alert-circle-outline"
+        confirmText="Understood"
+        onConfirm={() => setBudgetNotice(null)}
+      />
+
+      {/* Export Status Dialog */}
+      <ConfirmDialog
+        visible={Boolean(exportNotice)}
+        title={exportNotice?.title || "Export Status"}
+        message={exportNotice?.message || ""}
+        variant={exportNotice?.variant || "neutral"}
+        confirmText="Done"
+        onConfirm={() => setExportNotice(null)}
       />
     </ScreenContainer>
   );

@@ -25,10 +25,24 @@ export function generateExpenseCsv(expenses: Expense[]): string {
   return [headers.join(","), ...rows].join("\n");
 }
 
-export async function exportExpensesToCsv(expenses: Expense[]): Promise<boolean> {
+export interface ExportResult {
+  success: boolean;
+  title: string;
+  message: string;
+}
+
+export async function exportExpensesToCsv(
+  expenses: Expense[],
+  showAlerts: boolean = false
+): Promise<ExportResult> {
   if (!expenses.length) {
-    Alert.alert("Nothing to export", "Add at least one expense before creating an export backup.");
-    return false;
+    const res: ExportResult = {
+      success: false,
+      title: "Nothing to export",
+      message: "Add at least one expense before creating an export backup.",
+    };
+    if (showAlerts) Alert.alert(res.title, res.message);
+    return res;
   }
 
   await requestStoragePermission();
@@ -47,11 +61,21 @@ export async function exportExpensesToCsv(expenses: Expense[]): Promise<boolean>
       link.click();
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
-      Alert.alert("Export completed", "Your expense records have been downloaded as CSV.");
-      return true;
+      const res: ExportResult = {
+        success: true,
+        title: "Export completed",
+        message: "Your expense records have been downloaded as CSV.",
+      };
+      if (showAlerts) Alert.alert(res.title, res.message);
+      return res;
     } catch {
-      Alert.alert("Export failed", "Unable to download CSV in browser.");
-      return false;
+      const res: ExportResult = {
+        success: false,
+        title: "Export failed",
+        message: "Unable to download CSV in browser.",
+      };
+      if (showAlerts) Alert.alert(res.title, res.message);
+      return res;
     }
   }
 
@@ -59,10 +83,19 @@ export async function exportExpensesToCsv(expenses: Expense[]): Promise<boolean>
   if (!baseDir) {
     try {
       await Share.share({ message: csv, title: "Ledgerly Expense CSV" });
-      return true;
+      return {
+        success: true,
+        title: "Export shared",
+        message: "Your expense CSV backup was shared.",
+      };
     } catch {
-      Alert.alert("Export failed", "The expense backup could not be shared.");
-      return false;
+      const res: ExportResult = {
+        success: false,
+        title: "Export failed",
+        message: "The expense backup could not be shared.",
+      };
+      if (showAlerts) Alert.alert(res.title, res.message);
+      return res;
     }
   }
 
@@ -74,9 +107,18 @@ export async function exportExpensesToCsv(expenses: Expense[]): Promise<boolean>
     } else {
       await Share.share({ message: csv, title: "Ledgerly Expense CSV" });
     }
-    return true;
+    return {
+      success: true,
+      title: "Export completed",
+      message: "Your expense records have been exported successfully.",
+    };
   } catch {
-    Alert.alert("Export failed", "The expense backup could not be created.");
-    return false;
+    const res: ExportResult = {
+      success: false,
+      title: "Export failed",
+      message: "The expense backup could not be created.",
+    };
+    if (showAlerts) Alert.alert(res.title, res.message);
+    return res;
   }
 }

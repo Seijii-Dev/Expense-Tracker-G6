@@ -26,6 +26,11 @@ const config: ExpoConfig = {
       projectId: "e2002670-90ed-468a-b2f7-cfd6aa16be13",
     },
   },
+  web: {
+    bundler: "metro",
+    output: "static",
+    favicon: "./assets/images/icon.png",
+  },
   plugins: ["expo-router", "expo-font", "expo-secure-store"],
   experiments: {
     typedRoutes: true,

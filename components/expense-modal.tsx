@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from "react";
 import {
-  Alert,
   KeyboardAvoidingView,
   Modal,
   Platform,
@@ -42,10 +41,12 @@ export function ExpenseModal({ visible, initialExpense, onClose, onSubmit }: Exp
   const [payment, setPayment] = useState<Payment>("Cash");
   const [date, setDate] = useState(getPhilippinesDate());
   const [showAddCustomModal, setShowAddCustomModal] = useState(false);
+  const [validationError, setValidationError] = useState<string | null>(null);
 
   // Reset or initialize values when modal opens
   useEffect(() => {
     if (visible) {
+      setValidationError(null);
       if (initialExpense) {
         setAmount(String(initialExpense.amount));
         setDescription(initialExpense.description || "");
@@ -65,11 +66,21 @@ export function ExpenseModal({ visible, initialExpense, onClose, onSubmit }: Exp
   const handleSave = () => {
     const numeric = parseFloat(amount);
     if (isNaN(numeric) || numeric <= 0) {
-      Alert.alert("Invalid Amount", "Please enter an amount greater than 0.");
+      setValidationError("Please enter an amount greater than ₱0.");
+      try {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+      } catch {
+        // Non-fatal
+      }
       return;
     }
     if (!description.trim()) {
-      Alert.alert("Missing Description", "Please add a description of what this was for.");
+      setValidationError("Please add a description of what this was for.");
+      try {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+      } catch {
+        // Non-fatal
+      }
       return;
     }
 
@@ -85,6 +96,7 @@ export function ExpenseModal({ visible, initialExpense, onClose, onSubmit }: Exp
       payment,
       date,
     });
+    setValidationError(null);
     onClose();
   };
 
@@ -126,6 +138,24 @@ export function ExpenseModal({ visible, initialExpense, onClose, onSubmit }: Exp
           </View>
 
           <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+            {/* Inline Branded Validation Warning */}
+            {validationError && (
+              <View
+                style={[
+                  styles.errorBanner,
+                  {
+                    backgroundColor: dark ? "rgba(239, 68, 68, 0.14)" : "#FEE2E2",
+                    borderColor: colors.error,
+                  },
+                ]}
+              >
+                <Ionicons name="alert-circle" size={16} color={colors.error} />
+                <Text style={[styles.errorBannerText, { color: colors.error }]}>
+                  {validationError}
+                </Text>
+              </View>
+            )}
+
             {/* Amount input */}
             <Text style={[styles.label, { color: colors.subtle }]}>AMOUNT</Text>
             <View
@@ -133,14 +163,17 @@ export function ExpenseModal({ visible, initialExpense, onClose, onSubmit }: Exp
                 styles.amountWrap,
                 {
                   backgroundColor: dark ? "rgba(255,255,255,0.04)" : colors.surfaceSubtle,
-                  borderColor: colors.border,
+                  borderColor: validationError && (!amount || parseFloat(amount) <= 0) ? colors.error : colors.border,
                 },
               ]}
             >
               <Text style={[styles.currencySymbol, { color: colors.primary }]}>₱</Text>
               <TextInput
                 value={amount}
-                onChangeText={setAmount}
+                onChangeText={(val) => {
+                  setAmount(val);
+                  if (validationError) setValidationError(null);
+                }}
                 keyboardType="decimal-pad"
                 placeholder="0.00"
                 placeholderTextColor={colors.subtle}
@@ -153,14 +186,17 @@ export function ExpenseModal({ visible, initialExpense, onClose, onSubmit }: Exp
             <Text style={[styles.label, { color: colors.subtle }]}>DESCRIPTION</Text>
             <TextInput
               value={description}
-              onChangeText={setDescription}
+              onChangeText={(val) => {
+                setDescription(val);
+                if (validationError) setValidationError(null);
+              }}
               placeholder="What was this expense for?"
               placeholderTextColor={colors.subtle}
               style={[
                 styles.input,
                 {
                   backgroundColor: dark ? "rgba(255,255,255,0.04)" : colors.surfaceSubtle,
-                  borderColor: colors.border,
+                  borderColor: validationError && !description.trim() ? colors.error : colors.border,
                   color: colors.foreground,
                 },
               ]}
@@ -546,5 +582,20 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: "800",
     letterSpacing: 0.2,
+  },
+  errorBanner: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderRadius: 12,
+    borderWidth: 1,
+    marginBottom: 14,
+  },
+  errorBannerText: {
+    fontSize: 12.5,
+    fontWeight: "600",
+    flex: 1,
   },
 });

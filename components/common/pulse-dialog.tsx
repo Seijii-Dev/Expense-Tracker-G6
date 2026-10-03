@@ -1,5 +1,7 @@
-import React from "react";
+import React, { useEffect, useRef } from "react";
 import {
+  Animated,
+  Easing,
   Modal,
   Platform,
   Pressable,
@@ -34,6 +36,32 @@ export function PulseDialog({
   formatMoney = defaultFormatMoney,
 }: PulseDialogProps) {
   const { colors, dark } = useTheme();
+
+  // Smooth entrance animations
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const scaleAnim = useRef(new Animated.Value(0.92)).current;
+
+  useEffect(() => {
+    if (visible) {
+      Animated.parallel([
+        Animated.timing(fadeAnim, {
+          toValue: 1,
+          duration: 200,
+          easing: Easing.out(Easing.quad),
+          useNativeDriver: true,
+        }),
+        Animated.spring(scaleAnim, {
+          toValue: 1,
+          friction: 8,
+          tension: 70,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    } else {
+      fadeAnim.setValue(0);
+      scaleAnim.setValue(0.92);
+    }
+  }, [visible]);
 
   const isOver = budgetPercent >= 100;
   const isWarning = budgetPercent >= 80 && !isOver;
@@ -77,12 +105,21 @@ export function PulseDialog({
       onRequestClose={onClose}
     >
       <View style={[styles.backdrop, { backgroundColor: colors.dialogBackdrop }]}>
-        <GlassSurface
-          variant="sheet"
-          radius={28}
-          style={styles.cardWrap}
-          contentStyle={[styles.card, { backgroundColor: colors.card }]}
+        <Animated.View
+          style={[
+            styles.cardWrap,
+            {
+              opacity: fadeAnim,
+              transform: [{ scale: scaleAnim }],
+            },
+          ]}
         >
+          <GlassSurface
+            variant="sheet"
+            radius={28}
+            style={styles.cardContainer}
+            contentStyle={[styles.card, { backgroundColor: colors.card }]}
+          >
           {/* Pulse Header */}
           <View style={styles.topRow}>
             <View style={[styles.iconRing, { backgroundColor: statusBg }]}>
@@ -176,7 +213,8 @@ export function PulseDialog({
           >
             <Text style={styles.dismissBtnText}>Got it</Text>
           </Pressable>
-        </GlassSurface>
+          </GlassSurface>
+        </Animated.View>
       </View>
     </Modal>
   );
@@ -192,6 +230,9 @@ const styles = StyleSheet.create({
   cardWrap: {
     width: "100%",
     maxWidth: 380,
+  },
+  cardContainer: {
+    width: "100%",
   },
   card: {
     padding: 22,

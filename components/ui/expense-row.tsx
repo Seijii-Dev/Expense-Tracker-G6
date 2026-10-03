@@ -1,5 +1,5 @@
 import React from "react";
-import { Alert, Platform, Pressable, StyleSheet, Text, View } from "react-native";
+import { Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { CategoryIcon } from "@/components/ui/category-icon";
@@ -8,6 +8,7 @@ import { getCategoryStyle } from "@/constants/categories";
 import { useExpenses } from "@/lib/expense-store";
 import { useTheme } from "@/lib/theme-store";
 import { formatDate, formatMoney } from "@/utils/formatters";
+import { ConfirmDialog } from "@/components/common/confirm-dialog";
 
 interface ExpenseRowProps {
   expense: Expense;
@@ -27,24 +28,11 @@ export const ExpenseRow = React.memo(function ExpenseRow({
   const { colors, dark } = useTheme();
   const { customCategories } = useExpenses();
   const meta = getCategoryStyle(expense.category, customCategories);
+  const [showDeleteConfirm, setShowDeleteConfirm] = React.useState(false);
 
-  const handleDelete = React.useCallback(() => {
-    Alert.alert("Delete Expense", `Remove "${expense.description}" from your ledger?`, [
-      { text: "Cancel", style: "cancel" },
-      {
-        text: "Delete",
-        style: "destructive",
-        onPress: () => {
-          try {
-            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-          } catch {
-            // Non-fatal
-          }
-          onDelete?.();
-        },
-      },
-    ]);
-  }, [expense.description, onDelete]);
+  const handleDeletePress = React.useCallback(() => {
+    setShowDeleteConfirm(true);
+  }, []);
 
   return (
     <View style={[styles.row, { borderBottomColor: colors.border }]}>
@@ -121,7 +109,7 @@ export const ExpenseRow = React.memo(function ExpenseRow({
             {onDelete && (
               <Pressable
                 hitSlop={8}
-                onPress={handleDelete}
+                onPress={handleDeletePress}
                 accessibilityRole="button"
                 accessibilityLabel={`Delete ${expense.description}`}
                 style={({ pressed }) => [
@@ -136,6 +124,23 @@ export const ExpenseRow = React.memo(function ExpenseRow({
           </View>
         )}
       </View>
+
+      {/* Branded Delete Confirmation Dialog */}
+      <ConfirmDialog
+        visible={showDeleteConfirm}
+        title="Delete Expense"
+        message={`Remove "${expense.description}" (${formatMoney(expense.amount)}) from your ledger? This action cannot be reversed.`}
+        variant="danger"
+        icon="trash-outline"
+        confirmText="Delete"
+        cancelText="Cancel"
+        destructive
+        onConfirm={() => {
+          setShowDeleteConfirm(false);
+          onDelete?.();
+        }}
+        onCancel={() => setShowDeleteConfirm(false)}
+      />
     </View>
   );
 });

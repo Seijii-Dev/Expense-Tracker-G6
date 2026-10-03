@@ -26,19 +26,25 @@ function CustomTabItem({ focused, name, activeName, label }: TabBarIconProps) {
       <View
         style={[
           styles.iconPill,
-          focused && [
-            styles.activeIconPill,
-            {
-              backgroundColor: dark ? "rgba(255, 117, 101, 0.16)" : colors.primarySoft,
-              borderColor: dark ? "rgba(255, 117, 101, 0.35)" : "rgba(255, 101, 84, 0.2)",
-            },
-          ],
+          {
+            backgroundColor: focused
+              ? dark
+                ? "rgba(255, 117, 101, 0.18)"
+                : colors.primarySoft
+              : "transparent",
+            borderColor: focused
+              ? dark
+                ? "rgba(255, 117, 101, 0.35)"
+                : "rgba(255, 101, 84, 0.22)"
+              : "transparent",
+          },
+          focused && styles.activeIconPill,
         ]}
       >
         <Ionicons
           name={focused ? activeName : name}
           color={focused ? colors.primary : colors.muted}
-          size={20}
+          size={19}
         />
       </View>
       <Text
@@ -83,8 +89,8 @@ export default function TabsLayout() {
   }
 
   // Balanced floating pill navigation bar on all screen sizes
-  const maxBarWidth = 460;
-  const horizontalInset = Math.max(16, Math.floor((windowWidth - maxBarWidth) / 2));
+  const maxBarWidth = 480;
+  const horizontalInset = Math.max(12, Math.floor((windowWidth - maxBarWidth) / 2));
   const bottomInset = Math.max(insets.bottom + 6, Platform.OS === "ios" ? 18 : 14);
 
   return (
@@ -94,9 +100,11 @@ export default function TabsLayout() {
         tabBarShowLabel: false,
         tabBarItemStyle: {
           height: 64,
+          flex: 1,
           justifyContent: "center",
           alignItems: "center",
           paddingVertical: 4,
+          paddingHorizontal: 0,
           ...(Platform.OS === "web" ? ({ cursor: "pointer" } as any) : {}),
         },
         tabBarBackground: () => (
@@ -140,8 +148,8 @@ export default function TabsLayout() {
             <CustomTabItem
               focused={focused}
               color={color}
-              name="grid-outline"
-              activeName="grid"
+              name="wallet-outline"
+              activeName="wallet"
               label="Overview"
             />
           ),
@@ -217,6 +225,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     width: "100%",
     paddingVertical: 2,
+    paddingHorizontal: 0,
   },
   iconPill: {
     height: 30,
@@ -225,19 +234,20 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: "transparent",
   },
   activeIconPill: {
-    transform: [{ scale: 1.04 }],
+    transform: [{ scale: 1.05 }],
   },
   label: {
-    fontSize: 9.5,
+    fontSize: 10,
     fontWeight: "600",
-    letterSpacing: 0.2,
+    letterSpacing: -0.2,
     marginTop: 2,
+    lineHeight: 13,
+    textAlign: "center",
   },
   activeLabel: {
-    fontWeight: "800",
+    fontWeight: "700",
   },
   activeDot: {
     width: 4,
