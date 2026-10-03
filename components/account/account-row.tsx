@@ -1,5 +1,5 @@
 import React from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "@/lib/theme-store";
 
@@ -57,6 +57,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingVertical: 14,
     gap: 14,
+    ...(Platform.OS === "web" ? ({ cursor: "pointer" } as any) : {}),
   },
   rowBorder: {
     borderBottomWidth: 1,

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import {
   Alert,
+  Platform,
   Pressable,
   RefreshControl,
   ScrollView,
@@ -66,7 +67,11 @@ export default function SettingsScreen() {
   }, [account?.email]);
 
   const toggleBudgetNudges = (value: boolean) => {
-    Haptics.selectionAsync();
+    try {
+      Haptics.selectionAsync();
+    } catch {
+      // Non-fatal
+    }
     setBudgetNudges(value);
     if (account) {
       const nudgeKey = STORAGE_KEYS.budgetNudges(account.email);
@@ -75,7 +80,11 @@ export default function SettingsScreen() {
   };
 
   const toggleDarkMode = (value: boolean) => {
-    Haptics.selectionAsync();
+    try {
+      Haptics.selectionAsync();
+    } catch {
+      // Non-fatal
+    }
     setDark(value);
   };
 
@@ -103,7 +112,11 @@ export default function SettingsScreen() {
     const safe = Math.round(target);
     setBudgetText(String(safe));
     setBudget(safe);
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    try {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    } catch {
+      // Non-fatal
+    }
   };
 
   const handleExport = async () => {
@@ -287,7 +300,11 @@ export default function SettingsScreen() {
                             style: "destructive",
                             onPress: () => {
                               deleteCustomCategory(category);
-                              Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+                              try {
+                                Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+                              } catch {
+                                // Non-fatal
+                              }
                             },
                           },
                         ]
@@ -327,7 +344,11 @@ export default function SettingsScreen() {
               pressed && styles.pressed,
             ]}
             onPress={() => {
-              Haptics.selectionAsync();
+              try {
+                Haptics.selectionAsync();
+              } catch {
+                // Non-fatal
+              }
               setShowCategoryModal(true);
             }}
             accessibilityRole="button"
@@ -426,7 +447,11 @@ export default function SettingsScreen() {
               pressed && styles.pressed,
             ]}
             onPress={() => {
-              Haptics.selectionAsync();
+              try {
+                Haptics.selectionAsync();
+              } catch {
+                // Non-fatal
+              }
               setShowStorageDialog(true);
             }}
             accessibilityRole="button"
@@ -555,6 +580,7 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderRadius: 12,
     borderWidth: 1,
+    ...(Platform.OS === "web" ? ({ cursor: "pointer" } as any) : {}),
   },
   presetBtnText: {
     fontSize: 12,
@@ -576,6 +602,7 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderRadius: 14,
     borderWidth: 1,
+    ...(Platform.OS === "web" ? ({ cursor: "pointer" } as any) : {}),
   },
   pillText: {
     fontSize: 12,
@@ -591,6 +618,7 @@ const styles = StyleSheet.create({
     marginTop: 16,
     borderRadius: 12,
     borderWidth: 1,
+    ...(Platform.OS === "web" ? ({ cursor: "pointer" } as any) : {}),
   },
   outlineText: {
     fontSize: 12,
@@ -635,6 +663,7 @@ const styles = StyleSheet.create({
     gap: 8,
     height: 48,
     borderRadius: 14,
+    ...(Platform.OS === "web" ? ({ cursor: "pointer" } as any) : {}),
   },
   exportText: {
     color: "#FFFFFF",

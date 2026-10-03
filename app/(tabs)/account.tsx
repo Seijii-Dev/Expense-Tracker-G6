@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import {
+  Platform,
   Pressable,
   RefreshControl,
   ScrollView,
@@ -39,7 +40,11 @@ export default function AccountScreen() {
   };
 
   const showAbout = () => {
-    Haptics.selectionAsync();
+    try {
+      Haptics.selectionAsync();
+    } catch {
+      // Non-fatal
+    }
     setShowAboutModal(true);
   };
 
@@ -132,7 +137,11 @@ export default function AccountScreen() {
             pressed && styles.pressed,
           ]}
           onPress={() => {
-            Haptics.selectionAsync();
+            try {
+              Haptics.selectionAsync();
+            } catch {
+              // Non-fatal
+            }
             setShowSignOut(true);
           }}
           accessibilityRole="button"
@@ -207,6 +216,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     gap: 8,
     marginTop: 4,
+    ...(Platform.OS === "web" ? ({ cursor: "pointer" } as any) : {}),
   },
   signOutText: {
     fontSize: 14,

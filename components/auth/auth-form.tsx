@@ -59,7 +59,11 @@ export function AuthForm({ mode, onModeChange, onBack, onSubmit, busy }: AuthFor
             pressed && styles.pressed,
           ]}
           onPress={() => {
-            Haptics.selectionAsync();
+            try {
+              Haptics.selectionAsync();
+            } catch {
+              // Non-fatal
+            }
             onBack();
           }}
           accessibilityRole="button"
@@ -114,7 +118,11 @@ export function AuthForm({ mode, onModeChange, onBack, onSubmit, busy }: AuthFor
               ],
             ]}
             onPress={() => {
-              Haptics.selectionAsync();
+              try {
+                Haptics.selectionAsync();
+              } catch {
+                // Non-fatal
+              }
               onModeChange("login");
             }}
             accessibilityRole="tab"
@@ -145,7 +153,11 @@ export function AuthForm({ mode, onModeChange, onBack, onSubmit, busy }: AuthFor
               ],
             ]}
             onPress={() => {
-              Haptics.selectionAsync();
+              try {
+                Haptics.selectionAsync();
+              } catch {
+                // Non-fatal
+              }
               onModeChange("register");
             }}
             accessibilityRole="tab"
@@ -293,7 +305,11 @@ export function AuthForm({ mode, onModeChange, onBack, onSubmit, busy }: AuthFor
         <Pressable
           style={styles.switchMode}
           onPress={() => {
-            Haptics.selectionAsync();
+            try {
+              Haptics.selectionAsync();
+            } catch {
+              // Non-fatal
+            }
             onModeChange(isRegister ? "login" : "register");
           }}
           accessibilityRole="button"
@@ -330,6 +346,7 @@ const styles = StyleSheet.create({
     paddingVertical: 7,
     borderRadius: 12,
     borderWidth: 1,
+    ...(Platform.OS === "web" ? ({ cursor: "pointer" } as any) : {}),
   },
   backLinkText: {
     fontSize: 12,
@@ -376,6 +393,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     borderRadius: 12,
+    ...(Platform.OS === "web" ? ({ cursor: "pointer" } as any) : {}),
   },
   segmentBtnActive: {
     borderWidth: 1,
@@ -430,6 +448,7 @@ const styles = StyleSheet.create({
     shadowRadius: 16,
     shadowOffset: { width: 0, height: 7 },
     elevation: 6,
+    ...(Platform.OS === "web" ? ({ cursor: "pointer" } as any) : {}),
   },
   primaryCtaText: {
     color: "#FFFFFF",
@@ -443,6 +462,7 @@ const styles = StyleSheet.create({
   switchMode: {
     alignItems: "center",
     marginTop: 20,
+    ...(Platform.OS === "web" ? ({ cursor: "pointer" } as any) : {}),
   },
   switchText: {
     fontSize: 13,

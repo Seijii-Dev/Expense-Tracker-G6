@@ -1,10 +1,11 @@
 import React from "react";
-import { Alert, Pressable, StyleSheet, Text, View } from "react-native";
+import { Alert, Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { CategoryIcon } from "@/components/ui/category-icon";
 import { Expense } from "@/types/expense";
 import { getCategoryStyle } from "@/constants/categories";
+import { useExpenses } from "@/lib/expense-store";
 import { useTheme } from "@/lib/theme-store";
 import { formatDate, formatMoney } from "@/utils/formatters";
 
@@ -24,7 +25,8 @@ export const ExpenseRow = React.memo(function ExpenseRow({
   showActions = true,
 }: ExpenseRowProps) {
   const { colors, dark } = useTheme();
-  const meta = getCategoryStyle(expense.category);
+  const { customCategories } = useExpenses();
+  const meta = getCategoryStyle(expense.category, customCategories);
 
   const handleDelete = React.useCallback(() => {
     Alert.alert("Delete Expense", `Remove "${expense.description}" from your ledger?`, [
@@ -56,7 +58,7 @@ export const ExpenseRow = React.memo(function ExpenseRow({
           },
         ]}
       >
-        <CategoryIcon category={expense.category} size={20} />
+        <CategoryIcon category={expense.category} size={20} customCategories={customCategories} />
       </View>
 
       {/* Main Content */}
@@ -156,6 +158,7 @@ const styles = StyleSheet.create({
   },
   body: {
     flex: 1,
+    ...(Platform.OS === "web" ? ({ cursor: "pointer" } as any) : {}),
   },
   title: {
     fontSize: 13.5,
@@ -205,6 +208,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     alignItems: "center",
     justifyContent: "center",
+    ...(Platform.OS === "web" ? ({ cursor: "pointer" } as any) : {}),
   },
   actionPressed: {
     opacity: 0.6,

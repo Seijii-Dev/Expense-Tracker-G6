@@ -73,7 +73,11 @@ export function ExpenseModal({ visible, initialExpense, onClose, onSubmit }: Exp
       return;
     }
 
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    try {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    } catch {
+      // Non-fatal
+    }
     onSubmit({
       amount: Math.round(numeric * 100) / 100,
       description: description.trim(),
@@ -250,7 +254,11 @@ export function ExpenseModal({ visible, initialExpense, onClose, onSubmit }: Exp
                   <Pressable
                     key={item}
                     onPress={() => {
-                      Haptics.selectionAsync();
+                      try {
+                        Haptics.selectionAsync();
+                      } catch {
+                        // Non-fatal
+                      }
                       setCategory(item);
                     }}
                     style={({ pressed }) => [
@@ -291,7 +299,11 @@ export function ExpenseModal({ visible, initialExpense, onClose, onSubmit }: Exp
               })}
               <Pressable
                 onPress={() => {
-                  Haptics.selectionAsync();
+                  try {
+                    Haptics.selectionAsync();
+                  } catch {
+                    // Non-fatal
+                  }
                   setShowAddCustomModal(true);
                 }}
                 style={({ pressed }) => [
@@ -319,7 +331,11 @@ export function ExpenseModal({ visible, initialExpense, onClose, onSubmit }: Exp
                   <Pressable
                     key={item}
                     onPress={() => {
-                      Haptics.selectionAsync();
+                      try {
+                        Haptics.selectionAsync();
+                      } catch {
+                        // Non-fatal
+                      }
                       setPayment(item);
                     }}
                     style={({ pressed }) => [
@@ -433,6 +449,7 @@ const styles = StyleSheet.create({
     borderRadius: 17,
     alignItems: "center",
     justifyContent: "center",
+    ...(Platform.OS === "web" ? ({ cursor: "pointer" } as any) : {}),
   },
   label: {
     fontSize: 10,
@@ -481,6 +498,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     borderRadius: 12,
     borderWidth: 1,
+    ...(Platform.OS === "web" ? ({ cursor: "pointer" } as any) : {}),
   },
   presetText: {
     fontSize: 12,
@@ -498,6 +516,7 @@ const styles = StyleSheet.create({
     height: 38,
     borderRadius: 12,
     borderWidth: 1,
+    ...(Platform.OS === "web" ? ({ cursor: "pointer" } as any) : {}),
   },
   chipText: {
     fontSize: 12,
@@ -516,6 +535,7 @@ const styles = StyleSheet.create({
     shadowRadius: 14,
     shadowOffset: { width: 0, height: 6 },
     elevation: 5,
+    ...(Platform.OS === "web" ? ({ cursor: "pointer" } as any) : {}),
   },
   submitPressed: {
     opacity: 0.85,

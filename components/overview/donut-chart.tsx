@@ -3,6 +3,7 @@ import { StyleSheet, Text, View } from "react-native";
 import Svg, { Circle } from "react-native-svg";
 import { Expense } from "@/types/expense";
 import { getCategoryStyle } from "@/constants/categories";
+import { useExpenses } from "@/lib/expense-store";
 import { useTheme } from "@/lib/theme-store";
 import { formatMoney } from "@/utils/formatters";
 
@@ -13,6 +14,7 @@ interface DonutChartProps {
 
 export const DonutChart = React.memo(function DonutChart({ total, expenses }: DonutChartProps) {
   const { colors, dark } = useTheme();
+  const { customCategories } = useExpenses();
 
   const totals = React.useMemo(() => {
     const map = new Map<string, number>();
@@ -54,7 +56,7 @@ export const DonutChart = React.memo(function DonutChart({ total, expenses }: Do
               cx={size / 2}
               cy={size / 2}
               r={radius}
-              stroke={getCategoryStyle(category).color || colors.primary}
+              stroke={getCategoryStyle(category, customCategories).color || colors.primary}
               strokeWidth={strokeWidth}
               fill="none"
               strokeDasharray={[Math.max(0, length - 2), Math.max(0, circumference - (length - 2))]}

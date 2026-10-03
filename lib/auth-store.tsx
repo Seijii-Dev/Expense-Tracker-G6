@@ -287,7 +287,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const refreshAccount = useCallback((updated: RemoteAccount) => {
-    setAccount(updated);
+    setAccount((current) => {
+      if (
+        current &&
+        current.id === updated.id &&
+        current.email === updated.email &&
+        current.name === updated.name &&
+        current.budget === updated.budget
+      ) {
+        return current;
+      }
+      return updated;
+    });
     AsyncStorage.setItem(STORAGE_KEYS.cachedAccount, JSON.stringify(updated)).catch(() => undefined);
   }, []);
 

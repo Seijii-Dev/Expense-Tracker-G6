@@ -1,5 +1,5 @@
 import React from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { useTheme } from "@/lib/theme-store";
@@ -107,6 +107,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     borderRadius: 9,
     borderWidth: 1,
+    ...(Platform.OS === "web" ? ({ cursor: "pointer" } as any) : {}),
   },
   sortChipText: {
     fontSize: 10.5,

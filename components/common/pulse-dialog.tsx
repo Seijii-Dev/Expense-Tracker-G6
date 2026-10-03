@@ -1,6 +1,7 @@
 import React from "react";
 import {
   Modal,
+  Platform,
   Pressable,
   StyleSheet,
   Text,
@@ -165,7 +166,11 @@ export function PulseDialog({
               pressed && styles.btnPressed,
             ]}
             onPress={() => {
-              Haptics.selectionAsync();
+              try {
+                Haptics.selectionAsync();
+              } catch {
+                // Non-fatal
+              }
               onClose();
             }}
           >
@@ -305,6 +310,7 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     alignItems: "center",
     justifyContent: "center",
+    ...(Platform.OS === "web" ? ({ cursor: "pointer" } as any) : {}),
   },
   dismissBtnText: {
     color: "#FFFFFF",

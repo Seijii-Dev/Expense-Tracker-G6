@@ -3,6 +3,7 @@ import {
   Image,
   Linking,
   Modal,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -24,7 +25,11 @@ export function AboutDialog({ visible, onClose }: AboutDialogProps) {
   const { colors, dark } = useTheme();
 
   const handleVisitWebsite = async () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    try {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    } catch {
+      // Non-fatal
+    }
     try {
       const supported = await Linking.canOpenURL(WEBSITE_URL);
       if (supported) {
@@ -116,7 +121,11 @@ export function AboutDialog({ visible, onClose }: AboutDialogProps) {
               pressed && styles.btnPressed,
             ]}
             onPress={() => {
-              Haptics.selectionAsync();
+              try {
+                Haptics.selectionAsync();
+              } catch {
+                // Non-fatal
+              }
               onClose();
             }}
           >
@@ -232,6 +241,7 @@ const styles = StyleSheet.create({
     shadowRadius: 6,
     shadowOffset: { width: 0, height: 2 },
     elevation: 3,
+    ...(Platform.OS === "web" ? ({ cursor: "pointer" } as any) : {}),
   },
   visitBtnText: {
     color: "#FFFFFF",
@@ -246,6 +256,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     marginTop: 14,
+    ...(Platform.OS === "web" ? ({ cursor: "pointer" } as any) : {}),
   },
   closeBtnText: {
     fontSize: 13,

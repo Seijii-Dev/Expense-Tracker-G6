@@ -55,7 +55,11 @@ export function CustomCategoryModal({
     const trimmed = name.trim();
     if (!trimmed) {
       setErrorMessage("Please enter a category name.");
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+      try {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+      } catch {
+        // Non-fatal
+      }
       return;
     }
 
@@ -65,7 +69,11 @@ export function CustomCategoryModal({
       )
     ) {
       setErrorMessage(`"${trimmed}" category already exists.`);
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+      try {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+      } catch {
+        // Non-fatal
+      }
       return;
     }
 
@@ -81,12 +89,20 @@ export function CustomCategoryModal({
       });
 
       if (success) {
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        try {
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        } catch {
+          // Non-fatal
+        }
         resetForm();
         onClose();
       } else {
         setErrorMessage("Failed to add category. Name might already be taken.");
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+        try {
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+        } catch {
+          // Non-fatal
+        }
       }
     } catch {
       setErrorMessage("An unexpected error occurred. Please try again.");
@@ -194,7 +210,11 @@ export function CustomCategoryModal({
                   <Pressable
                     key={preset.color}
                     onPress={() => {
-                      Haptics.selectionAsync();
+                      try {
+                        Haptics.selectionAsync();
+                      } catch {
+                        // Non-fatal
+                      }
                       setSelectedColor(preset);
                     }}
                     style={[
@@ -218,7 +238,11 @@ export function CustomCategoryModal({
                   <Pressable
                     key={iconName}
                     onPress={() => {
-                      Haptics.selectionAsync();
+                      try {
+                        Haptics.selectionAsync();
+                      } catch {
+                        // Non-fatal
+                      }
                       setSelectedIcon(iconName);
                     }}
                     style={[
@@ -307,6 +331,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     alignItems: "center",
     justifyContent: "center",
+    ...(Platform.OS === "web" ? ({ cursor: "pointer" } as any) : {}),
   },
   scrollContent: {
     paddingBottom: 24,
@@ -365,6 +390,7 @@ const styles = StyleSheet.create({
     borderRadius: 17,
     alignItems: "center",
     justifyContent: "center",
+    ...(Platform.OS === "web" ? ({ cursor: "pointer" } as any) : {}),
   },
   colorDotSelected: {
     transform: [{ scale: 1.15 }],
@@ -384,6 +410,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     alignItems: "center",
     justifyContent: "center",
+    ...(Platform.OS === "web" ? ({ cursor: "pointer" } as any) : {}),
   },
   saveButton: {
     flexDirection: "row",
@@ -393,6 +420,7 @@ const styles = StyleSheet.create({
     height: 48,
     borderRadius: 14,
     marginTop: 10,
+    ...(Platform.OS === "web" ? ({ cursor: "pointer" } as any) : {}),
   },
   saveButtonText: {
     color: "#FFFFFF",

@@ -1,6 +1,7 @@
 import React from "react";
 import {
   Modal,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -55,7 +56,11 @@ export function StoragePermissionDialog({
   const { colors, dark } = useTheme();
 
   const handleGrant = async () => {
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    try {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    } catch {
+      // Non-fatal
+    }
     await requestStoragePermission();
     await setPromptedStoragePermission();
     onGranted?.();
@@ -63,7 +68,11 @@ export function StoragePermissionDialog({
   };
 
   const handleDismiss = async () => {
-    Haptics.selectionAsync();
+    try {
+      Haptics.selectionAsync();
+    } catch {
+      // Non-fatal
+    }
     await setPromptedStoragePermission();
     onClose();
   };
@@ -302,6 +311,7 @@ const styles = StyleSheet.create({
     shadowRadius: 6,
     shadowOffset: { width: 0, height: 2 },
     elevation: 3,
+    ...(Platform.OS === "web" ? ({ cursor: "pointer" } as any) : {}),
   },
   primaryBtnText: {
     color: "#FFFFFF",
@@ -315,6 +325,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     alignItems: "center",
     justifyContent: "center",
+    ...(Platform.OS === "web" ? ({ cursor: "pointer" } as any) : {}),
   },
   secondaryBtnText: {
     fontSize: 12,

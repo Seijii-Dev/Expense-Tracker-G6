@@ -42,7 +42,11 @@ export function WelcomeHero({ onSignIn, onRegister }: WelcomeHeroProps) {
               pressed && styles.pressed,
             ]}
             onPress={() => {
-              Haptics.selectionAsync();
+              try {
+                Haptics.selectionAsync();
+              } catch {
+                // Non-fatal
+              }
               onSignIn();
             }}
             accessibilityRole="button"
@@ -139,7 +143,11 @@ export function WelcomeHero({ onSignIn, onRegister }: WelcomeHeroProps) {
                 pressed && styles.pressed,
               ]}
               onPress={() => {
-                Haptics.selectionAsync();
+                try {
+                  Haptics.selectionAsync();
+                } catch {
+                  // Non-fatal
+                }
                 onRegister();
               }}
               accessibilityRole="button"
@@ -158,7 +166,11 @@ export function WelcomeHero({ onSignIn, onRegister }: WelcomeHeroProps) {
                 pressed && styles.pressed,
               ]}
               onPress={() => {
-                Haptics.selectionAsync();
+                try {
+                  Haptics.selectionAsync();
+                } catch {
+                  // Non-fatal
+                }
                 onSignIn();
               }}
               accessibilityRole="button"
@@ -214,6 +226,7 @@ const styles = StyleSheet.create({
     paddingVertical: 7,
     borderRadius: 12,
     borderWidth: 1,
+    ...(Platform.OS === "web" ? ({ cursor: "pointer" } as any) : {}),
   },
   navSignInText: {
     fontSize: 12,
@@ -384,6 +397,7 @@ const styles = StyleSheet.create({
     shadowRadius: 14,
     shadowOffset: { width: 0, height: 6 },
     elevation: 5,
+    ...(Platform.OS === "web" ? ({ cursor: "pointer" } as any) : {}),
   },
   primaryCtaText: {
     color: "#FFFFFF",
@@ -399,6 +413,7 @@ const styles = StyleSheet.create({
     height: 50,
     borderRadius: 16,
     borderWidth: 1,
+    ...(Platform.OS === "web" ? ({ cursor: "pointer" } as any) : {}),
   },
   secondaryCtaText: {
     fontSize: 14,

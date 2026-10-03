@@ -1,3 +1,4 @@
+import { Ionicons } from "@expo/vector-icons";
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { useFonts } from "expo-font";
@@ -21,6 +22,7 @@ export default function RootLayout() {
     DMSans_700Bold,
     Fraunces_600SemiBold,
     Fraunces_700Bold,
+    ...Ionicons.font,
   });
 
   if (!fontsLoaded) return null;

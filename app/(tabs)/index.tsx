@@ -1,5 +1,6 @@
 import React, { useCallback, useMemo, useState } from "react";
 import {
+  Platform,
   Pressable,
   RefreshControl,
   ScrollView,
@@ -384,6 +385,7 @@ const styles = StyleSheet.create({
   },
   bellWrap: {
     paddingTop: 4,
+    ...(Platform.OS === "web" ? ({ cursor: "pointer" } as any) : {}),
   },
   bell: {
     width: 42,
@@ -430,6 +432,7 @@ const styles = StyleSheet.create({
     shadowRadius: 10,
     shadowOffset: { width: 0, height: 4 },
     elevation: 4,
+    ...(Platform.OS === "web" ? ({ cursor: "pointer" } as any) : {}),
   },
   addButtonText: {
     color: "#FFFFFF",
@@ -513,6 +516,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 8,
+    ...(Platform.OS === "web" ? ({ cursor: "pointer" } as any) : {}),
   },
   viewAllText: {
     fontSize: 11.5,

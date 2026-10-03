@@ -1,5 +1,5 @@
 import React from "react";
-import { Modal, Pressable, StyleSheet, Text, View } from "react-native";
+import { Modal, Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "@/lib/theme-store";
 import { GlassSurface } from "@/components/ui/glass-surface";
@@ -128,6 +128,7 @@ export function ConfirmDialog({
       borderWidth: 1,
       alignItems: "center",
       justifyContent: "center",
+      ...(Platform.OS === "web" ? ({ cursor: "pointer" } as any) : {}),
     },
     cancelText: {
       fontSize: 13,
@@ -144,6 +145,7 @@ export function ConfirmDialog({
       shadowRadius: 8,
       shadowOffset: { width: 0, height: 4 },
       elevation: 4,
+      ...(Platform.OS === "web" ? ({ cursor: "pointer" } as any) : {}),
     },
     fullWidthBtn: {
       flex: 1,

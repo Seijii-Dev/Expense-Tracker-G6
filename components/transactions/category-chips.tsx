@@ -1,5 +1,5 @@
 import React, { useMemo } from "react";
-import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Platform, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import * as Haptics from "expo-haptics";
 import { Ionicons } from "@expo/vector-icons";
 import { Category } from "@/types/expense";
@@ -41,7 +41,11 @@ export function CategoryChips({ selected, onSelect }: CategoryChipsProps) {
           <Pressable
             key={item}
             onPress={() => {
-              Haptics.selectionAsync();
+              try {
+                Haptics.selectionAsync();
+              } catch {
+                // Non-fatal
+              }
               onSelect(item);
             }}
             accessibilityRole="button"
@@ -114,6 +118,7 @@ const styles = StyleSheet.create({
     borderRadius: 18,
     borderWidth: 1,
     gap: 6,
+    ...(Platform.OS === "web" ? ({ cursor: "pointer" } as any) : {}),
   },
   iconWrap: {
     width: 20,

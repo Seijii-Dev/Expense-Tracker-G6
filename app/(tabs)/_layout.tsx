@@ -1,11 +1,14 @@
 import React from "react";
-import { Tabs } from "expo-router";
+import { Redirect, Tabs } from "expo-router";
 import { Platform, StyleSheet, Text, View, useWindowDimensions } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import * as Haptics from "expo-haptics";
 import { useTheme } from "@/lib/theme-store";
+import { useAuth } from "@/lib/auth-store";
 import { GlassSurface } from "@/components/ui/glass-surface";
+import { ScreenContainer } from "@/components/screen-container";
+import { DashboardSkeleton } from "@/components/ui/dashboard-skeleton";
 
 type TabBarIconProps = {
   focused: boolean;
@@ -35,7 +38,7 @@ function CustomTabItem({ focused, name, activeName, label }: TabBarIconProps) {
         <Ionicons
           name={focused ? activeName : name}
           color={focused ? colors.primary : colors.muted}
-          size={focused ? 21 : 20}
+          size={20}
         />
       </View>
       <Text
@@ -48,17 +51,36 @@ function CustomTabItem({ focused, name, activeName, label }: TabBarIconProps) {
       >
         {label}
       </Text>
-      {focused && (
-        <View style={[styles.activeDot, { backgroundColor: colors.primary }]} />
-      )}
+      <View
+        style={[
+          styles.activeDot,
+          {
+            backgroundColor: focused ? colors.primary : "transparent",
+            opacity: focused ? 1 : 0,
+          },
+        ]}
+      />
     </View>
   );
 }
 
 export default function TabsLayout() {
+  const { account, loading } = useAuth();
   const { colors, dark } = useTheme();
   const insets = useSafeAreaInsets();
   const { width: windowWidth } = useWindowDimensions();
+
+  if (loading) {
+    return (
+      <ScreenContainer>
+        <DashboardSkeleton />
+      </ScreenContainer>
+    );
+  }
+
+  if (!account) {
+    return <Redirect href="/auth" />;
+  }
 
   // Balanced floating pill navigation bar on all screen sizes
   const maxBarWidth = 460;
@@ -75,6 +97,7 @@ export default function TabsLayout() {
           justifyContent: "center",
           alignItems: "center",
           paddingVertical: 4,
+          ...(Platform.OS === "web" ? ({ cursor: "pointer" } as any) : {}),
         },
         tabBarBackground: () => (
           <GlassSurface variant="nav" radius={32} style={StyleSheet.absoluteFill} />
@@ -147,8 +170,8 @@ export default function TabsLayout() {
             <CustomTabItem
               focused={focused}
               color={color}
-              name="bar-chart-outline"
-              activeName="bar-chart"
+              name="stats-chart-outline"
+              activeName="stats-chart"
               label="Reports"
             />
           ),
