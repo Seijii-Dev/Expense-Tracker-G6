@@ -50,21 +50,18 @@ export default function OverviewScreen() {
     removeExpense,
     refreshExpenses,
     syncing,
+    isBalanceHidden,
+    toggleBalanceHidden,
   } = useExpenses();
   const { account } = useAuth();
   const { colors, dark } = useTheme();
   const { width: windowWidth } = useWindowDimensions();
 
   const isNarrowMobile = windowWidth < 380;
-  const isTablet = windowWidth >= 620;
 
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
   const [showPulseModal, setShowPulseModal] = useState(false);
-
-  const greeting = getTimeGreeting();
-  const todayLabel = getFormattedTodayHeader();
-  const monthLabel = getFormattedMonthHeader();
 
   const currentMonth = getPhilippinesMonth();
   const monthExpenses = useMemo(
@@ -73,34 +70,6 @@ export default function OverviewScreen() {
   );
 
   const recentExpenses = useMemo(() => sortedExpenses.slice(0, 5), [sortedExpenses]);
-
-  const topCategorySummary = useMemo(() => {
-    const totals = monthExpenses.reduce<Record<string, number>>(
-      (map, exp) => ({ ...map, [exp.category]: (map[exp.category] || 0) + (exp.amount || 0) }),
-      {}
-    );
-    const top = Object.entries(totals).sort((a, b) => b[1] - a[1])[0];
-    if (!top) return "No spending yet";
-    return `${top[0]}  ${formatMoney(top[1])}`;
-  }, [monthExpenses]);
-
-  const isOverBudget = budgetPercent >= 100;
-  const isNearBudget = budgetPercent >= 80 && !isOverBudget;
-  const budgetStatusColor = isOverBudget
-    ? colors.error
-    : isNearBudget
-    ? colors.warning
-    : colors.success;
-  const budgetStatusBg = isOverBudget
-    ? colors.errorSoft
-    : isNearBudget
-    ? colors.warningSoft
-    : colors.successSoft;
-  const budgetStatusText = isOverBudget
-    ? "Over Budget"
-    : isNearBudget
-    ? `${budgetPercent}% Used`
-    : "On Track";
 
   const showPulseAlert = useCallback(() => {
     try {
@@ -139,7 +108,7 @@ export default function OverviewScreen() {
     );
   }
 
-  const firstName = account?.name?.trim().split(/\s+/)[0] || "there";
+  const firstName = account?.name?.trim().split(/\s+/)[0] || "Alex";
 
   return (
     <ScreenContainer>
@@ -155,165 +124,155 @@ export default function OverviewScreen() {
           />
         }
       >
-        {/* Header */}
+        {/* Brand & User Greeting Header (Screen 1 Mockup) */}
         <View style={styles.header}>
           <View style={styles.headerLeft}>
-            <View
-              style={[
-                styles.kickerPill,
-                {
-                  backgroundColor: dark ? "rgba(255, 117, 101, 0.14)" : colors.primarySoft,
-                  borderColor: dark ? "rgba(255, 117, 101, 0.28)" : "rgba(255, 101, 84, 0.22)",
-                },
-              ]}
-            >
-              <View style={[styles.kickerDot, { backgroundColor: colors.primary }]} />
-              <Text style={[styles.kicker, { color: colors.primary }]}>{todayLabel}</Text>
+            <View style={styles.brandRow}>
+              <View style={styles.logoBadge}>
+                <Ionicons name="leaf" size={17} color="#10B981" />
+              </View>
+              <Text style={[styles.brandTitle, { color: colors.foreground }]}>Ledgerly</Text>
             </View>
 
-            <Text style={[styles.title, { color: colors.foreground }]}>
-              {greeting}, {firstName}
-              <Text style={[styles.dot, { color: colors.primary }]}>.</Text>
-            </Text>
-            <Text style={[styles.subtitle, { color: colors.muted }]}>
-              Here’s your financial pulse for today.
-            </Text>
-          </View>
-
-          <Pressable
-            onPress={showPulseAlert}
-            style={({ pressed }) => [styles.bellWrap, pressed && styles.pressed]}
-            accessibilityRole="button"
-            accessibilityLabel="Financial Pulse Health"
-          >
-            <GlassSurface variant="pill" radius={18} contentStyle={styles.bell}>
-              <Ionicons name="pulse" size={18} color={colors.primary} />
-              <View style={[styles.notificationDot, { backgroundColor: colors.primary }]} />
-            </GlassSurface>
-          </Pressable>
-        </View>
-
-        {/* Primary Financial Status Hero */}
-        <GlassSurface
-          variant="card"
-          radius={26}
-          style={[
-            styles.heroCard,
-            {
-              backgroundColor: colors.cardElevated,
-              borderColor: colors.border,
-            },
-          ]}
-          contentStyle={styles.heroCardInner}
-        >
-          {/* Top row: Label & Status Pill */}
-          <View style={styles.heroTopRow}>
-            <View style={styles.heroKickerRow}>
-              <View style={[styles.kickerDot, { backgroundColor: budgetStatusColor }]} />
-              <Text style={[styles.heroKicker, { color: colors.subtle }]}>REMAINING BUDGET</Text>
-            </View>
-            <View style={[styles.heroStatusBadge, { backgroundColor: budgetStatusBg, borderColor: `${budgetStatusColor}30` }]}>
-              <View style={[styles.statusDot, { backgroundColor: budgetStatusColor }]} />
-              <Text style={[styles.heroStatusText, { color: budgetStatusColor }]}>{budgetStatusText}</Text>
+            <View style={styles.greetingBlock}>
+              <Text style={[styles.greetingLabel, { color: colors.muted }]}>Good morning,</Text>
+              <Text style={[styles.userNameText, { color: colors.foreground }]}>
+                {firstName} <Text style={styles.waveEmoji}>👋</Text>
+              </Text>
+              <Text style={[styles.greetingSubtitle, { color: colors.muted }]}>
+                Here's your financial summary for this month.
+              </Text>
             </View>
           </View>
 
-          {/* Big Amount */}
-          <Text
-            style={[
-              styles.heroAmount,
-              { color: remaining < 0 ? colors.error : colors.foreground },
-            ]}
-            numberOfLines={1}
-            adjustsFontSizeToFit
-          >
-            {formatMoney(remaining)}
-          </Text>
-
-          {/* Budget Progress Bar */}
-          <View style={[styles.heroProgressTrack, { backgroundColor: dark ? "rgba(255,255,255,0.08)" : colors.surfaceSubtle }]}>
-            <View
-              style={[
-                styles.heroProgressFill,
-                {
-                  backgroundColor: budgetStatusColor,
-                  width: `${Math.min(budgetPercent, 100)}%`,
-                },
-              ]}
-            />
-          </View>
-
-          {/* Budget Subtext & Add Action Row */}
-          <View style={styles.heroBottomRow}>
-            <Text style={[styles.heroBudgetSubtext, { color: colors.muted }]}>
-              {formatMoney(monthTotal)} spent of {formatMoney(budget)} plan
-            </Text>
+          <View style={styles.headerRightActions}>
+            {/* Notification Bell */}
             <Pressable
-              style={({ pressed }) => [
-                styles.quickAddBtn,
-                { backgroundColor: colors.primary },
-                pressed && styles.pressed,
-              ]}
-              onPress={() => {
-                try {
-                  Haptics.selectionAsync();
-                } catch {
-                  // Non-fatal
-                }
-                setShowAddModal(true);
-              }}
+              onPress={showPulseAlert}
+              style={({ pressed }) => [styles.headerIconBtn, pressed && styles.pressed]}
               accessibilityRole="button"
-              accessibilityLabel="Add new expense"
+              accessibilityLabel="Notifications"
             >
-              <Ionicons name="add" size={17} color="#FFFFFF" />
-              <Text style={styles.quickAddText}>Add expense</Text>
+              <View
+                style={[
+                  styles.iconCircle,
+                  {
+                    backgroundColor: dark ? "rgba(255,255,255,0.06)" : colors.surfaceSubtle,
+                    borderColor: colors.border,
+                  },
+                ]}
+              >
+                <Ionicons name="notifications-outline" size={19} color={colors.foreground} />
+                <View style={[styles.notificationDot, { backgroundColor: colors.primary }]} />
+              </View>
+            </Pressable>
+
+            {/* Profile Avatar Button */}
+            <Pressable
+              onPress={() => router.push("/(tabs)/account")}
+              style={({ pressed }) => [styles.avatarBtn, pressed && styles.pressed]}
+              accessibilityRole="button"
+              accessibilityLabel="Open Account Profile"
+            >
+              <View style={styles.avatarCircle}>
+                <Text style={styles.avatarInitials}>
+                  {firstName.charAt(0).toUpperCase()}
+                </Text>
+              </View>
             </Pressable>
           </View>
-        </GlassSurface>
+        </View>
+
+        {/* Hero Card: Available Balance (Screen 1 Mockup) */}
+        <View style={styles.heroCard}>
+          <View style={styles.heroTopRow}>
+            <Pressable
+              onPress={toggleBalanceHidden}
+              style={styles.balanceLabelWrap}
+              accessibilityRole="button"
+              accessibilityLabel="Toggle Balance Visibility"
+            >
+              <Text style={styles.balanceLabel}>Available Balance</Text>
+              <Ionicons
+                name={isBalanceHidden ? "eye-off-outline" : "eye-outline"}
+                size={17}
+                color="#A5D0BE"
+                style={{ marginLeft: 6 }}
+              />
+            </Pressable>
+            <View style={styles.walletIconBox}>
+              <Ionicons name="wallet-outline" size={20} color="#FFFFFF" />
+            </View>
+          </View>
+
+          <Text style={styles.heroAmount}>
+            {isBalanceHidden ? "••••••••" : formatMoney(remaining > 0 ? remaining : budget - monthTotal)}
+          </Text>
+
+          <View style={styles.heroSubBadge}>
+            <Ionicons name="arrow-up" size={12} color="#6EE7B7" />
+            <Text style={styles.heroSubBadgeText}>
+              {budgetPercent < 100
+                ? `${100 - budgetPercent}% under budget`
+                : `${budgetPercent - 100}% over budget`}
+            </Text>
+          </View>
+        </View>
 
         {/* Secondary 2-Column Metrics */}
         <View style={[styles.secondaryGrid, isNarrowMobile && styles.secondaryGridNarrow]}>
           <MetricCard
-            label="Spent this month"
-            value={formatMoney(monthTotal)}
-            icon={<Ionicons name="trending-up" size={16} color="#FF6554" />}
+            label="Total Spending"
+            value={isBalanceHidden ? "••••••" : formatMoney(monthTotal)}
+            icon={<Ionicons name="receipt-outline" size={16} color="#FF6554" />}
             tone="coral"
-            foot={monthExpenses.length ? `${monthExpenses.length} record${monthExpenses.length > 1 ? "s" : ""}` : "No records yet"}
+            foot={monthExpenses.length ? `${monthExpenses.length} transactions` : "0 transactions"}
             style={styles.secondaryCard}
           />
           <MetricCard
-            label="Spent today"
-            value={formatMoney(todayTotal)}
-            icon={<Ionicons name="cash-outline" size={16} color="#0EA5E9" />}
-            tone="blue"
-            foot={todayTotal > 0 ? "Logged today" : "No records today"}
+            label="Remaining Budget"
+            value={isBalanceHidden ? "••••••" : formatMoney(remaining)}
+            icon={<Ionicons name="wallet-outline" size={16} color="#10B981" />}
+            tone="green"
+            progress={budgetPercent}
+            foot={`${budgetPercent}% used`}
             style={styles.secondaryCard}
           />
         </View>
 
-        {/* Latest Activity Panel */}
+        {/* Spending by Category Card (Screen 1 Mockup) */}
         <GlassSurface style={styles.panel} contentStyle={styles.panelInner}>
           <View style={styles.panelHeader}>
-            <View>
-              <View style={styles.panelKickerRow}>
-                <View style={[styles.kickerDot, { backgroundColor: colors.success }]} />
-                <Text style={[styles.panelKicker, { color: colors.success }]}>LATEST ACTIVITY</Text>
-              </View>
-              <Text style={[styles.panelTitle, { color: colors.foreground }]}>Recent transactions</Text>
-            </View>
+            <Text style={[styles.panelSectionTitle, { color: colors.foreground }]}>
+              Spending by Category
+            </Text>
             <Pressable
+              onPress={() => router.push("/(tabs)/reports")}
               style={({ pressed }) => [styles.viewAllBtn, pressed && styles.pressed]}
-              onPress={() => {
-                try {
-                  Haptics.selectionAsync();
-                } catch {
-                  // Non-fatal
-                }
-                router.push("/(tabs)/transactions");
-              }}
             >
-              <Text style={[styles.viewAllText, { color: colors.primary }]}>View all</Text>
-              <Ionicons name="arrow-forward" size={14} color={colors.primary} />
+              <Text style={[styles.viewAllText, { color: "#10B981" }]}>View all</Text>
+              <Ionicons name="chevron-forward" size={14} color="#10B981" />
+            </Pressable>
+          </View>
+
+          <View style={[styles.overviewRow, isNarrowMobile && styles.overviewRowNarrow]}>
+            <DonutChart total={monthTotal} expenses={monthExpenses} />
+            <CategoryLegend expenses={monthExpenses} />
+          </View>
+        </GlassSurface>
+
+        {/* Recent Transactions Section (Screen 1 Mockup) */}
+        <GlassSurface style={styles.panel} contentStyle={styles.panelInner}>
+          <View style={styles.panelHeader}>
+            <Text style={[styles.panelSectionTitle, { color: colors.foreground }]}>
+              Recent Transactions
+            </Text>
+            <Pressable
+              onPress={() => router.push("/(tabs)/transactions")}
+              style={({ pressed }) => [styles.viewAllBtn, pressed && styles.pressed]}
+            >
+              <Text style={[styles.viewAllText, { color: "#10B981" }]}>View all</Text>
+              <Ionicons name="chevron-forward" size={14} color="#10B981" />
             </Pressable>
           </View>
 
@@ -322,9 +281,11 @@ export default function OverviewScreen() {
               <View style={[styles.emptyIconCircle, { backgroundColor: colors.surfaceSubtle }]}>
                 <Ionicons name="receipt-outline" size={24} color={colors.subtle} />
               </View>
-              <Text style={[styles.emptyRecentText, { color: colors.foreground }]}>No transactions yet</Text>
+              <Text style={[styles.emptyRecentText, { color: colors.foreground }]}>
+                No transactions yet
+              </Text>
               <Text style={[styles.emptyRecentSub, { color: colors.muted }]}>
-                Tap "+ Add expense" above to record your first transaction.
+                Tap the "+" button below to record your first transaction.
               </Text>
             </View>
           ) : (
@@ -339,41 +300,7 @@ export default function OverviewScreen() {
           )}
         </GlassSurface>
 
-        {/* Money Map Panel */}
-        <GlassSurface style={styles.panel} contentStyle={styles.panelInner}>
-          <View style={styles.panelHeader}>
-            <View>
-              <View style={styles.panelKickerRow}>
-                <View style={[styles.kickerDot, { backgroundColor: colors.primary }]} />
-                <Text style={[styles.panelKicker, { color: colors.primary }]}>MONEY MAP</Text>
-              </View>
-              <Text style={[styles.panelTitle, { color: colors.foreground }]}>Spending overview</Text>
-            </View>
-            <View
-              style={[
-                styles.badge,
-                {
-                  backgroundColor: dark ? "rgba(255,255,255,0.06)" : colors.surfaceSubtle,
-                  borderColor: colors.border,
-                },
-              ]}
-            >
-              <Text style={[styles.smallMuted, { color: colors.muted }]}>{monthLabel}</Text>
-            </View>
-          </View>
-
-          <View style={[styles.overviewRow, isNarrowMobile && styles.overviewRowNarrow]}>
-            <DonutChart total={monthTotal} expenses={monthExpenses} />
-            <CategoryLegend expenses={monthExpenses} />
-          </View>
-
-          <View style={[styles.panelFooter, { borderTopColor: colors.border }]}>
-            <Text style={[styles.footerLabel, { color: colors.muted }]}>Highest spending category</Text>
-            <Text style={[styles.footerValue, { color: colors.foreground }]}>{topCategorySummary}</Text>
-          </View>
-        </GlassSurface>
-
-        {/* Daily Rhythm Weekly Chart */}
+        {/* Daily Rhythm Bar Chart */}
         <DailyRhythm expenses={sortedExpenses} />
 
         {/* Spending Insight Card */}
@@ -403,126 +330,177 @@ export default function OverviewScreen() {
 
 const styles = StyleSheet.create({
   scroll: {
-    paddingBottom: 32,
+    paddingBottom: 96,
   },
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "flex-start",
     paddingTop: 8,
-    marginBottom: 20,
+    marginBottom: 18,
   },
   headerLeft: {
     flex: 1,
     paddingRight: 10,
   },
-  kickerPill: {
-    alignSelf: "flex-start",
+  brandRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 6,
-    paddingHorizontal: 9,
-    paddingVertical: 4.5,
-    borderRadius: 999,
-    borderWidth: 1,
+    gap: 7,
+    marginBottom: 10,
   },
-  kickerDot: {
-    width: 5,
-    height: 5,
-    borderRadius: 2.5,
-  },
-  kicker: {
-    fontSize: 9.5,
-    fontWeight: "800",
-    letterSpacing: 1.1,
-  },
-  title: {
-    fontFamily: "Fraunces_700Bold",
-    fontSize: 32,
-    letterSpacing: -1.2,
-    marginTop: 8,
-    lineHeight: 38,
-  },
-  dot: {
-    fontWeight: "700",
-  },
-  subtitle: {
-    fontSize: 12.5,
-    marginTop: 4,
-  },
-  bellWrap: {
-    paddingTop: 4,
-    ...(Platform.OS === "web" ? ({ cursor: "pointer" } as any) : {}),
-  },
-  bell: {
-    width: 42,
-    height: 42,
+  logoBadge: {
+    width: 28,
+    height: 28,
+    borderRadius: 9,
+    backgroundColor: "#E6F9F2",
     alignItems: "center",
     justifyContent: "center",
   },
+  brandTitle: {
+    fontFamily: "Fraunces_700Bold",
+    fontSize: 19,
+    letterSpacing: -0.4,
+  },
+  greetingBlock: {
+    marginTop: 2,
+  },
+  greetingLabel: {
+    fontSize: 13,
+    fontWeight: "500",
+  },
+  userNameText: {
+    fontFamily: "Fraunces_700Bold",
+    fontSize: 24,
+    letterSpacing: -0.5,
+    marginTop: 1,
+  },
+  waveEmoji: {
+    fontSize: 22,
+  },
+  greetingSubtitle: {
+    fontSize: 12,
+    marginTop: 3,
+    lineHeight: 17,
+  },
+  headerRightActions: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    paddingTop: 2,
+  },
+  headerIconBtn: {
+    ...(Platform.OS === "web" ? ({ cursor: "pointer" } as any) : {}),
+  },
+  iconCircle: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+    position: "relative",
+  },
   notificationDot: {
     position: "absolute",
-    top: 10,
-    right: 11,
+    top: 9,
+    right: 10,
     width: 7,
     height: 7,
     borderRadius: 3.5,
-    borderWidth: 1.5,
-    borderColor: "#FFFFFF",
+    backgroundColor: "#FF6554",
+  },
+  avatarBtn: {
+    ...(Platform.OS === "web" ? ({ cursor: "pointer" } as any) : {}),
+  },
+  avatarCircle: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: "#1B6A4B",
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 2,
+    borderColor: "#10B981",
+  },
+  avatarInitials: {
+    color: "#FFFFFF",
+    fontSize: 15,
+    fontWeight: "800",
   },
   heroCard: {
-    marginBottom: 16,
-  },
-  heroCardInner: {
+    backgroundColor: "#16382B",
+    borderRadius: 22,
     padding: 20,
+    marginBottom: 16,
+    shadowColor: "#16382B",
+    shadowOpacity: 0.25,
+    shadowRadius: 14,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 4,
   },
   heroTopRow: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    marginBottom: 10,
+    marginBottom: 6,
   },
-  heroKickerRow: {
+  balanceLabelWrap: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 6,
+    ...(Platform.OS === "web" ? ({ cursor: "pointer" } as any) : {}),
   },
-  heroKicker: {
-    fontSize: 10,
-    fontWeight: "800",
-    letterSpacing: 1.2,
+  balanceLabel: {
+    color: "#A5D0BE",
+    fontSize: 13,
+    fontWeight: "600",
   },
-  heroStatusBadge: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 5,
-    paddingHorizontal: 9,
-    paddingVertical: 4,
+  walletIconBox: {
+    width: 40,
+    height: 40,
     borderRadius: 12,
-    borderWidth: 1,
-  },
-  statusDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-  },
-  heroStatusText: {
-    fontSize: 10.5,
-    fontWeight: "800",
-    letterSpacing: 0.3,
+    backgroundColor: "rgba(255, 255, 255, 0.14)",
+    alignItems: "center",
+    justifyContent: "center",
   },
   heroAmount: {
     fontFamily: "Fraunces_700Bold",
+    color: "#FFFFFF",
     fontSize: 34,
     letterSpacing: -1,
     lineHeight: 40,
-    marginBottom: 14,
+    marginVertical: 4,
   },
-  heroProgressTrack: {
-    height: 8,
-    borderRadius: 4,
-    overflow: "hidden",
-    marginBottom: 14,
+  heroSubBadge: {
+    alignSelf: "flex-start",
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    backgroundColor: "rgba(255, 255, 255, 0.12)",
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+    marginTop: 8,
+  },
+  heroSubBadgeText: {
+    color: "#6EE7B7",
+    fontSize: 11,
+    fontWeight: "700",
+  },
+  panelSectionTitle: {
+    fontFamily: "Fraunces_700Bold",
+    fontSize: 18,
+    letterSpacing: -0.3,
+  },
+  viewAllBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 2,
+    ...(Platform.OS === "web" ? ({ cursor: "pointer" } as any) : {}),
+  },
+  viewAllText: {
+    fontSize: 12.5,
+    fontWeight: "700",
   },
   heroProgressFill: {
     height: "100%",
@@ -639,19 +617,6 @@ const styles = StyleSheet.create({
   },
   footerValue: {
     fontSize: 12,
-    fontWeight: "700",
-  },
-  viewAllBtn: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 8,
-    ...(Platform.OS === "web" ? ({ cursor: "pointer" } as any) : {}),
-  },
-  viewAllText: {
-    fontSize: 11.5,
     fontWeight: "700",
   },
   emptyRecent: {

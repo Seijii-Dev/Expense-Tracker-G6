@@ -31,6 +31,7 @@ export default function TransactionsScreen() {
 
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
+  const [showSortFilter, setShowSortFilter] = useState(false);
 
   const {
     query,
@@ -60,6 +61,11 @@ export default function TransactionsScreen() {
     setEditingExpense(null);
     setShowAddModal(false);
   }, []);
+
+  const currentMonthName = useMemo(
+    () => new Date().toLocaleString("en-US", { month: "long" }).toUpperCase(),
+    []
+  );
 
   const renderItem = useCallback(
     ({ item, index }: { item: Expense; index: number }) => {
@@ -104,7 +110,7 @@ export default function TransactionsScreen() {
             <ScreenHeader
               kicker="YOUR MONEY TRAIL"
               title="Transactions"
-              subtitle="Every peso has a place. Keep the record clear and organized."
+              subtitle="Track and manage your expenses"
             />
           </View>
           <Pressable
@@ -129,7 +135,28 @@ export default function TransactionsScreen() {
           </Pressable>
         </View>
 
-        {/* Summary banner */}
+        {/* Search Bar with filter toggle */}
+        <SearchBar
+          value={query}
+          onChangeText={setQuery}
+          placeholder="Search transactions..."
+          onPressFilter={() => setShowSortFilter((prev) => !prev)}
+          hasActiveFilters={hasActiveFilters}
+        />
+
+        {/* Category Filter Chips */}
+        <View style={{ marginTop: 10 }}>
+          <CategoryChips selected={category} onSelect={setCategory} />
+        </View>
+
+        {/* Sort/Filter options toggle */}
+        {showSortFilter && (
+          <View style={{ marginTop: 8 }}>
+            <SortSelector selected={sortBy} onSelect={setSortBy} />
+          </View>
+        )}
+
+        {/* Summary Card matching Mockup Screen 2 */}
         <View
           style={[
             styles.summaryCard,
@@ -145,52 +172,29 @@ export default function TransactionsScreen() {
           ]}
         >
           <View style={styles.summaryCol}>
-            <View style={styles.labelRow}>
-              <View style={[styles.statusDot, { backgroundColor: colors.primary }]} />
-              <Text style={[styles.summaryLabel, { color: colors.subtle }]}>SHOWING</Text>
-              {hasActiveFilters && (
-                <View style={[styles.filterBadge, { backgroundColor: colors.primarySoft }]}>
-                  <Text style={[styles.filterBadgeText, { color: colors.primary }]}>Filtered</Text>
-                </View>
-              )}
-            </View>
-            <Text
-              style={[styles.summaryValue, { color: colors.foreground }]}
-              numberOfLines={1}
-              adjustsFontSizeToFit
-            >
-              {filtered.length} <Text style={{ fontSize: 13, fontFamily: "DMSans_500Medium", color: colors.muted }}>records</Text>
+            <Text style={[styles.summaryKicker, { color: colors.muted }]}>
+              {currentMonthName} SUMMARY
+            </Text>
+            <Text style={[styles.summarySubLabel, { color: colors.subtle }]}>Transactions</Text>
+            <Text style={[styles.summaryValue, { color: colors.foreground }]}>
+              {filtered.length}{" "}
+              <Text style={{ fontSize: 12, color: "#10B981", fontWeight: "700" }}>18%^</Text>
             </Text>
           </View>
           <View style={[styles.divider, { backgroundColor: colors.border }]} />
           <View style={styles.summaryCol}>
-            <View style={styles.labelRow}>
-              <View style={[styles.statusDot, { backgroundColor: colors.success }]} />
-              <Text style={[styles.summaryLabel, { color: colors.subtle }]}>FILTERED TOTAL</Text>
-            </View>
-            <Text
-              style={[styles.summaryValue, { color: colors.foreground }]}
-              numberOfLines={1}
-              adjustsFontSizeToFit
-            >
+            <Text style={[styles.summaryKicker, { color: colors.muted }]}>TOTAL EXPENSE</Text>
+            <Text style={[styles.summarySubLabel, { color: colors.subtle }]}>All Categories</Text>
+            <Text style={[styles.summaryValue, { color: colors.foreground }]}>
               {formatMoney(total)}
             </Text>
           </View>
         </View>
 
-        {/* Search Bar */}
-        <SearchBar value={query} onChangeText={setQuery} />
-
-        {/* Sort Selector */}
-        <SortSelector selected={sortBy} onSelect={setSortBy} />
-
-        {/* Category Filter Chips */}
-        <CategoryChips selected={category} onSelect={setCategory} />
-
         {filtered.length > 0 && <View style={styles.listHeaderGap} />}
       </View>
     ),
-    [category, colors, dark, filtered.length, hasActiveFilters, query, setCategory, setQuery, setSortBy, sortBy, total]
+    [category, colors, currentMonthName, dark, filtered.length, hasActiveFilters, query, setCategory, setQuery, setSortBy, showSortFilter, sortBy, total]
   );
 
   const ListEmpty = useMemo(
@@ -283,13 +287,14 @@ export default function TransactionsScreen() {
 const styles = StyleSheet.create({
   scroll: {
     paddingTop: 12,
-    paddingBottom: 40,
+    paddingBottom: 96,
   },
   headerRow: {
     flexDirection: "row",
     alignItems: "flex-start",
     justifyContent: "space-between",
     gap: 12,
+    marginBottom: 8,
   },
   headerLeft: {
     flex: 1,
@@ -337,12 +342,23 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     borderRadius: 20,
     borderWidth: 1,
-    marginTop: 16,
+    marginTop: 14,
     marginBottom: 16,
   },
   summaryCol: {
     flex: 1,
     alignItems: "center",
+  },
+  summaryKicker: {
+    fontSize: 9.5,
+    fontWeight: "800",
+    letterSpacing: 0.8,
+    marginBottom: 2,
+  },
+  summarySubLabel: {
+    fontSize: 11,
+    fontWeight: "500",
+    marginBottom: 4,
   },
   labelRow: {
     flexDirection: "row",

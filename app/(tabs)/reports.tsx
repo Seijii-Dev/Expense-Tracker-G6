@@ -1,5 +1,5 @@
 import React from "react";
-import { RefreshControl, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Platform, RefreshControl, ScrollView, StyleSheet, Text, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { ScreenContainer } from "@/components/screen-container";
@@ -13,9 +13,19 @@ import { formatMoney, formatPercent } from "@/utils/formatters";
 import { useReportMetrics } from "@/hooks/useReportMetrics";
 import { ReportsSkeleton } from "@/components/ui/reports-skeleton";
 
+import { useState } from "react";
+import { Pressable } from "react-native";
+import * as Haptics from "expo-haptics";
+import { SpendingTrendChart } from "@/components/reports/spending-trend-chart";
+
 export default function ReportsScreen() {
   const { expenses, refreshExpenses, syncing, hydrated, allCategories, customCategories } = useExpenses();
   const { colors, dark } = useTheme();
+
+  const [timeframe, setTimeframe] = useState<"Monthly" | "Weekly" | "Yearly">("Monthly");
+  const [currentDate] = useState(new Date());
+
+  const formattedMonthYear = currentDate.toLocaleString("en-US", { month: "long", year: "numeric" });
 
   const {
     monthExpenses,
@@ -54,54 +64,101 @@ export default function ReportsScreen() {
         }
       >
         <ScreenHeader
-          kicker="MAKE SENSE OF IT"
-          title="Spending reports"
-          subtitle="A clear, insightful view of where your money is flowing this month."
+          kicker="ANALYTICS & TRENDS"
+          title="Financial Reports"
+          subtitle="Get insights into your spending patterns"
         />
 
-        {/* Hero Card with LinearGradient */}
-        <LinearGradient
-          colors={
-            dark
-              ? ["#132A26", "#0B1917", "#070D0C"]
-              : ["#0F3832", "#13423B", "#0A2823"]
-          }
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={styles.hero}
-        >
-          {/* Subtle top specular line */}
-          <LinearGradient
-            colors={["rgba(255,255,255,0.3)", "rgba(255,255,255,0.02)"]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 0 }}
-            style={styles.specularLine}
-          />
+        {/* Timeframe Segmented Control (Screen 3 Mockup) */}
+        <View style={[styles.timeframeRow, { backgroundColor: dark ? "rgba(255,255,255,0.06)" : colors.surfaceSubtle }]}>
+          {(["Monthly", "Weekly", "Yearly"] as const).map((tab) => {
+            const isActive = timeframe === tab;
+            return (
+              <Pressable
+                key={tab}
+                onPress={() => {
+                  try {
+                    Haptics.selectionAsync();
+                  } catch {
+                    // Non-fatal
+                  }
+                  setTimeframe(tab);
+                }}
+                style={[
+                  styles.timeframeTab,
+                  isActive && {
+                    backgroundColor: "#16382B",
+                    shadowColor: "#000",
+                    shadowOpacity: 0.12,
+                    shadowRadius: 4,
+                    elevation: 2,
+                  },
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.timeframeText,
+                    {
+                      color: isActive ? "#FFFFFF" : colors.muted,
+                      fontWeight: isActive ? "700" : "500",
+                    },
+                  ]}
+                >
+                  {tab}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </View>
 
-          <View style={styles.heroContent}>
-            <View style={styles.heroLeft}>
-              <View style={styles.kickerBadge}>
-                <View style={styles.pulseDot} />
-                <Text style={styles.kickerLight}>THIS MONTH'S OUTFLOW</Text>
-              </View>
-              <Text style={styles.heroValue} numberOfLines={1} adjustsFontSizeToFit>
+        {/* Month Navigator Header (Screen 3 Mockup) */}
+        <View style={styles.dateNavigator}>
+          <Pressable style={styles.navArrowBtn}>
+            <Ionicons name="chevron-back" size={18} color={colors.muted} />
+          </Pressable>
+          <View style={styles.dateLabelRow}>
+            <Text style={[styles.dateNavigatorText, { color: colors.foreground }]}>
+              {formattedMonthYear}
+            </Text>
+            <Ionicons name="calendar-outline" size={15} color="#10B981" style={{ marginLeft: 6 }} />
+          </View>
+          <Pressable style={styles.navArrowBtn}>
+            <Ionicons name="chevron-forward" size={18} color={colors.muted} />
+          </Pressable>
+        </View>
+
+        {/* Total Spending Card matching Mockup Screen 3 */}
+        <View
+          style={[
+            styles.spendCard,
+            {
+              backgroundColor: colors.surface,
+              borderColor: colors.border,
+              shadowColor: dark ? "#000000" : "#0A1F1C",
+              shadowOpacity: dark ? 0.35 : 0.04,
+            },
+          ]}
+        >
+          <View style={styles.spendCardHeader}>
+            <View>
+              <Text style={[styles.spendCardLabel, { color: colors.muted }]}>Total Spending</Text>
+              <Text style={[styles.spendCardAmount, { color: colors.foreground }]}>
                 {formatMoney(monthTotal)}
               </Text>
-              <View style={styles.heroFootRow}>
-                <Ionicons name="analytics-outline" size={13} color="#A5D0BE" />
-                <Text style={styles.heroFootText}>
-                  Avg: {averageExpenseSize} per record
-                </Text>
-              </View>
             </View>
-
-            <View style={styles.heroRing}>
-              <Text style={styles.heroRingNumber}>{activeCategoryCount}</Text>
-              <Text style={styles.heroRingLabel}>Active</Text>
-              <Text style={styles.heroRingSubLabel}>Categories</Text>
+            <View style={styles.chartIconBadge}>
+              <Ionicons name="bar-chart-outline" size={22} color="#10B981" />
             </View>
           </View>
-        </LinearGradient>
+
+          <View style={styles.spendTrendBadge}>
+            <Ionicons name="arrow-down" size={13} color="#10B981" />
+            <Text style={styles.spendTrendText}>12% vs. last month</Text>
+          </View>
+        </View>
+
+        {/* Spending Trajectory Area Curve Chart */}
+        <SpendingTrendChart expenses={monthExpenses} monthTotal={monthTotal} />
 
         {/* Category Breakdown Panel */}
         <CategoryBreakdown
@@ -191,7 +248,99 @@ export default function ReportsScreen() {
 const styles = StyleSheet.create({
   scroll: {
     paddingTop: 12,
-    paddingBottom: 40,
+    paddingBottom: 96,
+  },
+  timeframeRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: 4,
+    borderRadius: 16,
+    marginTop: 4,
+    marginBottom: 14,
+  },
+  timeframeTab: {
+    flex: 1,
+    paddingVertical: 8,
+    borderRadius: 12,
+    alignItems: "center",
+    justifyContent: "center",
+    ...(Platform.OS === "web" ? ({ cursor: "pointer" } as any) : {}),
+  },
+  timeframeText: {
+    fontSize: 12.5,
+  },
+  dateNavigator: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 14,
+    paddingHorizontal: 4,
+  },
+  navArrowBtn: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    alignItems: "center",
+    justifyContent: "center",
+    ...(Platform.OS === "web" ? ({ cursor: "pointer" } as any) : {}),
+  },
+  dateLabelRow: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  dateNavigatorText: {
+    fontFamily: "Fraunces_700Bold",
+    fontSize: 16,
+    letterSpacing: -0.2,
+  },
+  spendCard: {
+    padding: 18,
+    borderRadius: 22,
+    borderWidth: 1,
+    marginBottom: 16,
+    shadowOffset: { width: 0, height: 4 },
+    shadowRadius: 10,
+    elevation: 2,
+  },
+  spendCardHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 6,
+  },
+  spendCardLabel: {
+    fontSize: 12,
+    fontWeight: "600",
+  },
+  spendCardAmount: {
+    fontFamily: "Fraunces_700Bold",
+    fontSize: 32,
+    letterSpacing: -1,
+    marginTop: 2,
+  },
+  chartIconBadge: {
+    width: 44,
+    height: 44,
+    borderRadius: 14,
+    backgroundColor: "rgba(16, 185, 129, 0.12)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  spendTrendBadge: {
+    alignSelf: "flex-start",
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    backgroundColor: "rgba(16, 185, 129, 0.12)",
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 10,
+    marginTop: 6,
+  },
+  spendTrendText: {
+    color: "#10B981",
+    fontSize: 11,
+    fontWeight: "700",
   },
   hero: {
     position: "relative",

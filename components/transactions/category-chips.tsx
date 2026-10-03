@@ -54,11 +54,11 @@ export function CategoryChips({ selected, onSelect }: CategoryChipsProps) {
               styles.chip,
               {
                 backgroundColor: isActive
-                  ? dark
-                    ? `${catStyle.color}22`
-                    : catStyle.soft
+                  ? "#16382B"
+                  : dark
+                  ? "rgba(255,255,255,0.05)"
                   : colors.surface,
-                borderColor: isActive ? catStyle.color : colors.border,
+                borderColor: isActive ? "#16382B" : colors.border,
                 opacity: pressed ? 0.8 : 1,
                 transform: [{ scale: pressed ? 0.96 : 1 }],
               },
@@ -69,7 +69,7 @@ export function CategoryChips({ selected, onSelect }: CategoryChipsProps) {
                 styles.iconWrap,
                 {
                   backgroundColor: isActive
-                    ? catStyle.color
+                    ? "rgba(255,255,255,0.18)"
                     : dark
                     ? "rgba(255,255,255,0.06)"
                     : "rgba(0,0,0,0.04)",
@@ -86,11 +86,7 @@ export function CategoryChips({ selected, onSelect }: CategoryChipsProps) {
               style={[
                 styles.chipText,
                 {
-                  color: isActive
-                    ? dark
-                      ? "#FFFFFF"
-                      : catStyle.color
-                    : colors.muted,
+                  color: isActive ? "#FFFFFF" : colors.muted,
                   fontWeight: isActive ? "700" : "500",
                 },
               ]}

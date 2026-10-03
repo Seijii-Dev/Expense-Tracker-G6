@@ -31,6 +31,11 @@ export type ExpenseContextValue = {
   allCategories: string[];
   addCustomCategory: (category: { name: string; color: string; soft?: string; icon: string }) => Promise<boolean>;
   deleteCustomCategory: (nameOrId: string) => Promise<boolean>;
+  addExpenseModalOpen: boolean;
+  openAddExpenseModal: () => void;
+  closeAddExpenseModal: () => void;
+  isBalanceHidden: boolean;
+  toggleBalanceHidden: () => void;
 };
 
 type PendingSyncItem =
@@ -83,6 +88,12 @@ export function ExpenseProvider({ children }: { children: React.ReactNode }) {
   const [hydratedKey, setHydratedKey] = useState<string | null>(null);
   const [syncing, setSyncing] = useState(false);
   const [syncError, setSyncError] = useState<string | null>(null);
+  const [addExpenseModalOpen, setAddExpenseModalOpen] = useState(false);
+  const [isBalanceHidden, setIsBalanceHidden] = useState(false);
+
+  const openAddExpenseModal = useCallback(() => setAddExpenseModalOpen(true), []);
+  const closeAddExpenseModal = useCallback(() => setAddExpenseModalOpen(false), []);
+  const toggleBalanceHidden = useCallback(() => setIsBalanceHidden((prev) => !prev), []);
 
   const accountEmail = account?.email ?? null;
   const isSyncingRef = React.useRef(false);
@@ -534,6 +545,11 @@ export function ExpenseProvider({ children }: { children: React.ReactNode }) {
       allCategories,
       addCustomCategory,
       deleteCustomCategory,
+      addExpenseModalOpen,
+      openAddExpenseModal,
+      closeAddExpenseModal,
+      isBalanceHidden,
+      toggleBalanceHidden,
     }),
     [
       expenses,
@@ -555,6 +571,11 @@ export function ExpenseProvider({ children }: { children: React.ReactNode }) {
       allCategories,
       addCustomCategory,
       deleteCustomCategory,
+      addExpenseModalOpen,
+      openAddExpenseModal,
+      closeAddExpenseModal,
+      isBalanceHidden,
+      toggleBalanceHidden,
     ]
   );
 

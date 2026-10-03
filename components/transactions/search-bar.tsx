@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Pressable, StyleSheet, TextInput, View } from "react-native";
+import { Platform, Pressable, StyleSheet, TextInput, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { useTheme } from "@/lib/theme-store";
@@ -8,12 +8,16 @@ interface SearchBarProps {
   value: string;
   onChangeText: (text: string) => void;
   placeholder?: string;
+  onPressFilter?: () => void;
+  hasActiveFilters?: boolean;
 }
 
 export function SearchBar({
   value,
   onChangeText,
-  placeholder = "Search description, category, or amount…",
+  placeholder = "Search transactions...",
+  onPressFilter,
+  hasActiveFilters,
 }: SearchBarProps) {
   const { colors, dark } = useTheme();
   const [isFocused, setIsFocused] = useState(false);
@@ -24,15 +28,15 @@ export function SearchBar({
         styles.search,
         {
           backgroundColor: dark ? "rgba(255,255,255,0.05)" : colors.surface,
-          borderColor: isFocused ? colors.primary : colors.border,
+          borderColor: isFocused ? "#10B981" : colors.border,
         },
         isFocused && styles.searchFocused,
       ]}
     >
       <Ionicons
         name="search"
-        size={17}
-        color={isFocused ? colors.primary : colors.subtle}
+        size={18}
+        color={isFocused ? "#10B981" : colors.subtle}
       />
       <TextInput
         value={value}
@@ -56,8 +60,35 @@ export function SearchBar({
           }}
           accessibilityRole="button"
           accessibilityLabel="Clear search input"
+          style={{ marginRight: onPressFilter ? 6 : 0 }}
         >
           <Ionicons name="close-circle" size={18} color={colors.subtle} />
+        </Pressable>
+      )}
+
+      {onPressFilter && (
+        <Pressable
+          hitSlop={8}
+          onPress={() => {
+            try {
+              Haptics.selectionAsync();
+            } catch {
+              // Non-fatal
+            }
+            onPressFilter();
+          }}
+          accessibilityRole="button"
+          accessibilityLabel="Filter transactions"
+          style={[
+            styles.filterBtn,
+            hasActiveFilters && { backgroundColor: dark ? "rgba(16, 185, 129, 0.2)" : "#E6F9F2" },
+          ]}
+        >
+          <Ionicons
+            name="funnel-outline"
+            size={16}
+            color={hasActiveFilters ? "#10B981" : colors.muted}
+          />
         </Pressable>
       )}
     </View>
@@ -85,6 +116,15 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 13,
     fontWeight: "500",
+  },
+  filterBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    alignItems: "center",
+    justifyContent: "center",
+    marginLeft: 4,
+    ...(Platform.OS === "web" ? ({ cursor: "pointer" } as any) : {}),
   },
 });
 

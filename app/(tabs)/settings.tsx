@@ -1,25 +1,22 @@
 import React, { useEffect, useState } from "react";
 import {
-  Alert,
+  Modal,
   Platform,
   Pressable,
   RefreshControl,
   ScrollView,
   StyleSheet,
+  Switch,
   Text,
   TextInput,
   View,
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { ScreenContainer } from "@/components/screen-container";
-import { ScreenHeader } from "@/components/common/screen-header";
-import { SectionHeading } from "@/components/settings/section-heading";
-import { PreferenceRow } from "@/components/settings/preference-row";
 import { CategoryIcon } from "@/components/ui/category-icon";
-import { CATEGORIES, CATEGORY_META, getCategoryStyle } from "@/constants/categories";
+import { CATEGORIES, getCategoryStyle } from "@/constants/categories";
 import { STORAGE_KEYS } from "@/constants/storage";
 import { useExpenses } from "@/lib/expense-store";
 import { useTheme } from "@/lib/theme-store";
@@ -29,6 +26,7 @@ import { exportExpensesToCsv } from "@/utils/export-csv";
 import { StoragePermissionDialog } from "@/components/common/storage-permission-dialog";
 import { CustomCategoryModal } from "@/components/settings/custom-category-modal";
 import { ConfirmDialog } from "@/components/common/confirm-dialog";
+import { AboutDialog } from "@/components/common/about-dialog";
 
 const BUDGET_PRESETS = [3000, 5000, 10000, 15000, 20000] as const;
 
@@ -46,13 +44,16 @@ export default function SettingsScreen() {
     deleteCustomCategory,
   } = useExpenses();
   const { dark, setDark, colors } = useTheme();
-  const { account, logout } = useAuth();
+  const { account } = useAuth();
 
   const [budgetText, setBudgetText] = useState(String(budget));
   const [budgetNudges, setBudgetNudges] = useState(true);
   const [showStorageDialog, setShowStorageDialog] = useState(false);
   const [showCategoryModal, setShowCategoryModal] = useState(false);
-  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const [showBudgetModal, setShowBudgetModal] = useState(false);
+  const [showCurrencyModal, setShowCurrencyModal] = useState(false);
+  const [showBackupModal, setShowBackupModal] = useState(false);
+  const [showAboutModal, setShowAboutModal] = useState(false);
   const [categoryToDelete, setCategoryToDelete] = useState<string | null>(null);
   const [budgetNotice, setBudgetNotice] = useState<string | null>(null);
   const [exportNotice, setExportNotice] = useState<{
@@ -95,10 +96,6 @@ export default function SettingsScreen() {
       // Non-fatal
     }
     setDark(value);
-  };
-
-  const handleLogout = () => {
-    setShowLogoutConfirm(true);
   };
 
   const commitBudget = (amount?: number) => {
@@ -146,11 +143,13 @@ export default function SettingsScreen() {
           />
         }
       >
-        <ScreenHeader
-          kicker="MAKE IT YOURS"
-          title="Settings"
-          subtitle="Shape the way you track, manage, and back up everyday spending."
-        />
+        {/* Header matching Mockup Screen 4 */}
+        <View style={styles.header}>
+          <Text style={[styles.title, { color: colors.foreground }]}>Settings</Text>
+          <Text style={[styles.subtitle, { color: colors.muted }]}>
+            Customize your app experience
+          </Text>
+        </View>
 
         {syncError && (
           <View style={styles.syncBanner}>
@@ -159,10 +158,10 @@ export default function SettingsScreen() {
           </View>
         )}
 
-        {/* Account Group */}
+        {/* Grouped Settings Card matching Mockup */}
         <View
           style={[
-            styles.panel,
+            styles.settingsCard,
             {
               backgroundColor: colors.surface,
               borderColor: colors.border,
@@ -174,294 +173,513 @@ export default function SettingsScreen() {
             },
           ]}
         >
-          <SectionHeading
-            icon={<Ionicons name="person-outline" size={18} color={colors.primary} />}
-            title="Account"
-            copy={account ? account.email : "Not signed in"}
-          />
-          <View style={styles.accountRow}>
-            <Text style={[styles.accountName, { color: colors.foreground }]}>{account?.name}</Text>
-            {syncing && <Text style={[styles.syncingText, { color: colors.muted }]}>Syncing…</Text>}
-          </View>
+          {/* 1. Appearance */}
           <Pressable
             style={({ pressed }) => [
-              styles.outlineButton,
-              {
-                borderColor: `${colors.primary}40`,
-                backgroundColor: dark ? `${colors.primary}12` : colors.primarySoft,
-              },
+              styles.settingRow,
+              { borderBottomColor: colors.border },
               pressed && styles.pressed,
             ]}
-            onPress={handleLogout}
+            onPress={() => toggleDarkMode(!dark)}
             accessibilityRole="button"
           >
-            <Ionicons name="log-out-outline" size={15} color={colors.primary} />
-            <Text style={[styles.outlineText, { color: colors.primary }]}>Sign out</Text>
-          </Pressable>
-        </View>
-
-        {/* Budget Preferences Group */}
-        <View
-          style={[
-            styles.panel,
-            {
-              backgroundColor: colors.surface,
-              borderColor: colors.border,
-              shadowColor: dark ? "#000000" : "#0A1F1C",
-              shadowOffset: { width: 0, height: 4 },
-              shadowOpacity: dark ? 0.35 : 0.04,
-              shadowRadius: 10,
-              elevation: 2,
-            },
-          ]}
-        >
-          <SectionHeading
-            icon={<Ionicons name="cash-outline" size={18} color={colors.primary} />}
-            title="Money preferences"
-            copy="Set your default currency and monthly spending targets."
-          />
-
-          <Text style={[styles.fieldLabel, { color: colors.subtle }]}>CURRENCY</Text>
-          <View style={[styles.select, { borderColor: colors.border, backgroundColor: dark ? "rgba(255,255,255,0.03)" : colors.surfaceSubtle }]}>
-            <Text style={[styles.selectText, { color: colors.foreground }]}>PHP — Philippine peso (₱)</Text>
-            <Ionicons name="checkmark-circle" size={18} color={colors.success} />
-          </View>
-
-          <Text style={[styles.fieldLabel, { color: colors.subtle }]}>MONTHLY BUDGET TARGET</Text>
-          <View style={[styles.inputWrap, { borderColor: colors.border, backgroundColor: dark ? "rgba(255,255,255,0.03)" : colors.surfaceSubtle }]}>
-            <Text style={[styles.inputPrefix, { color: colors.primary }]}>₱</Text>
-            <TextInput
-              value={budgetText}
-              onChangeText={setBudgetText}
-              onEndEditing={() => commitBudget()}
-              onBlur={() => commitBudget()}
-              keyboardType="number-pad"
-              style={[styles.input, { color: colors.foreground }]}
+            <View
+              style={[
+                styles.iconCircle,
+                { backgroundColor: dark ? "rgba(245, 158, 11, 0.2)" : "#FEF3C7" },
+              ]}
+            >
+              <Ionicons name="sunny" size={20} color="#F59E0B" />
+            </View>
+            <View style={styles.rowContent}>
+              <Text style={[styles.rowTitle, { color: colors.foreground }]}>Appearance</Text>
+              <Text style={[styles.rowSubtitle, { color: colors.muted }]}>
+                {dark ? "Dark Mode" : "Light, Dark or System"}
+              </Text>
+            </View>
+            <Switch
+              value={dark}
+              onValueChange={toggleDarkMode}
+              trackColor={{
+                false: dark ? "rgba(255,255,255,0.12)" : colors.border,
+                true: "#16382B",
+              }}
+              thumbColor="#FFFFFF"
             />
-          </View>
+          </Pressable>
 
-          {/* Budget Presets */}
-          <Text style={[styles.presetLabel, { color: colors.subtle }]}>QUICK PRESETS</Text>
-          <View style={styles.presetRow}>
-            {BUDGET_PRESETS.map((preset) => {
-              const active = budget === preset;
-              return (
-                <Pressable
-                  key={preset}
-                  onPress={() => commitBudget(preset)}
-                  style={({ pressed }) => [
-                    styles.presetBtn,
-                    {
-                      borderColor: active ? colors.primary : colors.border,
-                      backgroundColor: active
-                        ? dark
-                          ? `${colors.primary}25`
-                          : colors.primarySoft
-                        : dark
-                        ? "rgba(255,255,255,0.04)"
-                        : colors.surfaceSubtle,
-                      opacity: pressed ? 0.8 : 1,
-                      transform: [{ scale: pressed ? 0.96 : 1 }],
-                    },
-                  ]}
-                >
-                  <Text
-                    style={[
-                      styles.presetBtnText,
-                      {
-                        color: active ? colors.primary : colors.muted,
-                        fontWeight: active ? "700" : "500",
-                      },
-                    ]}
-                  >
-                    {formatMoney(preset)}
-                  </Text>
-                </Pressable>
-              );
-            })}
-          </View>
-
-          <View style={[styles.divider, { backgroundColor: colors.border }]} />
-
-          <SectionHeading
-            icon={<Ionicons name="pricetag-outline" size={18} color={colors.primary} />}
-            title="Active Categories"
-            copy={`${allCategories.length} categories active across your records.`}
-          />
-          <View style={styles.pills}>
-            {allCategories.map((category) => {
-              const catStyle = getCategoryStyle(category, customCategories);
-              const isCustom = customCategories.some(
-                (c) => c.name.toLowerCase() === category.toLowerCase()
-              );
-              return (
-                <Pressable
-                  key={category}
-                  onPress={() => {
-                    if (isCustom) {
-                      setCategoryToDelete(category);
-                    }
-                  }}
-                  style={({ pressed }) => [
-                    styles.pill,
-                    {
-                      backgroundColor: dark ? `${catStyle.color}25` : catStyle.soft,
-                      borderColor: `${catStyle.color}40`,
-                      opacity: pressed ? 0.8 : 1,
-                    },
-                  ]}
-                >
-                  <CategoryIcon category={category} size={15} customCategories={customCategories} />
-                  <Text style={[styles.pillText, { color: catStyle.color }]}>{category}</Text>
-                  {isCustom && (
-                    <Ionicons
-                      name="close-circle"
-                      size={14}
-                      color={catStyle.color}
-                      style={{ opacity: 0.75, marginLeft: 2 }}
-                    />
-                  )}
-                </Pressable>
-              );
-            })}
-          </View>
+          {/* 2. Notifications */}
           <Pressable
             style={({ pressed }) => [
-              styles.outlineButton,
-              {
-                borderColor: `${colors.primary}40`,
-                backgroundColor: dark ? `${colors.primary}12` : colors.primarySoft,
-              },
+              styles.settingRow,
+              { borderBottomColor: colors.border },
+              pressed && styles.pressed,
+            ]}
+            onPress={() => toggleBudgetNudges(!budgetNudges)}
+            accessibilityRole="button"
+          >
+            <View
+              style={[
+                styles.iconCircle,
+                { backgroundColor: dark ? "rgba(255, 101, 84, 0.2)" : "#FEE2E2" },
+              ]}
+            >
+              <Ionicons name="notifications" size={20} color="#FF6554" />
+            </View>
+            <View style={styles.rowContent}>
+              <Text style={[styles.rowTitle, { color: colors.foreground }]}>Notifications</Text>
+              <Text style={[styles.rowSubtitle, { color: colors.muted }]}>
+                {budgetNudges ? "Budget alerts enabled" : "Manage your notifications"}
+              </Text>
+            </View>
+            <Switch
+              value={budgetNudges}
+              onValueChange={toggleBudgetNudges}
+              trackColor={{
+                false: dark ? "rgba(255,255,255,0.12)" : colors.border,
+                true: "#16382B",
+              }}
+              thumbColor="#FFFFFF"
+            />
+          </Pressable>
+
+          {/* 3. Budget Settings */}
+          <Pressable
+            style={({ pressed }) => [
+              styles.settingRow,
+              { borderBottomColor: colors.border },
               pressed && styles.pressed,
             ]}
             onPress={() => {
               try {
                 Haptics.selectionAsync();
-              } catch {
-                // Non-fatal
-              }
-              setShowCategoryModal(true);
+              } catch {}
+              setShowBudgetModal(true);
             }}
             accessibilityRole="button"
           >
-            <Ionicons name="add" size={16} color={colors.primary} />
-            <Text style={[styles.outlineText, { color: colors.primary }]}>Add custom category</Text>
-          </Pressable>
-        </View>
-
-        {/* Display & Notifications Group */}
-        <View
-          style={[
-            styles.panel,
-            {
-              backgroundColor: colors.surface,
-              borderColor: colors.border,
-              shadowColor: dark ? "#000000" : "#0A1F1C",
-              shadowOffset: { width: 0, height: 4 },
-              shadowOpacity: dark ? 0.35 : 0.04,
-              shadowRadius: 10,
-              elevation: 2,
-            },
-          ]}
-        >
-          <PreferenceRow
-            icon={<Ionicons name="moon-outline" size={18} color={colors.primary} />}
-            title="Dark mode"
-            copy="Use a darker, high-contrast palette for late hours"
-            value={dark}
-            onChange={toggleDarkMode}
-          />
-          <PreferenceRow
-            icon={<Ionicons name="notifications-outline" size={18} color={colors.primary} />}
-            title="Budget nudges"
-            copy="Receive visual warnings when reaching 80% and 100% of budget"
-            value={budgetNudges}
-            onChange={toggleBudgetNudges}
-            last
-          />
-        </View>
-
-        {/* Data Backup & Export Group */}
-        <View
-          style={[
-            styles.backup,
-            {
-              backgroundColor: dark ? "rgba(255,255,255,0.03)" : "#FFF9F7",
-              borderColor: colors.border,
-              shadowColor: dark ? "#000000" : "#0A1F1C",
-              shadowOffset: { width: 0, height: 4 },
-              shadowOpacity: dark ? 0.35 : 0.04,
-              shadowRadius: 10,
-              elevation: 2,
-            },
-          ]}
-        >
-          <View
-            style={[
-              styles.backupIcon,
-              {
-                backgroundColor: dark ? `${colors.primary}20` : colors.primarySoft,
-                borderColor: `${colors.primary}30`,
-              },
-            ]}
-          >
-            <Ionicons name="download-outline" size={20} color={colors.primary} />
-          </View>
-          <Text style={[styles.kicker, { color: colors.primary }]}>YOUR DATA, YOUR SAY</Text>
-          <Text style={[styles.backupTitle, { color: colors.foreground }]}>Keep a copy close.</Text>
-          <Text style={[styles.backupCopy, { color: colors.muted }]}>
-            Export your {expenses.length} transactions anytime as a portable CSV backup file.
-          </Text>
-          <Pressable
-            style={({ pressed }) => [
-              styles.exportButton,
-              { backgroundColor: colors.primary },
-              pressed && styles.pressed,
-            ]}
-            onPress={handleExport}
-            accessibilityRole="button"
-          >
-            <Ionicons name="download-outline" size={16} color="#FFFFFF" />
-            <Text style={styles.exportText}>Export as CSV</Text>
+            <View
+              style={[
+                styles.iconCircle,
+                { backgroundColor: dark ? "rgba(16, 185, 129, 0.2)" : "#D1FAE5" },
+              ]}
+            >
+              <Ionicons name="compass-outline" size={20} color="#10B981" />
+            </View>
+            <View style={styles.rowContent}>
+              <Text style={[styles.rowTitle, { color: colors.foreground }]}>Budget Settings</Text>
+              <Text style={[styles.rowSubtitle, { color: colors.muted }]}>
+                Set your monthly budget
+              </Text>
+            </View>
+            <Ionicons name="chevron-forward" size={18} color={colors.muted} />
           </Pressable>
 
+          {/* 4. Currency */}
           <Pressable
             style={({ pressed }) => [
-              styles.outlineButton,
-              {
-                borderColor: colors.border,
-                marginTop: 12,
-                alignSelf: "stretch",
-                justifyContent: "center",
-                backgroundColor: colors.surface,
-              },
+              styles.settingRow,
+              { borderBottomColor: colors.border },
               pressed && styles.pressed,
             ]}
             onPress={() => {
               try {
                 Haptics.selectionAsync();
-              } catch {
-                // Non-fatal
-              }
-              setShowStorageDialog(true);
+              } catch {}
+              setShowCurrencyModal(true);
             }}
             accessibilityRole="button"
           >
-            <Ionicons name="shield-checkmark-outline" size={15} color={colors.primary} />
-            <Text style={[styles.outlineText, { color: colors.primary }]}>
-              Storage Permission Details
-            </Text>
+            <View
+              style={[
+                styles.iconCircle,
+                { backgroundColor: dark ? "rgba(22, 163, 74, 0.2)" : "#DCFCE7" },
+              ]}
+            >
+              <Ionicons name="cash-outline" size={20} color="#16A34A" />
+            </View>
+            <View style={styles.rowContent}>
+              <Text style={[styles.rowTitle, { color: colors.foreground }]}>Currency</Text>
+              <Text style={[styles.rowSubtitle, { color: colors.muted }]}>
+                USD - US Dollar / PHP
+              </Text>
+            </View>
+            <Ionicons name="chevron-forward" size={18} color={colors.muted} />
+          </Pressable>
+
+          {/* 5. Data & Backup */}
+          <Pressable
+            style={({ pressed }) => [
+              styles.settingRow,
+              { borderBottomColor: colors.border },
+              pressed && styles.pressed,
+            ]}
+            onPress={() => {
+              try {
+                Haptics.selectionAsync();
+              } catch {}
+              setShowBackupModal(true);
+            }}
+            accessibilityRole="button"
+          >
+            <View
+              style={[
+                styles.iconCircle,
+                { backgroundColor: dark ? "rgba(14, 165, 233, 0.2)" : "#E0F2FE" },
+              ]}
+            >
+              <Ionicons name="cloud-upload-outline" size={20} color="#0284C7" />
+            </View>
+            <View style={styles.rowContent}>
+              <Text style={[styles.rowTitle, { color: colors.foreground }]}>Data & Backup</Text>
+              <Text style={[styles.rowSubtitle, { color: colors.muted }]}>
+                Sync your data securely
+              </Text>
+            </View>
+            <Ionicons name="chevron-forward" size={18} color={colors.muted} />
+          </Pressable>
+
+          {/* 6. About Ledgerly */}
+          <Pressable
+            style={({ pressed }) => [styles.settingRow, styles.lastRow, pressed && styles.pressed]}
+            onPress={() => {
+              try {
+                Haptics.selectionAsync();
+              } catch {}
+              setShowAboutModal(true);
+            }}
+            accessibilityRole="button"
+          >
+            <View
+              style={[
+                styles.iconCircle,
+                { backgroundColor: dark ? "rgba(99, 102, 241, 0.2)" : "#E0E7FF" },
+              ]}
+            >
+              <Ionicons name="information-circle-outline" size={20} color="#4F46E5" />
+            </View>
+            <View style={styles.rowContent}>
+              <Text style={[styles.rowTitle, { color: colors.foreground }]}>About Ledgerly</Text>
+              <Text style={[styles.rowSubtitle, { color: colors.muted }]}>Version 1.0.0</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={18} color={colors.muted} />
           </Pressable>
         </View>
       </ScrollView>
 
-      {/* Storage Permission Dialog */}
-      <StoragePermissionDialog
-        visible={showStorageDialog}
-        onClose={() => setShowStorageDialog(false)}
-      />
+      {/* Budget Settings Modal */}
+      <Modal
+        visible={showBudgetModal}
+        animationType="slide"
+        transparent
+        onRequestClose={() => setShowBudgetModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <Pressable style={styles.modalBackdrop} onPress={() => setShowBudgetModal(false)} />
+          <View
+            style={[
+              styles.modalSheet,
+              { backgroundColor: colors.surface, borderColor: colors.border },
+            ]}
+          >
+            <View style={styles.modalHeader}>
+              <Text style={[styles.modalTitle, { color: colors.foreground }]}>Budget Settings</Text>
+              <Pressable
+                onPress={() => setShowBudgetModal(false)}
+                style={({ pressed }) => [styles.closeBtn, pressed && { opacity: 0.7 }]}
+              >
+                <Ionicons name="close" size={22} color={colors.muted} />
+              </Pressable>
+            </View>
 
-      {/* Custom Category Modal */}
+            <ScrollView showsVerticalScrollIndicator={false} style={{ maxHeight: 420 }}>
+              <Text style={[styles.modalSectionLabel, { color: colors.muted }]}>
+                MONTHLY BUDGET TARGET
+              </Text>
+              <View
+                style={[
+                  styles.inputWrap,
+                  {
+                    borderColor: colors.border,
+                    backgroundColor: dark ? "rgba(255,255,255,0.03)" : colors.surfaceSubtle,
+                  },
+                ]}
+              >
+                <Text style={[styles.inputPrefix, { color: colors.primary }]}>₱</Text>
+                <TextInput
+                  value={budgetText}
+                  onChangeText={setBudgetText}
+                  onEndEditing={() => commitBudget()}
+                  onBlur={() => commitBudget()}
+                  keyboardType="number-pad"
+                  style={[styles.input, { color: colors.foreground }]}
+                />
+              </View>
+
+              {budgetNotice && (
+                <Text style={{ color: "#FF6554", fontSize: 12, marginTop: 4 }}>
+                  {budgetNotice}
+                </Text>
+              )}
+
+              {/* Quick Presets */}
+              <Text style={[styles.modalSectionLabel, { color: colors.muted, marginTop: 16 }]}>
+                QUICK PRESETS
+              </Text>
+              <View style={styles.presetRow}>
+                {BUDGET_PRESETS.map((preset) => {
+                  const active = budget === preset;
+                  return (
+                    <Pressable
+                      key={preset}
+                      onPress={() => commitBudget(preset)}
+                      style={({ pressed }) => [
+                        styles.presetBtn,
+                        {
+                          borderColor: active ? colors.primary : colors.border,
+                          backgroundColor: active
+                            ? dark
+                              ? `${colors.primary}25`
+                              : colors.primarySoft
+                            : dark
+                            ? "rgba(255,255,255,0.04)"
+                            : colors.surfaceSubtle,
+                          opacity: pressed ? 0.8 : 1,
+                        },
+                      ]}
+                    >
+                      <Text
+                        style={[
+                          styles.presetBtnText,
+                          {
+                            color: active ? colors.primary : colors.muted,
+                            fontWeight: active ? "700" : "500",
+                          },
+                        ]}
+                      >
+                        {formatMoney(preset)}
+                      </Text>
+                    </Pressable>
+                  );
+                })}
+              </View>
+
+              {/* Categories */}
+              <View style={[styles.divider, { backgroundColor: colors.border }]} />
+              <View style={styles.catHeaderRow}>
+                <Text style={[styles.modalSectionLabel, { color: colors.muted }]}>
+                  ACTIVE CATEGORIES ({allCategories.length})
+                </Text>
+                <Pressable
+                  onPress={() => {
+                    setShowBudgetModal(false);
+                    setShowCategoryModal(true);
+                  }}
+                  style={styles.addCatLink}
+                >
+                  <Ionicons name="add" size={14} color={colors.primary} />
+                  <Text style={[styles.addCatLinkText, { color: colors.primary }]}>Add custom</Text>
+                </Pressable>
+              </View>
+
+              <View style={styles.pillsWrap}>
+                {allCategories.map((category) => {
+                  const catStyle = getCategoryStyle(category, customCategories);
+                  const isCustom = customCategories.some(
+                    (c) => c.name.toLowerCase() === category.toLowerCase()
+                  );
+                  return (
+                    <Pressable
+                      key={category}
+                      onPress={() => {
+                        if (isCustom) setCategoryToDelete(category);
+                      }}
+                      style={[
+                        styles.pill,
+                        {
+                          backgroundColor: dark ? `${catStyle.color}25` : catStyle.soft,
+                          borderColor: `${catStyle.color}40`,
+                        },
+                      ]}
+                    >
+                      <CategoryIcon
+                        category={category}
+                        size={14}
+                        customCategories={customCategories}
+                      />
+                      <Text style={[styles.pillText, { color: catStyle.color }]}>{category}</Text>
+                      {isCustom && (
+                        <Ionicons
+                          name="close-circle"
+                          size={13}
+                          color={catStyle.color}
+                          style={{ opacity: 0.75, marginLeft: 2 }}
+                        />
+                      )}
+                    </Pressable>
+                  );
+                })}
+              </View>
+            </ScrollView>
+
+            <Pressable
+              style={({ pressed }) => [
+                styles.primaryModalBtn,
+                { backgroundColor: "#16382B" },
+                pressed && { opacity: 0.85 },
+              ]}
+              onPress={() => {
+                commitBudget();
+                setShowBudgetModal(false);
+              }}
+            >
+              <Text style={styles.primaryModalBtnText}>Save Budget</Text>
+            </Pressable>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Currency Modal */}
+      <Modal
+        visible={showCurrencyModal}
+        animationType="fade"
+        transparent
+        onRequestClose={() => setShowCurrencyModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <Pressable style={styles.modalBackdrop} onPress={() => setShowCurrencyModal(false)} />
+          <View
+            style={[
+              styles.modalSheet,
+              { backgroundColor: colors.surface, borderColor: colors.border },
+            ]}
+          >
+            <View style={styles.modalHeader}>
+              <Text style={[styles.modalTitle, { color: colors.foreground }]}>Select Currency</Text>
+              <Pressable
+                onPress={() => setShowCurrencyModal(false)}
+                style={({ pressed }) => [styles.closeBtn, pressed && { opacity: 0.7 }]}
+              >
+                <Ionicons name="close" size={22} color={colors.muted} />
+              </Pressable>
+            </View>
+
+            <View style={styles.currencyList}>
+              <View
+                style={[
+                  styles.currencyItem,
+                  {
+                    backgroundColor: dark ? "rgba(22, 56, 43, 0.2)" : "#EAFBF1",
+                    borderColor: "#16382B",
+                  },
+                ]}
+              >
+                <View>
+                  <Text style={[styles.currencyName, { color: colors.foreground }]}>
+                    Philippine Peso (PHP)
+                  </Text>
+                  <Text style={[styles.currencySymbol, { color: colors.muted }]}>₱ — Primary</Text>
+                </View>
+                <Ionicons name="checkmark-circle" size={20} color="#16382B" />
+              </View>
+
+              <View
+                style={[
+                  styles.currencyItem,
+                  {
+                    backgroundColor: dark ? "rgba(255,255,255,0.03)" : colors.surfaceSubtle,
+                    borderColor: colors.border,
+                    opacity: 0.7,
+                  },
+                ]}
+              >
+                <View>
+                  <Text style={[styles.currencyName, { color: colors.foreground }]}>
+                    US Dollar (USD)
+                  </Text>
+                  <Text style={[styles.currencySymbol, { color: colors.muted }]}>$ — Supported</Text>
+                </View>
+              </View>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Data & Backup Modal */}
+      <Modal
+        visible={showBackupModal}
+        animationType="slide"
+        transparent
+        onRequestClose={() => setShowBackupModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <Pressable style={styles.modalBackdrop} onPress={() => setShowBackupModal(false)} />
+          <View
+            style={[
+              styles.modalSheet,
+              { backgroundColor: colors.surface, borderColor: colors.border },
+            ]}
+          >
+            <View style={styles.modalHeader}>
+              <Text style={[styles.modalTitle, { color: colors.foreground }]}>Data & Backup</Text>
+              <Pressable
+                onPress={() => setShowBackupModal(false)}
+                style={({ pressed }) => [styles.closeBtn, pressed && { opacity: 0.7 }]}
+              >
+                <Ionicons name="close" size={22} color={colors.muted} />
+              </Pressable>
+            </View>
+
+            <View style={styles.backupCard}>
+              <View style={styles.backupIconCircle}>
+                <Ionicons name="cloud-done-outline" size={28} color="#0284C7" />
+              </View>
+              <Text style={[styles.backupCardTitle, { color: colors.foreground }]}>
+                {expenses.length} Records Safe
+              </Text>
+              <Text style={[styles.backupCardSubtitle, { color: colors.muted }]}>
+                Your transactions are stored securely offline and synced when connected.
+              </Text>
+            </View>
+
+            <Pressable
+              style={({ pressed }) => [
+                styles.primaryModalBtn,
+                { backgroundColor: "#16382B", marginTop: 12 },
+                pressed && { opacity: 0.85 },
+              ]}
+              onPress={handleExport}
+            >
+              <Ionicons name="download-outline" size={18} color="#FFFFFF" style={{ marginRight: 6 }} />
+              <Text style={styles.primaryModalBtnText}>Export as CSV</Text>
+            </Pressable>
+
+            <Pressable
+              style={({ pressed }) => [
+                styles.secondaryModalBtn,
+                { borderColor: colors.border, marginTop: 10 },
+                pressed && { opacity: 0.85 },
+              ]}
+              onPress={() => {
+                setShowBackupModal(false);
+                setShowStorageDialog(true);
+              }}
+            >
+              <Ionicons
+                name="shield-checkmark-outline"
+                size={16}
+                color={colors.foreground}
+                style={{ marginRight: 6 }}
+              />
+              <Text style={[styles.secondaryModalBtnText, { color: colors.foreground }]}>
+                Storage Permissions
+              </Text>
+            </Pressable>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Modals & Dialogs */}
       <CustomCategoryModal
         visible={showCategoryModal}
         onClose={() => setShowCategoryModal(false)}
@@ -469,34 +687,19 @@ export default function SettingsScreen() {
         existingCategories={allCategories}
       />
 
-      {/* Sign Out Confirmation Dialog */}
-      <ConfirmDialog
-        visible={showLogoutConfirm}
-        title="Sign out of Ledgerly?"
-        message="You can sign back in any time. Your saved transactions remain safely synced in your account."
-        variant="danger"
-        icon="log-out-outline"
-        confirmText="Sign out"
-        cancelText="Cancel"
-        destructive
-        onConfirm={async () => {
-          setShowLogoutConfirm(false);
-          await logout();
-          router.replace("/auth");
-        }}
-        onCancel={() => setShowLogoutConfirm(false)}
+      <StoragePermissionDialog
+        visible={showStorageDialog}
+        onClose={() => setShowStorageDialog(false)}
       />
 
-      {/* Delete Custom Category Dialog */}
+      <AboutDialog visible={showAboutModal} onClose={() => setShowAboutModal(false)} />
+
       <ConfirmDialog
         visible={Boolean(categoryToDelete)}
-        title="Delete Custom Category"
-        message={`Are you sure you want to remove "${categoryToDelete}"? Past transactions categorized under it will remain in your records.`}
-        variant="danger"
-        icon="trash-outline"
-        confirmText="Delete category"
+        title={`Delete "${categoryToDelete}"?`}
+        message="This category will be permanently removed. Existing expenses in this category will keep their label."
+        confirmText="Delete"
         cancelText="Cancel"
-        destructive
         onConfirm={() => {
           if (categoryToDelete) {
             deleteCustomCategory(categoryToDelete);
@@ -504,117 +707,151 @@ export default function SettingsScreen() {
           }
         }}
         onCancel={() => setCategoryToDelete(null)}
+        destructive
       />
 
-      {/* Invalid Budget Notice Dialog */}
-      <ConfirmDialog
-        visible={Boolean(budgetNotice)}
-        title="Invalid Budget"
-        message={budgetNotice || ""}
-        variant="warning"
-        icon="alert-circle-outline"
-        confirmText="Understood"
-        onConfirm={() => setBudgetNotice(null)}
-      />
-
-      {/* Export Status Dialog */}
-      <ConfirmDialog
-        visible={Boolean(exportNotice)}
-        title={exportNotice?.title || "Export Status"}
-        message={exportNotice?.message || ""}
-        variant={exportNotice?.variant || "neutral"}
-        confirmText="Done"
-        onConfirm={() => setExportNotice(null)}
-      />
+      {exportNotice && (
+        <ConfirmDialog
+          visible={Boolean(exportNotice)}
+          title={exportNotice.title}
+          message={exportNotice.message}
+          confirmText="Done"
+          onConfirm={() => setExportNotice(null)}
+        />
+      )}
     </ScreenContainer>
   );
 }
 
 const styles = StyleSheet.create({
   scroll: {
-    paddingTop: 12,
-    paddingBottom: 40,
+    paddingTop: 16,
+    paddingBottom: 96,
+  },
+  header: {
+    marginBottom: 20,
+  },
+  title: {
+    fontSize: 28,
+    fontFamily: "Fraunces_700Bold",
+    letterSpacing: -0.6,
+  },
+  subtitle: {
+    fontSize: 13.5,
+    marginTop: 4,
+    fontWeight: "500",
   },
   syncBanner: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 10,
-    padding: 14,
+    gap: 8,
+    padding: 12,
+    borderRadius: 12,
+    backgroundColor: "#FDF2EE",
     marginBottom: 16,
-    borderRadius: 14,
-    backgroundColor: "#FFF3EE",
-    borderWidth: 1,
-    borderColor: "#F4CBB5",
   },
   syncBannerText: {
-    flex: 1,
-    color: "#B5502E",
     fontSize: 12,
-    lineHeight: 17,
+    color: "#B5502E",
+    fontWeight: "500",
+    flex: 1,
   },
-  panel: {
-    padding: 20,
-    marginBottom: 16,
+  settingsCard: {
     borderRadius: 22,
     borderWidth: 1,
+    overflow: "hidden",
   },
-  accountRow: {
+  settingRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 15,
+    paddingHorizontal: 16,
+    borderBottomWidth: 1,
+    ...(Platform.OS === "web" ? ({ cursor: "pointer" } as any) : {}),
+  },
+  lastRow: {
+    borderBottomWidth: 0,
+  },
+  iconCircle: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: 14,
+  },
+  rowContent: {
+    flex: 1,
+  },
+  rowTitle: {
+    fontSize: 15,
+    fontWeight: "700",
+    letterSpacing: -0.2,
+  },
+  rowSubtitle: {
+    fontSize: 12,
+    marginTop: 2,
+    fontWeight: "500",
+  },
+  pressed: {
+    opacity: 0.7,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "flex-end",
+  },
+  modalBackdrop: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  modalSheet: {
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+    borderWidth: 1,
+    padding: 22,
+    paddingBottom: Platform.OS === "ios" ? 40 : 24,
+  },
+  modalHeader: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    marginBottom: 16,
+    marginBottom: 18,
   },
-  accountName: {
+  modalTitle: {
+    fontSize: 20,
     fontFamily: "Fraunces_700Bold",
-    fontSize: 16,
+    letterSpacing: -0.3,
   },
-  syncingText: {
-    fontSize: 11,
+  closeBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: "center",
+    justifyContent: "center",
   },
-  fieldLabel: {
+  modalSectionLabel: {
     fontSize: 10,
     fontWeight: "800",
-    letterSpacing: 1.1,
-    marginTop: 10,
+    letterSpacing: 1,
     marginBottom: 8,
-  },
-  select: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    height: 48,
-    paddingHorizontal: 16,
-    borderRadius: 14,
-    borderWidth: 1,
-  },
-  selectText: {
-    fontSize: 13,
-    fontWeight: "600",
   },
   inputWrap: {
     flexDirection: "row",
     alignItems: "center",
-    height: 52,
-    paddingHorizontal: 16,
-    borderRadius: 14,
     borderWidth: 1,
+    borderRadius: 14,
+    paddingHorizontal: 14,
+    height: 48,
   },
   inputPrefix: {
-    fontFamily: "Fraunces_700Bold",
-    fontSize: 20,
+    fontSize: 18,
+    fontWeight: "700",
+    marginRight: 6,
   },
   input: {
     flex: 1,
-    fontFamily: "Fraunces_700Bold",
-    fontSize: 18,
-    marginLeft: 8,
-  },
-  presetLabel: {
-    fontSize: 10,
-    fontWeight: "800",
-    letterSpacing: 1,
-    marginTop: 14,
-    marginBottom: 8,
+    fontSize: 16,
+    fontWeight: "600",
   },
   presetRow: {
     flexDirection: "row",
@@ -622,105 +859,119 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   presetBtn: {
-    flexGrow: 1,
-    minWidth: "28%",
-    alignItems: "center",
-    justifyContent: "center",
     paddingHorizontal: 12,
-    paddingVertical: 10,
-    borderRadius: 12,
+    paddingVertical: 7,
+    borderRadius: 10,
     borderWidth: 1,
-    ...(Platform.OS === "web" ? ({ cursor: "pointer" } as any) : {}),
   },
   presetBtnText: {
-    fontSize: 12.5,
+    fontSize: 12,
   },
   divider: {
     height: 1,
-    marginVertical: 20,
+    marginVertical: 18,
   },
-  pills: {
+  catHeaderRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 10,
+  },
+  addCatLink: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+  },
+  addCatLinkText: {
+    fontSize: 12,
+    fontWeight: "700",
+  },
+  pillsWrap: {
     flexDirection: "row",
     flexWrap: "wrap",
     gap: 8,
+    marginBottom: 16,
   },
   pill: {
     flexDirection: "row",
     alignItems: "center",
     gap: 6,
-    paddingHorizontal: 12,
-    minHeight: 38,
-    borderRadius: 12,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 10,
     borderWidth: 1,
-    ...(Platform.OS === "web" ? ({ cursor: "pointer" } as any) : {}),
   },
   pillText: {
     fontSize: 12,
-    fontWeight: "700",
+    fontWeight: "600",
   },
-  outlineButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    alignSelf: "flex-start",
-    gap: 8,
-    height: 40,
-    paddingHorizontal: 14,
-    marginTop: 16,
-    borderRadius: 12,
-    borderWidth: 1,
-    ...(Platform.OS === "web" ? ({ cursor: "pointer" } as any) : {}),
-  },
-  outlineText: {
-    fontSize: 12,
-    fontWeight: "700",
-  },
-  backup: {
-    padding: 22,
-    marginBottom: 16,
-    borderRadius: 22,
-    borderWidth: 1,
-  },
-  backupIcon: {
-    width: 44,
-    height: 44,
-    alignItems: "center",
-    justifyContent: "center",
-    marginBottom: 14,
-    borderRadius: 14,
-    borderWidth: 1,
-  },
-  kicker: {
-    fontSize: 10,
-    fontWeight: "800",
-    letterSpacing: 1.2,
-  },
-  backupTitle: {
-    fontFamily: "Fraunces_700Bold",
-    fontSize: 22,
-    marginTop: 4,
-  },
-  backupCopy: {
-    fontSize: 12,
-    lineHeight: 18,
-    marginTop: 6,
-    marginBottom: 20,
-  },
-  exportButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 8,
+  primaryModalBtn: {
     height: 48,
     borderRadius: 14,
-    ...(Platform.OS === "web" ? ({ cursor: "pointer" } as any) : {}),
+    alignItems: "center",
+    justifyContent: "center",
+    flexDirection: "row",
+    marginTop: 8,
   },
-  exportText: {
+  primaryModalBtnText: {
     color: "#FFFFFF",
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: "700",
   },
-  pressed: {
-    opacity: 0.8,
-    transform: [{ scale: 0.98 }],
+  secondaryModalBtn: {
+    height: 46,
+    borderRadius: 14,
+    alignItems: "center",
+    justifyContent: "center",
+    flexDirection: "row",
+    borderWidth: 1,
+  },
+  secondaryModalBtnText: {
+    fontSize: 14,
+    fontWeight: "600",
+  },
+  currencyList: {
+    gap: 10,
+    marginBottom: 10,
+  },
+  currencyItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    padding: 14,
+    borderRadius: 14,
+    borderWidth: 1,
+  },
+  currencyName: {
+    fontSize: 14.5,
+    fontWeight: "700",
+  },
+  currencySymbol: {
+    fontSize: 12,
+    marginTop: 2,
+  },
+  backupCard: {
+    alignItems: "center",
+    paddingVertical: 20,
+  },
+  backupIconCircle: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: "rgba(2, 132, 199, 0.12)",
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 12,
+  },
+  backupCardTitle: {
+    fontSize: 17,
+    fontWeight: "800",
+    letterSpacing: -0.3,
+  },
+  backupCardSubtitle: {
+    fontSize: 12.5,
+    textAlign: "center",
+    marginTop: 4,
+    paddingHorizontal: 16,
   },
 });

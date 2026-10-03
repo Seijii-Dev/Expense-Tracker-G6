@@ -10,8 +10,10 @@ import {
   useWindowDimensions,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { useTheme } from "@/lib/theme-store";
+import { useExpenses } from "@/lib/expense-store";
 import { NavIcon, NavTabName } from "@/components/navigation/nav-icons";
 import { GlassSurface } from "@/components/ui/glass-surface";
 
@@ -162,7 +164,9 @@ export function FloatingTabBar({ state, descriptors, navigation }: FloatingTabBa
   const { colors, dark } = useTheme();
   const insets = useSafeAreaInsets();
   const { width: windowWidth } = useWindowDimensions();
+  const { openAddExpenseModal } = useExpenses();
   const [keyboardVisible, setKeyboardVisible] = useState(false);
+  const fabScaleAnim = useRef(new Animated.Value(1)).current;
 
   // Auto-hide floating nav bar when virtual keyboard opens on mobile
   useEffect(() => {
@@ -188,7 +192,7 @@ export function FloatingTabBar({ state, descriptors, navigation }: FloatingTabBa
   // Responsive dock sizing
   const isSmallScreen = windowWidth < 360;
   const isTabletOrDesktop = windowWidth >= 600;
-  const dockMaxWidth = 480;
+  const dockMaxWidth = 460;
 
   // Horizontal dock positioning
   const dockWidth = isTabletOrDesktop
@@ -196,6 +200,81 @@ export function FloatingTabBar({ state, descriptors, navigation }: FloatingTabBa
     : Math.min(dockMaxWidth, windowWidth - (isSmallScreen ? 16 : 24));
 
   const bottomInset = Math.max(insets.bottom + 8, Platform.OS === "ios" ? 18 : 12);
+
+  const handleFabPress = () => {
+    try {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    } catch {
+      // Non-fatal
+    }
+    openAddExpenseModal();
+  };
+
+  const handleFabPressIn = () => {
+    Animated.spring(fabScaleAnim, {
+      toValue: 0.9,
+      damping: 18,
+      stiffness: 300,
+      useNativeDriver: true,
+    }).start();
+  };
+
+  const handleFabPressOut = () => {
+    Animated.spring(fabScaleAnim, {
+      toValue: 1,
+      damping: 15,
+      stiffness: 240,
+      useNativeDriver: true,
+    }).start();
+  };
+
+  const renderTab = (routeName: string) => {
+    const routeIndex = state.routes.findIndex((r) => r.name === routeName);
+    if (routeIndex === -1) return null;
+    const route = state.routes[routeIndex];
+    const isFocused = state.index === routeIndex;
+    const { options } = descriptors[route.key] || {};
+
+    if (options?.tabBarButton === (() => null)) {
+      return null;
+    }
+
+    const handlePress = () => {
+      try {
+        Haptics.selectionAsync();
+      } catch {
+        // Non-fatal
+      }
+
+      const event = navigation.emit({
+        type: "tabPress",
+        target: route.key,
+        canPreventDefault: true,
+      });
+
+      if (!isFocused && !event.defaultPrevented) {
+        navigation.navigate(route.name);
+      }
+    };
+
+    const handleLongPress = () => {
+      navigation.emit({
+        type: "tabLongPress",
+        target: route.key,
+      });
+    };
+
+    return (
+      <TabButton
+        key={route.key}
+        name={route.name}
+        isFocused={isFocused}
+        onPress={handlePress}
+        onLongPress={handleLongPress}
+        isCompact={isSmallScreen}
+      />
+    );
+  };
 
   return (
     <View
@@ -224,51 +303,38 @@ export function FloatingTabBar({ state, descriptors, navigation }: FloatingTabBa
         ]}
         contentStyle={styles.dockContent}
       >
-        {state.routes.map((route, index) => {
-          const isFocused = state.index === index;
-          const { options } = descriptors[route.key] || {};
+        {/* Left Tabs: Overview & Records */}
+        {renderTab("index")}
+        {renderTab("transactions")}
 
-          // Filter out screens not meant for tabs if any
-          if (options?.tabBarButton === (() => null)) {
-            return null;
-          }
+        {/* Center Floating Action Button (+) */}
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Add New Expense"
+          onPress={handleFabPress}
+          onPressIn={handleFabPressIn}
+          onPressOut={handleFabPressOut}
+          style={[
+            styles.fabContainer,
+            Platform.OS === "web" ? ({ cursor: "pointer", userSelect: "none" } as any) : {},
+          ]}
+        >
+          <Animated.View
+            style={[
+              styles.fabButton,
+              {
+                backgroundColor: "#FF6554",
+                transform: [{ scale: fabScaleAnim }],
+              },
+            ]}
+          >
+            <Ionicons name="add" size={28} color="#FFFFFF" />
+          </Animated.View>
+        </Pressable>
 
-          const handlePress = () => {
-            try {
-              Haptics.selectionAsync();
-            } catch {
-              // Non-fatal
-            }
-
-            const event = navigation.emit({
-              type: "tabPress",
-              target: route.key,
-              canPreventDefault: true,
-            });
-
-            if (!isFocused && !event.defaultPrevented) {
-              navigation.navigate(route.name);
-            }
-          };
-
-          const handleLongPress = () => {
-            navigation.emit({
-              type: "tabLongPress",
-              target: route.key,
-            });
-          };
-
-          return (
-            <TabButton
-              key={route.key}
-              name={route.name}
-              isFocused={isFocused}
-              onPress={handlePress}
-              onLongPress={handleLongPress}
-              isCompact={isSmallScreen}
-            />
-          );
-        })}
+        {/* Right Tabs: Reports & Settings */}
+        {renderTab("reports")}
+        {renderTab("settings")}
       </GlassSurface>
     </View>
   );
@@ -327,5 +393,23 @@ const styles = StyleSheet.create({
     marginTop: 3,
     lineHeight: 13,
     textAlign: "center",
+  },
+  fabContainer: {
+    width: 58,
+    alignItems: "center",
+    justifyContent: "center",
+    height: "100%",
+  },
+  fabButton: {
+    width: 46,
+    height: 46,
+    borderRadius: 23,
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: "#FF6554",
+    shadowOpacity: 0.45,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 8,
   },
 });

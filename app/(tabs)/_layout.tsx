@@ -1,12 +1,15 @@
 import React from "react";
 import { Redirect, Tabs } from "expo-router";
 import { useAuth } from "@/lib/auth-store";
+import { useExpenses } from "@/lib/expense-store";
 import { ScreenContainer } from "@/components/screen-container";
 import { DashboardSkeleton } from "@/components/ui/dashboard-skeleton";
 import { FloatingTabBar } from "@/components/navigation/floating-nav-bar";
+import { ExpenseModal } from "@/components/expense-modal";
 
 export default function TabsLayout() {
   const { account, loading } = useAuth();
+  const { addExpenseModalOpen, closeAddExpenseModal, addExpense } = useExpenses();
 
   if (loading) {
     return (
@@ -21,44 +24,53 @@ export default function TabsLayout() {
   }
 
   return (
-    <Tabs
-      tabBar={(props) => <FloatingTabBar {...props} />}
-      screenOptions={{
-        headerShown: false,
-        lazy: true,
-      }}
-    >
-      <Tabs.Screen
-        name="index"
-        options={{
-          title: "Overview",
+    <>
+      <Tabs
+        tabBar={(props) => <FloatingTabBar {...props} />}
+        screenOptions={{
+          headerShown: false,
+          lazy: true,
         }}
+      >
+        <Tabs.Screen
+          name="index"
+          options={{
+            title: "Overview",
+          }}
+        />
+        <Tabs.Screen
+          name="transactions"
+          options={{
+            title: "Records",
+          }}
+        />
+        <Tabs.Screen
+          name="reports"
+          options={{
+            title: "Reports",
+          }}
+        />
+        <Tabs.Screen
+          name="settings"
+          options={{
+            title: "Settings",
+          }}
+        />
+        <Tabs.Screen
+          name="account"
+          options={{
+            title: "Account",
+          }}
+        />
+      </Tabs>
+
+      {/* Global Add Expense Modal triggered from Center FAB */}
+      <ExpenseModal
+        visible={addExpenseModalOpen}
+        onClose={closeAddExpenseModal}
+        onSubmit={addExpense}
       />
-      <Tabs.Screen
-        name="transactions"
-        options={{
-          title: "Records",
-        }}
-      />
-      <Tabs.Screen
-        name="reports"
-        options={{
-          title: "Reports",
-        }}
-      />
-      <Tabs.Screen
-        name="settings"
-        options={{
-          title: "Settings",
-        }}
-      />
-      <Tabs.Screen
-        name="account"
-        options={{
-          title: "Account",
-        }}
-      />
-    </Tabs>
+    </>
   );
 }
 

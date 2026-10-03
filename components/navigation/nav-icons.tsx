@@ -18,130 +18,47 @@ export const NavIcon = React.memo(function NavIcon({
 }: NavIconProps) {
   switch (name) {
     case "overview":
-      return focused ? (
+      return (
         <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-          <Rect
-            x="3"
-            y="4"
-            width="18"
-            height="16"
-            rx="4"
-            fill={color}
-            fillOpacity={0.16}
+          <Path
+            d="M3 10.25L12 3l9 7.25V19.5a2 2 0 0 1-2 2h-4.5a1 1 0 0 1-1-1v-4a1.5 1.5 0 0 0-1.5-1.5h-2a1.5 1.5 0 0 0-1.5 1.5v4a1 1 0 0 1-1 1H5a2 2 0 0 1-2-2v-9.25z"
+            fill={focused ? color : "none"}
+            fillOpacity={focused ? 0.2 : 0}
             stroke={color}
-            strokeWidth="2"
+            strokeWidth={focused ? "2" : "1.8"}
+            strokeLinecap="round"
+            strokeLinejoin="round"
           />
-          <Path d="M3 9.5h18" stroke={color} strokeWidth="2" />
-          <Rect x="6" y="13" width="4.5" height="3.5" rx="1.2" fill={color} />
-          <Circle cx="16.5" cy="14.75" r="1.5" fill={color} />
-        </Svg>
-      ) : (
-        <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-          <Rect
-            x="3"
-            y="4"
-            width="18"
-            height="16"
-            rx="4"
-            stroke={color}
-            strokeWidth="1.8"
-          />
-          <Path d="M3 9.5h18" stroke={color} strokeWidth="1.8" />
-          <Rect
-            x="6"
-            y="13"
-            width="4.5"
-            height="3.5"
-            rx="1.2"
-            stroke={color}
-            strokeWidth="1.5"
-          />
-          <Circle cx="16.5" cy="14.75" r="1.2" fill={color} />
         </Svg>
       );
 
     case "records":
-      return focused ? (
+      return (
         <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
           <Path
             d="M5 3.5h14a1.5 1.5 0 0 1 1.5 1.5v15.5l-3-1.5-2.75 1.5-2.75-1.5-2.75 1.5-2.75-1.5-1.5.75V5A1.5 1.5 0 0 1 5 3.5z"
-            fill={color}
-            fillOpacity={0.16}
+            fill={focused ? color : "none"}
+            fillOpacity={focused ? 0.2 : 0}
             stroke={color}
-            strokeWidth="2"
+            strokeWidth={focused ? "2" : "1.8"}
             strokeLinejoin="round"
           />
           <Path
             d="M8.5 8h7M8.5 12h5M8.5 15.5h7"
             stroke={color}
-            strokeWidth="2"
-            strokeLinecap="round"
-          />
-        </Svg>
-      ) : (
-        <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-          <Path
-            d="M5 3.5h14a1.5 1.5 0 0 1 1.5 1.5v15.5l-3-1.5-2.75 1.5-2.75-1.5-2.75 1.5-2.75-1.5-1.5.75V5A1.5 1.5 0 0 1 5 3.5z"
-            stroke={color}
-            strokeWidth="1.8"
-            strokeLinejoin="round"
-          />
-          <Path
-            d="M8.5 8h7M8.5 12h5M8.5 15.5h7"
-            stroke={color}
-            strokeWidth="1.8"
+            strokeWidth={focused ? "2" : "1.8"}
             strokeLinecap="round"
           />
         </Svg>
       );
 
     case "reports":
-      return focused ? (
+      return (
         <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-          <Rect x="3.5" y="12" width="4" height="8.5" rx="1.5" fill={color} />
-          <Rect x="10" y="7" width="4" height="13.5" rx="1.5" fill={color} />
-          <Rect x="16.5" y="3.5" width="4" height="17" rx="1.5" fill={color} />
           <Path
-            d="M3.5 10l5-4 4.5 3 6-5.5"
+            d="M18 20V10M12 20V4M6 20v-6"
             stroke={color}
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        </Svg>
-      ) : (
-        <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-          <Rect
-            x="3.5"
-            y="12"
-            width="4"
-            height="8.5"
-            rx="1.5"
-            stroke={color}
-            strokeWidth="1.8"
-          />
-          <Rect
-            x="10"
-            y="7"
-            width="4"
-            height="13.5"
-            rx="1.5"
-            stroke={color}
-            strokeWidth="1.8"
-          />
-          <Rect
-            x="16.5"
-            y="3.5"
-            width="4"
-            height="17"
-            rx="1.5"
-            stroke={color}
-            strokeWidth="1.8"
-          />
-          <Path
-            d="M3.5 10l5-4 4.5 3 6-5.5"
-            stroke={color}
-            strokeWidth="1.8"
+            strokeWidth={focused ? "2.2" : "1.8"}
             strokeLinecap="round"
             strokeLinejoin="round"
           />
@@ -149,70 +66,41 @@ export const NavIcon = React.memo(function NavIcon({
       );
 
     case "settings":
-      return focused ? (
+      return (
         <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
           <Path
-            d="M3.5 7h17M3.5 17h17"
+            d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"
+            fill={focused ? color : "none"}
+            fillOpacity={focused ? 0.22 : 0}
             stroke={color}
-            strokeWidth="2.2"
-            strokeLinecap="round"
+            strokeWidth={focused ? "2" : "1.8"}
           />
-          <Circle cx="8.5" cy="7" r="3.2" fill={color} />
-          <Circle cx="15.5" cy="17" r="3.2" fill={color} />
-        </Svg>
-      ) : (
-        <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
           <Path
-            d="M3.5 7h17M3.5 17h17"
+            d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"
             stroke={color}
-            strokeWidth="1.8"
+            strokeWidth={focused ? "2" : "1.8"}
             strokeLinecap="round"
-          />
-          <Circle
-            cx="8.5"
-            cy="7"
-            r="3"
-            fill="transparent"
-            stroke={color}
-            strokeWidth="1.8"
-          />
-          <Circle
-            cx="15.5"
-            cy="17"
-            r="3"
-            fill="transparent"
-            stroke={color}
-            strokeWidth="1.8"
+            strokeLinejoin="round"
           />
         </Svg>
       );
 
     case "account":
-      return focused ? (
-        <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-          <Circle cx="12" cy="7.5" r="4.2" fill={color} />
-          <Path
-            d="M4.5 19.5c0-4 3.35-7.25 7.5-7.25s7.5 3.25 7.5 7.25"
-            fill={color}
-            fillOpacity={0.2}
-            stroke={color}
-            strokeWidth="2"
-            strokeLinecap="round"
-          />
-        </Svg>
-      ) : (
+      return (
         <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
           <Circle
             cx="12"
             cy="7.5"
             r="4"
+            fill={focused ? color : "none"}
+            fillOpacity={focused ? 0.22 : 0}
             stroke={color}
-            strokeWidth="1.8"
+            strokeWidth={focused ? "2" : "1.8"}
           />
           <Path
             d="M4.5 19.5c0-4 3.35-7.25 7.5-7.25s7.5 3.25 7.5 7.25"
             stroke={color}
-            strokeWidth="1.8"
+            strokeWidth={focused ? "2" : "1.8"}
             strokeLinecap="round"
           />
         </Svg>
