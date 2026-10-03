@@ -224,9 +224,8 @@ const styles = StyleSheet.create({
     borderRadius: 24,
   },
   brandTitle: {
-    fontFamily: Platform.select({ ios: "Georgia", default: "serif" }),
+    fontFamily: "Fraunces_700Bold",
     fontSize: 32,
-    fontWeight: "700",
     letterSpacing: -0.8,
     marginBottom: 6,
   },

@@ -1,12 +1,15 @@
 import React, { useCallback, useMemo, useState } from "react";
 import {
   FlatList,
+  Platform,
   Pressable,
   RefreshControl,
   StyleSheet,
   Text,
   View,
 } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import * as Haptics from "expo-haptics";
 import { ScreenContainer } from "@/components/screen-container";
 import { ScreenHeader } from "@/components/common/screen-header";
 import { ExpenseRow } from "@/components/ui/expense-row";
@@ -23,10 +26,11 @@ import { useFilteredExpenses } from "@/hooks/useFilteredExpenses";
 import { TransactionsSkeleton } from "@/components/ui/transactions-skeleton";
 
 export default function TransactionsScreen() {
-  const { sortedExpenses, removeExpense, updateExpense, refreshExpenses, syncing, hydrated } = useExpenses();
+  const { sortedExpenses, removeExpense, updateExpense, addExpense, refreshExpenses, syncing, hydrated } = useExpenses();
   const { colors, dark } = useTheme();
 
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
+  const [showAddModal, setShowAddModal] = useState(false);
 
   const {
     query,
@@ -45,13 +49,16 @@ export default function TransactionsScreen() {
     (data: NewExpenseData) => {
       if (editingExpense) {
         updateExpense(editingExpense.id, data);
+      } else {
+        addExpense(data);
       }
     },
-    [editingExpense, updateExpense]
+    [editingExpense, updateExpense, addExpense]
   );
 
   const handleCloseModal = useCallback(() => {
     setEditingExpense(null);
+    setShowAddModal(false);
   }, []);
 
   const renderItem = useCallback(
@@ -92,11 +99,35 @@ export default function TransactionsScreen() {
   const ListHeader = useMemo(
     () => (
       <View>
-        <ScreenHeader
-          kicker="YOUR MONEY TRAIL"
-          title="Transactions"
-          subtitle="Every peso has a place. Keep the record clear and organized."
-        />
+        <View style={styles.headerRow}>
+          <View style={styles.headerLeft}>
+            <ScreenHeader
+              kicker="YOUR MONEY TRAIL"
+              title="Transactions"
+              subtitle="Every peso has a place. Keep the record clear and organized."
+            />
+          </View>
+          <Pressable
+            style={({ pressed }) => [
+              styles.addBtn,
+              { backgroundColor: colors.primary },
+              pressed && styles.pressed,
+            ]}
+            onPress={() => {
+              try {
+                Haptics.selectionAsync();
+              } catch {
+                // Non-fatal
+              }
+              setShowAddModal(true);
+            }}
+            accessibilityRole="button"
+            accessibilityLabel="Add new expense"
+          >
+            <Ionicons name="add" size={17} color="#FFFFFF" />
+            <Text style={styles.addBtnText}>Add</Text>
+          </Pressable>
+        </View>
 
         {/* Summary banner */}
         <View
@@ -117,6 +148,11 @@ export default function TransactionsScreen() {
             <View style={styles.labelRow}>
               <View style={[styles.statusDot, { backgroundColor: colors.primary }]} />
               <Text style={[styles.summaryLabel, { color: colors.subtle }]}>SHOWING</Text>
+              {hasActiveFilters && (
+                <View style={[styles.filterBadge, { backgroundColor: colors.primarySoft }]}>
+                  <Text style={[styles.filterBadgeText, { color: colors.primary }]}>Filtered</Text>
+                </View>
+              )}
             </View>
             <Text
               style={[styles.summaryValue, { color: colors.foreground }]}
@@ -154,7 +190,7 @@ export default function TransactionsScreen() {
         {filtered.length > 0 && <View style={styles.listHeaderGap} />}
       </View>
     ),
-    [category, colors, dark, filtered.length, query, setCategory, setQuery, setSortBy, sortBy, total]
+    [category, colors, dark, filtered.length, hasActiveFilters, query, setCategory, setQuery, setSortBy, sortBy, total]
   );
 
   const ListEmpty = useMemo(
@@ -233,9 +269,9 @@ export default function TransactionsScreen() {
         }
       />
 
-      {/* Edit Expense Modal */}
+      {/* Add / Edit Expense Modal */}
       <ExpenseModal
-        visible={editingExpense !== null}
+        visible={showAddModal || editingExpense !== null}
         initialExpense={editingExpense}
         onClose={handleCloseModal}
         onSubmit={handleModalSubmit}
@@ -248,6 +284,50 @@ const styles = StyleSheet.create({
   scroll: {
     paddingTop: 12,
     paddingBottom: 40,
+  },
+  headerRow: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    justifyContent: "space-between",
+    gap: 12,
+  },
+  headerLeft: {
+    flex: 1,
+  },
+  addBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    height: 38,
+    paddingHorizontal: 14,
+    borderRadius: 12,
+    marginTop: 6,
+    shadowColor: "#FF6554",
+    shadowOpacity: 0.28,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 3 },
+    elevation: 3,
+    ...(Platform.OS === "web" ? ({ cursor: "pointer" } as any) : {}),
+  },
+  addBtnText: {
+    color: "#FFFFFF",
+    fontSize: 12,
+    fontWeight: "800",
+    letterSpacing: -0.2,
+  },
+  filterBadge: {
+    paddingHorizontal: 6,
+    paddingVertical: 1.5,
+    borderRadius: 6,
+  },
+  filterBadgeText: {
+    fontSize: 9,
+    fontWeight: "700",
+    letterSpacing: 0.3,
+  },
+  pressed: {
+    opacity: 0.8,
+    transform: [{ scale: 0.98 }],
   },
   summaryCard: {
     flexDirection: "row",
@@ -283,7 +363,6 @@ const styles = StyleSheet.create({
   summaryValue: {
     fontFamily: "Fraunces_700Bold",
     fontSize: 22,
-    fontWeight: "700",
   },
   divider: {
     width: 1,

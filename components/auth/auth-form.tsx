@@ -372,7 +372,6 @@ const styles = StyleSheet.create({
   formTitle: {
     fontFamily: "Fraunces_700Bold",
     fontSize: 32,
-    fontWeight: "700",
     letterSpacing: -1.2,
   },
   formSubtitle: {

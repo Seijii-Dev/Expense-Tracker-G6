@@ -79,7 +79,7 @@ export const ExpenseRow = React.memo(function ExpenseRow({
 
       {/* Amount & Actions */}
       <View style={styles.rightSide}>
-        <Text style={[styles.amount, { color: colors.foreground }]}>
+        <Text style={[styles.amount, { color: colors.foreground }]} numberOfLines={1} adjustsFontSizeToFit>
           −{formatMoney(expense.amount)}
         </Text>
         {showActions && (
@@ -103,7 +103,7 @@ export const ExpenseRow = React.memo(function ExpenseRow({
                   pressed && styles.actionPressed,
                 ]}
               >
-                <Ionicons name="create-outline" size={14} color={colors.muted} />
+                <Ionicons name="create-outline" size={15} color={colors.muted} />
               </Pressable>
             )}
             {onDelete && (
@@ -118,29 +118,31 @@ export const ExpenseRow = React.memo(function ExpenseRow({
                   pressed && styles.actionPressed,
                 ]}
               >
-                <Ionicons name="trash-outline" size={14} color={colors.error} />
+                <Ionicons name="trash-outline" size={15} color={colors.error} />
               </Pressable>
             )}
           </View>
         )}
       </View>
 
-      {/* Branded Delete Confirmation Dialog */}
-      <ConfirmDialog
-        visible={showDeleteConfirm}
-        title="Delete Expense"
-        message={`Remove "${expense.description}" (${formatMoney(expense.amount)}) from your ledger? This action cannot be reversed.`}
-        variant="danger"
-        icon="trash-outline"
-        confirmText="Delete"
-        cancelText="Cancel"
-        destructive
-        onConfirm={() => {
-          setShowDeleteConfirm(false);
-          onDelete?.();
-        }}
-        onCancel={() => setShowDeleteConfirm(false)}
-      />
+      {/* Branded Delete Confirmation Dialog (rendered conditionally for optimal performance) */}
+      {showDeleteConfirm && (
+        <ConfirmDialog
+          visible={showDeleteConfirm}
+          title="Delete Expense"
+          message={`Remove "${expense.description}" (${formatMoney(expense.amount)}) from your ledger? This action cannot be reversed.`}
+          variant="danger"
+          icon="trash-outline"
+          confirmText="Delete"
+          cancelText="Cancel"
+          destructive
+          onConfirm={() => {
+            setShowDeleteConfirm(false);
+            onDelete?.();
+          }}
+          onCancel={() => setShowDeleteConfirm(false)}
+        />
+      )}
     </View>
   );
 });
@@ -163,6 +165,7 @@ const styles = StyleSheet.create({
   },
   body: {
     flex: 1,
+    minWidth: 0,
     ...(Platform.OS === "web" ? ({ cursor: "pointer" } as any) : {}),
   },
   title: {
@@ -195,11 +198,11 @@ const styles = StyleSheet.create({
   rightSide: {
     alignItems: "flex-end",
     gap: 6,
+    flexShrink: 0,
   },
   amount: {
     fontFamily: "Fraunces_700Bold",
     fontSize: 15,
-    fontWeight: "700",
     letterSpacing: -0.3,
   },
   actions: {
@@ -208,9 +211,9 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   actionButton: {
-    width: 26,
-    height: 26,
-    borderRadius: 8,
+    width: 32,
+    height: 32,
+    borderRadius: 10,
     alignItems: "center",
     justifyContent: "center",
     ...(Platform.OS === "web" ? ({ cursor: "pointer" } as any) : {}),

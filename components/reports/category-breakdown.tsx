@@ -189,7 +189,6 @@ const styles = StyleSheet.create({
   panelTitle: {
     fontFamily: "Fraunces_700Bold",
     fontSize: 22,
-    fontWeight: "700",
     letterSpacing: -0.4,
   },
   iconWrap: {
@@ -251,7 +250,6 @@ const styles = StyleSheet.create({
   categoryAmount: {
     fontFamily: "Fraunces_700Bold",
     fontSize: 14,
-    fontWeight: "700",
   },
   track: {
     height: 8,

@@ -102,15 +102,15 @@ const styles = StyleSheet.create({
   sortChip: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 4,
-    height: 30,
-    paddingHorizontal: 10,
-    borderRadius: 9,
+    gap: 5,
+    height: 34,
+    paddingHorizontal: 11,
+    borderRadius: 10,
     borderWidth: 1,
     ...(Platform.OS === "web" ? ({ cursor: "pointer" } as any) : {}),
   },
   sortChipText: {
-    fontSize: 10.5,
+    fontSize: 11,
     fontWeight: "600",
   },
   pressed: {

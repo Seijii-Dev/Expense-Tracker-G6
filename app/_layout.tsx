@@ -19,6 +19,11 @@ function ThemedStatusBar() {
   return <StatusBar style={dark ? "light" : "dark"} />;
 }
 
+function BrandedSplashScreen({ isReady }: { isReady: boolean }) {
+  const { dark } = useTheme();
+  return <SplashScreen isReady={isReady} dark={dark} />;
+}
+
 export default function RootLayout() {
   const [fontsLoaded] = useFonts({
     DMSans_400Regular,
@@ -71,8 +76,8 @@ export default function RootLayout() {
                   }}
                 />
                 <StoragePermissionPrompt />
-                {/* Branded Application Launch Screen */}
-                <SplashScreen isReady={Boolean(fontsLoaded)} />
+                {/* Branded Application Launch Screen with Theme Awareness */}
+                <BrandedSplashScreen isReady={Boolean(fontsLoaded)} />
               </View>
             </FontsLoadedProvider>
           </ExpenseProvider>

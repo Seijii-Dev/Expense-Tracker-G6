@@ -84,6 +84,24 @@ export default function OverviewScreen() {
     return `${top[0]}  ${formatMoney(top[1])}`;
   }, [monthExpenses]);
 
+  const isOverBudget = budgetPercent >= 100;
+  const isNearBudget = budgetPercent >= 80 && !isOverBudget;
+  const budgetStatusColor = isOverBudget
+    ? colors.error
+    : isNearBudget
+    ? colors.warning
+    : colors.success;
+  const budgetStatusBg = isOverBudget
+    ? colors.errorSoft
+    : isNearBudget
+    ? colors.warningSoft
+    : colors.successSoft;
+  const budgetStatusText = isOverBudget
+    ? "Over Budget"
+    : isNearBudget
+    ? `${budgetPercent}% Used`
+    : "On Track";
+
   const showPulseAlert = useCallback(() => {
     try {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -175,103 +193,107 @@ export default function OverviewScreen() {
           </Pressable>
         </View>
 
-        {/* Action Row */}
-        <View style={styles.actionRow}>
-          <GlassSurface variant="pill" radius={14} contentStyle={styles.monthPill}>
-            <Ionicons name="calendar-outline" size={15} color={colors.primary} />
-            <Text style={[styles.monthText, { color: colors.foreground }]}>{monthLabel}</Text>
-          </GlassSurface>
+        {/* Primary Financial Status Hero */}
+        <GlassSurface
+          variant="card"
+          radius={26}
+          style={[
+            styles.heroCard,
+            {
+              backgroundColor: colors.cardElevated,
+              borderColor: colors.border,
+            },
+          ]}
+          contentStyle={styles.heroCardInner}
+        >
+          {/* Top row: Label & Status Pill */}
+          <View style={styles.heroTopRow}>
+            <View style={styles.heroKickerRow}>
+              <View style={[styles.kickerDot, { backgroundColor: budgetStatusColor }]} />
+              <Text style={[styles.heroKicker, { color: colors.subtle }]}>REMAINING BUDGET</Text>
+            </View>
+            <View style={[styles.heroStatusBadge, { backgroundColor: budgetStatusBg, borderColor: `${budgetStatusColor}30` }]}>
+              <View style={[styles.statusDot, { backgroundColor: budgetStatusColor }]} />
+              <Text style={[styles.heroStatusText, { color: budgetStatusColor }]}>{budgetStatusText}</Text>
+            </View>
+          </View>
 
-          <Pressable
-            style={({ pressed }) => [
-              styles.addButton,
-              { backgroundColor: colors.primary },
-              pressed && styles.pressed,
+          {/* Big Amount */}
+          <Text
+            style={[
+              styles.heroAmount,
+              { color: remaining < 0 ? colors.error : colors.foreground },
             ]}
-            onPress={() => {
-              try {
-                Haptics.selectionAsync();
-              } catch {
-                // Non-fatal
-              }
-              setShowAddModal(true);
-            }}
+            numberOfLines={1}
+            adjustsFontSizeToFit
           >
-            <Ionicons name="add" size={18} color="#FFFFFF" />
-            <Text style={styles.addButtonText}>Add expense</Text>
-          </Pressable>
-        </View>
+            {formatMoney(remaining)}
+          </Text>
 
-        {/* Responsive Metrics Grid */}
-        <View style={[styles.metricGrid, isTablet && styles.metricGridTablet]}>
+          {/* Budget Progress Bar */}
+          <View style={[styles.heroProgressTrack, { backgroundColor: dark ? "rgba(255,255,255,0.08)" : colors.surfaceSubtle }]}>
+            <View
+              style={[
+                styles.heroProgressFill,
+                {
+                  backgroundColor: budgetStatusColor,
+                  width: `${Math.min(budgetPercent, 100)}%`,
+                },
+              ]}
+            />
+          </View>
+
+          {/* Budget Subtext & Add Action Row */}
+          <View style={styles.heroBottomRow}>
+            <Text style={[styles.heroBudgetSubtext, { color: colors.muted }]}>
+              {formatMoney(monthTotal)} spent of {formatMoney(budget)} plan
+            </Text>
+            <Pressable
+              style={({ pressed }) => [
+                styles.quickAddBtn,
+                { backgroundColor: colors.primary },
+                pressed && styles.pressed,
+              ]}
+              onPress={() => {
+                try {
+                  Haptics.selectionAsync();
+                } catch {
+                  // Non-fatal
+                }
+                setShowAddModal(true);
+              }}
+              accessibilityRole="button"
+              accessibilityLabel="Add new expense"
+            >
+              <Ionicons name="add" size={17} color="#FFFFFF" />
+              <Text style={styles.quickAddText}>Add expense</Text>
+            </Pressable>
+          </View>
+        </GlassSurface>
+
+        {/* Secondary 2-Column Metrics */}
+        <View style={[styles.secondaryGrid, isNarrowMobile && styles.secondaryGridNarrow]}>
           <MetricCard
             label="Spent this month"
             value={formatMoney(monthTotal)}
-            icon={<Ionicons name="trending-up" size={17} color="#FF6554" />}
+            icon={<Ionicons name="trending-up" size={16} color="#FF6554" />}
             tone="coral"
-            foot={monthTotal > 0 ? "Live from your records" : "No records yet"}
-            style={isTablet ? styles.metricCardFlex : undefined}
+            foot={monthExpenses.length ? `${monthExpenses.length} record${monthExpenses.length > 1 ? "s" : ""}` : "No records yet"}
+            style={styles.secondaryCard}
           />
           <MetricCard
             label="Spent today"
             value={formatMoney(todayTotal)}
-            icon={<Ionicons name="cash-outline" size={17} color="#0EA5E9" />}
+            icon={<Ionicons name="cash-outline" size={16} color="#0EA5E9" />}
             tone="blue"
-            foot={todayTotal > 0 ? "Updated live today" : "No spending logged today"}
-            style={isTablet ? styles.metricCardFlex : undefined}
-          />
-          <MetricCard
-            label="Remaining budget"
-            value={formatMoney(remaining)}
-            icon={<Ionicons name="wallet-outline" size={17} color="#10B981" />}
-            tone={budgetPercent >= 100 ? "coral" : budgetPercent >= 80 ? "warning" : "green"}
-            foot={`${budgetPercent}% of ${formatMoney(budget)} used`}
-            progress={budgetPercent}
-            style={isTablet ? styles.metricCardFlex : undefined}
+            foot={todayTotal > 0 ? "Logged today" : "No records today"}
+            style={styles.secondaryCard}
           />
         </View>
-
-        {/* Money Map Panel */}
-        <GlassSurface style={styles.panel} contentStyle={styles.panelInner}>
-          <View style={styles.panelHeader}>
-            <View>
-              <View style={styles.panelKickerRow}>
-                <View style={[styles.kickerDot, { backgroundColor: colors.primary }]} />
-                <Text style={[styles.panelKicker, { color: colors.primary }]}>MONEY MAP</Text>
-              </View>
-              <Text style={[styles.panelTitle, { color: colors.foreground }]}>Spending overview</Text>
-            </View>
-            <View
-              style={[
-                styles.badge,
-                {
-                  backgroundColor: dark ? "rgba(255,255,255,0.06)" : colors.surfaceSubtle,
-                  borderColor: colors.border,
-                },
-              ]}
-            >
-              <Text style={[styles.smallMuted, { color: colors.muted }]}>This month</Text>
-            </View>
-          </View>
-
-          <View style={[styles.overviewRow, isNarrowMobile && styles.overviewRowNarrow]}>
-            <DonutChart total={monthTotal} expenses={monthExpenses} />
-            <CategoryLegend expenses={monthExpenses} />
-          </View>
-
-          <View style={[styles.panelFooter, { borderTopColor: colors.border }]}>
-            <Text style={[styles.footerLabel, { color: colors.muted }]}>Highest spending category</Text>
-            <Text style={[styles.footerValue, { color: colors.foreground }]}>{topCategorySummary}</Text>
-          </View>
-        </GlassSurface>
-
-        {/* Daily Rhythm Weekly Chart */}
-        <DailyRhythm expenses={sortedExpenses} />
 
         {/* Latest Activity Panel */}
         <GlassSurface style={styles.panel} contentStyle={styles.panelInner}>
           <View style={styles.panelHeader}>
-
             <View>
               <View style={styles.panelKickerRow}>
                 <View style={[styles.kickerDot, { backgroundColor: colors.success }]} />
@@ -302,7 +324,7 @@ export default function OverviewScreen() {
               </View>
               <Text style={[styles.emptyRecentText, { color: colors.foreground }]}>No transactions yet</Text>
               <Text style={[styles.emptyRecentSub, { color: colors.muted }]}>
-                Tap the "+ Add expense" button above to log your first record.
+                Tap "+ Add expense" above to record your first transaction.
               </Text>
             </View>
           ) : (
@@ -316,6 +338,43 @@ export default function OverviewScreen() {
             ))
           )}
         </GlassSurface>
+
+        {/* Money Map Panel */}
+        <GlassSurface style={styles.panel} contentStyle={styles.panelInner}>
+          <View style={styles.panelHeader}>
+            <View>
+              <View style={styles.panelKickerRow}>
+                <View style={[styles.kickerDot, { backgroundColor: colors.primary }]} />
+                <Text style={[styles.panelKicker, { color: colors.primary }]}>MONEY MAP</Text>
+              </View>
+              <Text style={[styles.panelTitle, { color: colors.foreground }]}>Spending overview</Text>
+            </View>
+            <View
+              style={[
+                styles.badge,
+                {
+                  backgroundColor: dark ? "rgba(255,255,255,0.06)" : colors.surfaceSubtle,
+                  borderColor: colors.border,
+                },
+              ]}
+            >
+              <Text style={[styles.smallMuted, { color: colors.muted }]}>{monthLabel}</Text>
+            </View>
+          </View>
+
+          <View style={[styles.overviewRow, isNarrowMobile && styles.overviewRowNarrow]}>
+            <DonutChart total={monthTotal} expenses={monthExpenses} />
+            <CategoryLegend expenses={monthExpenses} />
+          </View>
+
+          <View style={[styles.panelFooter, { borderTopColor: colors.border }]}>
+            <Text style={[styles.footerLabel, { color: colors.muted }]}>Highest spending category</Text>
+            <Text style={[styles.footerValue, { color: colors.foreground }]}>{topCategorySummary}</Text>
+          </View>
+        </GlassSurface>
+
+        {/* Daily Rhythm Weekly Chart */}
+        <DailyRhythm expenses={sortedExpenses} />
 
         {/* Spending Insight Card */}
         <SpendingInsight expenses={monthExpenses} />
@@ -380,7 +439,6 @@ const styles = StyleSheet.create({
   title: {
     fontFamily: "Fraunces_700Bold",
     fontSize: 32,
-    fontWeight: "700",
     letterSpacing: -1.2,
     marginTop: 8,
     lineHeight: 38,
@@ -412,57 +470,109 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
     borderColor: "#FFFFFF",
   },
-  actionRow: {
+  heroCard: {
+    marginBottom: 16,
+  },
+  heroCardInner: {
+    padding: 20,
+  },
+  heroTopRow: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    marginBottom: 16,
+    marginBottom: 10,
   },
-  monthPill: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 7,
-    paddingHorizontal: 13,
-    height: 40,
-  },
-  monthText: {
-    fontSize: 12,
-    fontWeight: "600",
-  },
-  addButton: {
+  heroKickerRow: {
     flexDirection: "row",
     alignItems: "center",
     gap: 6,
-    height: 40,
-    paddingHorizontal: 16,
-    borderRadius: 14,
+  },
+  heroKicker: {
+    fontSize: 10,
+    fontWeight: "800",
+    letterSpacing: 1.2,
+  },
+  heroStatusBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+    paddingHorizontal: 9,
+    paddingVertical: 4,
+    borderRadius: 12,
+    borderWidth: 1,
+  },
+  statusDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+  },
+  heroStatusText: {
+    fontSize: 10.5,
+    fontWeight: "800",
+    letterSpacing: 0.3,
+  },
+  heroAmount: {
+    fontFamily: "Fraunces_700Bold",
+    fontSize: 34,
+    letterSpacing: -1,
+    lineHeight: 40,
+    marginBottom: 14,
+  },
+  heroProgressTrack: {
+    height: 8,
+    borderRadius: 4,
+    overflow: "hidden",
+    marginBottom: 14,
+  },
+  heroProgressFill: {
+    height: "100%",
+    borderRadius: 4,
+  },
+  heroBottomRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 12,
+  },
+  heroBudgetSubtext: {
+    flex: 1,
+    fontSize: 11.5,
+    fontWeight: "500",
+  },
+  quickAddBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    height: 38,
+    paddingHorizontal: 15,
+    borderRadius: 13,
     shadowColor: "#FF6554",
     shadowOpacity: 0.35,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 4,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 3 },
+    elevation: 3,
     ...(Platform.OS === "web" ? ({ cursor: "pointer" } as any) : {}),
   },
-  addButtonText: {
+  quickAddText: {
     color: "#FFFFFF",
-    fontSize: 12.5,
+    fontSize: 12,
     fontWeight: "800",
     letterSpacing: -0.2,
+  },
+  secondaryGrid: {
+    flexDirection: "row",
+    gap: 12,
+    marginBottom: 16,
+  },
+  secondaryGridNarrow: {
+    flexDirection: "column",
+  },
+  secondaryCard: {
+    flex: 1,
   },
   pressed: {
     opacity: 0.8,
     transform: [{ scale: 0.98 }],
-  },
-  metricGrid: {
-    gap: 12,
-    marginBottom: 16,
-  },
-  metricGridTablet: {
-    flexDirection: "row",
-    alignItems: "stretch",
-  },
-  metricCardFlex: {
-    flex: 1,
   },
   panel: {
     marginBottom: 16,
@@ -488,7 +598,6 @@ const styles = StyleSheet.create({
   panelTitle: {
     fontFamily: "Fraunces_700Bold",
     fontSize: 20,
-    fontWeight: "700",
     letterSpacing: -0.4,
     marginTop: 4,
   },

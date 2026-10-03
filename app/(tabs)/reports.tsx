@@ -84,7 +84,9 @@ export default function ReportsScreen() {
                 <View style={styles.pulseDot} />
                 <Text style={styles.kickerLight}>THIS MONTH'S OUTFLOW</Text>
               </View>
-              <Text style={styles.heroValue}>{formatMoney(monthTotal)}</Text>
+              <Text style={styles.heroValue} numberOfLines={1} adjustsFontSizeToFit>
+                {formatMoney(monthTotal)}
+              </Text>
               <View style={styles.heroFootRow}>
                 <Ionicons name="analytics-outline" size={13} color="#A5D0BE" />
                 <Text style={styles.heroFootText}>
@@ -244,7 +246,6 @@ const styles = StyleSheet.create({
     fontFamily: "Fraunces_700Bold",
     color: "#FFFFFF",
     fontSize: 34,
-    fontWeight: "700",
     letterSpacing: -1,
     marginTop: 6,
   },
@@ -262,6 +263,7 @@ const styles = StyleSheet.create({
   heroRing: {
     width: 88,
     height: 88,
+    flexShrink: 0,
     alignItems: "center",
     justifyContent: "center",
     borderRadius: 44,
@@ -273,7 +275,6 @@ const styles = StyleSheet.create({
     fontFamily: "Fraunces_700Bold",
     color: "#FFFFFF",
     fontSize: 24,
-    fontWeight: "700",
   },
   heroRingLabel: {
     color: "#A5D0BE",
@@ -319,7 +320,6 @@ const styles = StyleSheet.create({
   panelTitle: {
     fontFamily: "Fraunces_700Bold",
     fontSize: 22,
-    fontWeight: "700",
     letterSpacing: -0.4,
   },
   iconWrap: {

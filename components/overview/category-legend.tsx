@@ -150,7 +150,6 @@ const styles = StyleSheet.create({
   legendAmount: {
     fontFamily: "Fraunces_700Bold",
     fontSize: 11.5,
-    fontWeight: "700",
     minWidth: 54,
     textAlign: "right",
   },

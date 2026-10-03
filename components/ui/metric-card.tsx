@@ -141,7 +141,6 @@ const styles = StyleSheet.create({
   value: {
     fontFamily: "Fraunces_700Bold",
     fontSize: 28,
-    fontWeight: "700",
     letterSpacing: -0.9,
     marginTop: 10,
   },

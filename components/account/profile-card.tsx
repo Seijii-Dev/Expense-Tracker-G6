@@ -113,7 +113,6 @@ const styles = StyleSheet.create({
   avatarText: {
     fontFamily: "Fraunces_700Bold",
     fontSize: 22,
-    fontWeight: "700",
   },
   profileBody: {
     flex: 1,
@@ -127,7 +126,6 @@ const styles = StyleSheet.create({
   name: {
     fontFamily: "Fraunces_700Bold",
     fontSize: 17,
-    fontWeight: "700",
     letterSpacing: -0.2,
   },
   email: {

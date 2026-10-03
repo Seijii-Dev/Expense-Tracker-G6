@@ -60,7 +60,6 @@ const styles = StyleSheet.create({
   noteNumber: {
     fontFamily: "Fraunces_700Bold",
     fontSize: 13,
-    fontWeight: "700",
   },
   noteTitle: {
     fontSize: 14,

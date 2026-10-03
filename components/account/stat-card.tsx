@@ -72,7 +72,6 @@ const styles = StyleSheet.create({
   statValue: {
     fontFamily: "Fraunces_700Bold",
     fontSize: 16,
-    fontWeight: "700",
   },
   statLabel: {
     fontSize: 10,

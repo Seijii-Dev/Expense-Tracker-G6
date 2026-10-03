@@ -145,7 +145,7 @@ function TabButton({ name, isFocused, onPress, onLongPress, isCompact }: TabButt
             styles.label,
             {
               color: isFocused ? colors.primary : colors.muted,
-              fontSize: isCompact ? 9 : 10.5,
+              fontSize: isCompact ? 9.5 : 11,
               fontWeight: isFocused ? "700" : "500",
             },
           ]}
@@ -153,17 +153,6 @@ function TabButton({ name, isFocused, onPress, onLongPress, isCompact }: TabButt
         >
           {info.label}
         </Text>
-
-        {/* Active Dot */}
-        <View
-          style={[
-            styles.dot,
-            {
-              backgroundColor: isFocused ? colors.primary : "transparent",
-              opacity: isFocused ? 1 : 0,
-            },
-          ]}
-        />
       </Animated.View>
     </Pressable>
   );
@@ -323,26 +312,20 @@ const styles = StyleSheet.create({
     position: "absolute",
     top: -2,
     bottom: -2,
-    left: "10%",
-    right: "10%",
+    left: "8%",
+    right: "8%",
     borderRadius: 20,
     borderWidth: 1,
   },
   iconContainer: {
-    height: 26,
+    height: 24,
     alignItems: "center",
     justifyContent: "center",
   },
   label: {
     letterSpacing: -0.2,
-    marginTop: 2,
-    lineHeight: 12,
+    marginTop: 3,
+    lineHeight: 13,
     textAlign: "center",
-  },
-  dot: {
-    width: 3.5,
-    height: 3.5,
-    borderRadius: 1.75,
-    marginTop: 2.5,
   },
 });

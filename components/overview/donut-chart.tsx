@@ -124,7 +124,6 @@ const styles = StyleSheet.create({
   donutTotal: {
     fontFamily: "Fraunces_700Bold",
     fontSize: 14.5,
-    fontWeight: "700",
     letterSpacing: -0.3,
     textAlign: "center",
   },

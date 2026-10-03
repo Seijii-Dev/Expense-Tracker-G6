@@ -3,10 +3,12 @@ export type ThemeColors = {
   surface: string;
   surfaceSubtle: string;
   card: string;
+  cardElevated: string;
   foreground: string;
   muted: string;
   subtle: string;
   border: string;
+  borderSubtle: string;
   primary: string;
   primarySoft: string;
   accent: string;
@@ -14,7 +16,10 @@ export type ThemeColors = {
   success: string;
   successSoft: string;
   warning: string;
+  warningSoft: string;
   error: string;
+  errorSoft: string;
+  inputBg: string;
   dialogBackdrop: string;
   glassFill: string;
   glassBorder: string;
@@ -30,10 +35,12 @@ export const lightColors: ThemeColors = {
   surface: "#FFFFFF",
   surfaceSubtle: "#EDF4F1",
   card: "#FFFFFF",
+  cardElevated: "#FFFFFF",
   foreground: "#0F1D1A",
   muted: "#4A605A",
   subtle: "#7A918B",
   border: "#DEE8E4",
+  borderSubtle: "#EAF0ED",
   primary: "#FF6554",
   primarySoft: "#FFF0ED",
   accent: "#0EA5E9",
@@ -41,7 +48,10 @@ export const lightColors: ThemeColors = {
   success: "#10B981",
   successSoft: "#E6F9F2",
   warning: "#F59E0B",
+  warningSoft: "#FEF3C7",
   error: "#EF4444",
+  errorSoft: "#FEE2E2",
+  inputBg: "#F8FAF9",
   dialogBackdrop: "rgba(15, 29, 26, 0.68)",
   glassFill: "rgba(255, 255, 255, 0.94)",
   glassBorder: "rgba(222, 232, 228, 0.90)",
@@ -57,10 +67,12 @@ export const darkColors: ThemeColors = {
   surface: "#0F1A18",
   surfaceSubtle: "#142421",
   card: "#111E1B",
+  cardElevated: "#152522",
   foreground: "#F5FAF8",
   muted: "#A4BCB5",
   subtle: "#6D8680",
   border: "rgba(164, 210, 196, 0.15)",
+  borderSubtle: "rgba(164, 210, 196, 0.08)",
   primary: "#FF7565",
   primarySoft: "rgba(255, 117, 101, 0.18)",
   accent: "#38BDF8",
@@ -68,7 +80,10 @@ export const darkColors: ThemeColors = {
   success: "#34D399",
   successSoft: "rgba(52, 211, 153, 0.18)",
   warning: "#FBBF24",
+  warningSoft: "rgba(245, 158, 11, 0.18)",
   error: "#F87171",
+  errorSoft: "rgba(239, 68, 68, 0.18)",
+  inputBg: "rgba(255, 255, 255, 0.04)",
   dialogBackdrop: "rgba(3, 7, 6, 0.85)",
   glassFill: "rgba(15, 26, 24, 0.92)",
   glassBorder: "rgba(164, 210, 196, 0.18)",

@@ -209,7 +209,6 @@ const styles = StyleSheet.create({
   panelTitle: {
     fontFamily: "Fraunces_700Bold",
     fontSize: 20,
-    fontWeight: "700",
     letterSpacing: -0.4,
     marginTop: 4,
   },
@@ -241,7 +240,6 @@ const styles = StyleSheet.create({
   weekTotal: {
     fontFamily: "Fraunces_700Bold",
     fontSize: 26,
-    fontWeight: "700",
     letterSpacing: -0.8,
     marginTop: 2,
   },
@@ -260,7 +258,6 @@ const styles = StyleSheet.create({
   selectedDayAmount: {
     fontFamily: "Fraunces_700Bold",
     fontSize: 13,
-    fontWeight: "700",
   },
   bars: {
     height: 136,

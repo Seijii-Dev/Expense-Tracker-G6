@@ -567,7 +567,6 @@ const styles = StyleSheet.create({
   accountName: {
     fontFamily: "Fraunces_700Bold",
     fontSize: 16,
-    fontWeight: "700",
   },
   syncingText: {
     fontSize: 11,
@@ -603,14 +602,12 @@ const styles = StyleSheet.create({
   inputPrefix: {
     fontFamily: "Fraunces_700Bold",
     fontSize: 20,
-    fontWeight: "700",
   },
   input: {
     flex: 1,
     fontFamily: "Fraunces_700Bold",
     fontSize: 18,
     marginLeft: 8,
-    fontWeight: "700",
   },
   presetLabel: {
     fontSize: 10,
@@ -700,7 +697,6 @@ const styles = StyleSheet.create({
   backupTitle: {
     fontFamily: "Fraunces_700Bold",
     fontSize: 22,
-    fontWeight: "700",
     marginTop: 4,
   },
   backupCopy: {

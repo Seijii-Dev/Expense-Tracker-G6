@@ -234,7 +234,6 @@ const styles = StyleSheet.create({
   brandTitle: {
     fontFamily: "Fraunces_700Bold",
     fontSize: 20,
-    fontWeight: "700",
     letterSpacing: -0.5,
   },
   brandBadge: {
@@ -276,7 +275,6 @@ const styles = StyleSheet.create({
   heroTitle: {
     fontFamily: "Fraunces_700Bold",
     fontSize: 38,
-    fontWeight: "700",
     letterSpacing: -1.6,
     lineHeight: 44,
     textAlign: "center",
@@ -325,7 +323,6 @@ const styles = StyleSheet.create({
     fontFamily: "Fraunces_700Bold",
     color: "#FFFFFF",
     fontSize: 14,
-    fontWeight: "700",
   },
   mockStatusChip: {
     flexDirection: "row",
@@ -360,7 +357,6 @@ const styles = StyleSheet.create({
     fontFamily: "Fraunces_700Bold",
     color: "#FFFFFF",
     fontSize: 32,
-    fontWeight: "700",
     letterSpacing: -1,
     marginTop: 4,
   },
@@ -383,7 +379,6 @@ const styles = StyleSheet.create({
     fontFamily: "Fraunces_700Bold",
     color: "#FFFFFF",
     fontSize: 13,
-    fontWeight: "700",
     marginTop: 2,
   },
   mockChipGrowth: {

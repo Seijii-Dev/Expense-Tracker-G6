@@ -317,7 +317,6 @@ const styles = StyleSheet.create({
   title: {
     fontFamily: "Fraunces_700Bold",
     fontSize: 22,
-    fontWeight: "700",
     marginTop: 4,
   },
   subtitle: {

@@ -249,9 +249,8 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   appName: {
-    fontFamily: Platform.select({ ios: "Georgia", default: "serif" }),
+    fontFamily: "Fraunces_700Bold",
     fontSize: 22,
-    fontWeight: "700",
     letterSpacing: -0.3,
   },
   kicker: {

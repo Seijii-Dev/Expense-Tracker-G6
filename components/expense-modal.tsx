@@ -476,7 +476,6 @@ const styles = StyleSheet.create({
   title: {
     fontFamily: "Fraunces_700Bold",
     fontSize: 26,
-    fontWeight: "700",
     letterSpacing: -0.6,
     marginTop: 4,
   },
@@ -511,14 +510,12 @@ const styles = StyleSheet.create({
   currencySymbol: {
     fontFamily: "Fraunces_700Bold",
     fontSize: 30,
-    fontWeight: "700",
     marginRight: 8,
   },
   amountInput: {
     flex: 1,
     fontFamily: "Fraunces_700Bold",
     fontSize: 30,
-    fontWeight: "700",
   },
   input: {
     height: 48,

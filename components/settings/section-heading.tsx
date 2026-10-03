@@ -53,7 +53,6 @@ const styles = StyleSheet.create({
   headingTitle: {
     fontFamily: "Fraunces_700Bold",
     fontSize: 17,
-    fontWeight: "700",
     letterSpacing: -0.2,
   },
   headingCopy: {

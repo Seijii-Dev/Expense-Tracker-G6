@@ -256,9 +256,8 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   title: {
-    fontFamily: Platform.select({ ios: "Georgia", default: "serif" }),
+    fontFamily: "Fraunces_700Bold",
     fontSize: 22,
-    fontWeight: "700",
     letterSpacing: -0.4,
   },
   message: {

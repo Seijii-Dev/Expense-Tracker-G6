@@ -6,6 +6,8 @@ import { Expense } from "@/types/expense";
 import { GlassSurface } from "@/components/ui/glass-surface";
 import { formatMoney } from "@/utils/formatters";
 
+import { useTheme } from "@/lib/theme-store";
+
 interface SpendingInsightProps {
   expenses: Expense[];
 }
@@ -25,14 +27,19 @@ function getTopCategoryInfo(expenses: Expense[]): TopCategoryInfo | null {
 }
 
 export const SpendingInsight = React.memo(function SpendingInsight({ expenses }: SpendingInsightProps) {
+  const { dark } = useTheme();
   const hasExpenses = expenses.length > 0;
   const topInfo = React.useMemo(() => getTopCategoryInfo(expenses), [expenses]);
+
+  const gradientColors: [string, string, string] = dark
+    ? ["#0F241F", "#0B1D19", "#081412"]
+    : ["#144238", "#184F43", "#103930"];
 
   return (
     <GlassSurface radius={26} style={styles.wrap} contentStyle={styles.insight}>
       <LinearGradient
         pointerEvents="none"
-        colors={["#0C261F", "#0B1D22", "#081615"]}
+        colors={gradientColors}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={StyleSheet.absoluteFill}
@@ -120,7 +127,6 @@ const styles = StyleSheet.create({
     fontFamily: "Fraunces_700Bold",
     color: "#FFFFFF",
     fontSize: 23,
-    fontWeight: "700",
     letterSpacing: -0.6,
     marginTop: 4,
   },

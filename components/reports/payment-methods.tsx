@@ -157,7 +157,6 @@ const styles = StyleSheet.create({
   panelTitle: {
     fontFamily: "Fraunces_700Bold",
     fontSize: 22,
-    fontWeight: "700",
     letterSpacing: -0.4,
   },
   iconWrap: {
@@ -200,7 +199,6 @@ const styles = StyleSheet.create({
   paymentAmount: {
     fontFamily: "Fraunces_700Bold",
     fontSize: 17,
-    fontWeight: "700",
     marginBottom: 10,
   },
   miniTrack: {
