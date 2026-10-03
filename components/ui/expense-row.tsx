@@ -33,7 +33,11 @@ export const ExpenseRow = React.memo(function ExpenseRow({
         text: "Delete",
         style: "destructive",
         onPress: () => {
-          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+          try {
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+          } catch {
+            // Non-fatal
+          }
           onDelete?.();
         },
       },
@@ -42,17 +46,20 @@ export const ExpenseRow = React.memo(function ExpenseRow({
 
   return (
     <View style={[styles.row, { borderBottomColor: colors.border }]}>
+      {/* Category Avatar */}
       <View
         style={[
           styles.iconWrap,
           {
-            backgroundColor: dark ? `${meta.color}22` : meta.soft,
+            backgroundColor: dark ? `${meta.color}25` : meta.soft,
+            borderColor: dark ? `${meta.color}40` : `${meta.color}30`,
           },
         ]}
       >
-        <CategoryIcon category={expense.category} size={22} />
+        <CategoryIcon category={expense.category} size={20} />
       </View>
 
+      {/* Main Content */}
       <Pressable
         style={styles.body}
         onPress={onPress || onEdit}
@@ -63,30 +70,50 @@ export const ExpenseRow = React.memo(function ExpenseRow({
           {expense.description}
         </Text>
         <View style={styles.metaRow}>
-          <Text style={[styles.categoryBadge, { color: meta.color }]}>{expense.category}</Text>
+          <View
+            style={[
+              styles.categoryPill,
+              {
+                backgroundColor: dark ? `${meta.color}1E` : meta.soft,
+              },
+            ]}
+          >
+            <Text style={[styles.categoryBadge, { color: meta.color }]}>{expense.category}</Text>
+          </View>
           <Text style={[styles.metaDot, { color: colors.subtle }]}>•</Text>
-          <Text style={[styles.metaText, { color: colors.subtle }]}>{expense.payment}</Text>
+          <Text style={[styles.metaText, { color: colors.muted }]}>{expense.payment}</Text>
           <Text style={[styles.metaDot, { color: colors.subtle }]}>•</Text>
           <Text style={[styles.metaText, { color: colors.subtle }]}>{formatDate(expense.date)}</Text>
         </View>
       </Pressable>
 
+      {/* Amount & Actions */}
       <View style={styles.rightSide}>
-        <Text style={[styles.amount, { color: colors.foreground }]}>−{formatMoney(expense.amount)}</Text>
+        <Text style={[styles.amount, { color: colors.foreground }]}>
+          −{formatMoney(expense.amount)}
+        </Text>
         {showActions && (
           <View style={styles.actions}>
             {onEdit && (
               <Pressable
                 hitSlop={8}
                 onPress={() => {
-                  Haptics.selectionAsync();
+                  try {
+                    Haptics.selectionAsync();
+                  } catch {
+                    // Non-fatal
+                  }
                   onEdit();
                 }}
                 accessibilityRole="button"
                 accessibilityLabel={`Edit ${expense.description}`}
-                style={({ pressed }) => [styles.actionButton, pressed && styles.actionPressed]}
+                style={({ pressed }) => [
+                  styles.actionButton,
+                  { backgroundColor: colors.surfaceSubtle },
+                  pressed && styles.actionPressed,
+                ]}
               >
-                <Ionicons name="create-outline" size={15} color={colors.muted} />
+                <Ionicons name="create-outline" size={14} color={colors.muted} />
               </Pressable>
             )}
             {onDelete && (
@@ -95,9 +122,13 @@ export const ExpenseRow = React.memo(function ExpenseRow({
                 onPress={handleDelete}
                 accessibilityRole="button"
                 accessibilityLabel={`Delete ${expense.description}`}
-                style={({ pressed }) => [styles.actionButton, pressed && styles.actionPressed]}
+                style={({ pressed }) => [
+                  styles.actionButton,
+                  { backgroundColor: dark ? "rgba(248, 113, 113, 0.12)" : "#FEE2E2" },
+                  pressed && styles.actionPressed,
+                ]}
               >
-                <Ionicons name="trash-outline" size={15} color={colors.subtle} />
+                <Ionicons name="trash-outline" size={14} color={colors.error} />
               </Pressable>
             )}
           </View>
@@ -116,35 +147,41 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   iconWrap: {
-    width: 38,
-    height: 38,
+    width: 42,
+    height: 42,
     alignItems: "center",
     justifyContent: "center",
-    borderRadius: 12,
+    borderRadius: 14,
+    borderWidth: 1,
   },
   body: {
     flex: 1,
   },
   title: {
-    fontSize: 13,
+    fontSize: 13.5,
     fontWeight: "700",
     letterSpacing: -0.2,
   },
   metaRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 4,
+    gap: 5,
     marginTop: 4,
   },
+  categoryPill: {
+    paddingHorizontal: 7,
+    paddingVertical: 2,
+    borderRadius: 6,
+  },
   categoryBadge: {
-    fontSize: 10,
+    fontSize: 9.5,
     fontWeight: "700",
   },
   metaDot: {
-    fontSize: 10,
+    fontSize: 9,
   },
   metaText: {
-    fontSize: 10,
+    fontSize: 10.5,
     fontWeight: "500",
   },
   rightSide: {
@@ -153,18 +190,25 @@ const styles = StyleSheet.create({
   },
   amount: {
     fontFamily: "Fraunces_700Bold",
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: "700",
+    letterSpacing: -0.3,
   },
   actions: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 10,
+    gap: 6,
   },
   actionButton: {
-    padding: 2,
+    width: 26,
+    height: 26,
+    borderRadius: 8,
+    alignItems: "center",
+    justifyContent: "center",
   },
   actionPressed: {
     opacity: 0.6,
+    transform: [{ scale: 0.92 }],
   },
 });
+

@@ -128,8 +128,8 @@ export function ExpenseModal({ visible, initialExpense, onClose, onSubmit }: Exp
               style={[
                 styles.amountWrap,
                 {
-                  backgroundColor: dark ? "rgba(255,255,255,0.06)" : "#FFF9F8",
-                  borderColor: dark ? colors.border : "#F4CCC5",
+                  backgroundColor: dark ? "rgba(255,255,255,0.04)" : colors.surfaceSubtle,
+                  borderColor: colors.border,
                 },
               ]}
             >
@@ -155,7 +155,7 @@ export function ExpenseModal({ visible, initialExpense, onClose, onSubmit }: Exp
               style={[
                 styles.input,
                 {
-                  backgroundColor: dark ? "rgba(255,255,255,0.06)" : "#F6FAFC",
+                  backgroundColor: dark ? "rgba(255,255,255,0.04)" : colors.surfaceSubtle,
                   borderColor: colors.border,
                   color: colors.foreground,
                 },
@@ -167,25 +167,35 @@ export function ExpenseModal({ visible, initialExpense, onClose, onSubmit }: Exp
             <View style={styles.presetRow}>
               <Pressable
                 onPress={() => setDate(today)}
-                style={[
+                style={({ pressed }) => [
                   styles.presetChip,
-                  { borderColor: colors.border, backgroundColor: dark ? "rgba(255,255,255,0.06)" : "#F6FAFC" },
-                  date === today && {
-                    borderColor: colors.primary,
-                    backgroundColor: colors.primarySoft,
+                  {
+                    borderColor: date === today ? colors.primary : colors.border,
+                    backgroundColor:
+                      date === today
+                        ? dark
+                          ? `${colors.primary}25`
+                          : colors.primarySoft
+                        : dark
+                        ? "rgba(255,255,255,0.04)"
+                        : colors.surfaceSubtle,
+                    opacity: pressed ? 0.8 : 1,
                   },
                 ]}
+                accessibilityRole="button"
               >
                 <Ionicons
                   name="calendar-outline"
-                  size={13}
+                  size={14}
                   color={date === today ? colors.primary : colors.muted}
                 />
                 <Text
                   style={[
                     styles.presetText,
-                    { color: colors.muted },
-                    date === today && { color: colors.primary, fontWeight: "700" },
+                    {
+                      color: date === today ? colors.primary : colors.muted,
+                      fontWeight: date === today ? "700" : "500",
+                    },
                   ]}
                 >
                   Today
@@ -194,25 +204,35 @@ export function ExpenseModal({ visible, initialExpense, onClose, onSubmit }: Exp
 
               <Pressable
                 onPress={() => setDate(yesterday)}
-                style={[
+                style={({ pressed }) => [
                   styles.presetChip,
-                  { borderColor: colors.border, backgroundColor: dark ? "rgba(255,255,255,0.06)" : "#F6FAFC" },
-                  date === yesterday && {
-                    borderColor: colors.primary,
-                    backgroundColor: colors.primarySoft,
+                  {
+                    borderColor: date === yesterday ? colors.primary : colors.border,
+                    backgroundColor:
+                      date === yesterday
+                        ? dark
+                          ? `${colors.primary}25`
+                          : colors.primarySoft
+                        : dark
+                        ? "rgba(255,255,255,0.04)"
+                        : colors.surfaceSubtle,
+                    opacity: pressed ? 0.8 : 1,
                   },
                 ]}
+                accessibilityRole="button"
               >
                 <Ionicons
                   name="time-outline"
-                  size={13}
+                  size={14}
                   color={date === yesterday ? colors.primary : colors.muted}
                 />
                 <Text
                   style={[
                     styles.presetText,
-                    { color: colors.muted },
-                    date === yesterday && { color: colors.primary, fontWeight: "700" },
+                    {
+                      color: date === yesterday ? colors.primary : colors.muted,
+                      fontWeight: date === yesterday ? "700" : "500",
+                    },
                   ]}
                 >
                   Yesterday
@@ -233,21 +253,35 @@ export function ExpenseModal({ visible, initialExpense, onClose, onSubmit }: Exp
                       Haptics.selectionAsync();
                       setCategory(item);
                     }}
-                    style={[
+                    style={({ pressed }) => [
                       styles.chip,
-                      { borderColor: colors.border, backgroundColor: dark ? "rgba(255,255,255,0.06)" : "#F6FAFC" },
-                      active && {
-                        backgroundColor: dark ? `${meta.color}25` : meta.soft,
-                        borderColor: meta.color,
+                      {
+                        borderColor: active ? meta.color : colors.border,
+                        backgroundColor: active
+                          ? dark
+                            ? `${meta.color}25`
+                            : meta.soft
+                          : dark
+                          ? "rgba(255,255,255,0.04)"
+                          : colors.surfaceSubtle,
+                        opacity: pressed ? 0.8 : 1,
                       },
                     ]}
+                    accessibilityRole="button"
+                    accessibilityState={{ selected: active }}
                   >
                     <CategoryIcon category={item} size={16} customCategories={customCategories} />
                     <Text
                       style={[
                         styles.chipText,
-                        { color: colors.muted },
-                        active && { color: meta.color, fontWeight: "700" },
+                        {
+                          color: active
+                            ? dark
+                              ? "#FFFFFF"
+                              : meta.color
+                            : colors.muted,
+                          fontWeight: active ? "700" : "500",
+                        },
                       ]}
                     >
                       {item}
@@ -260,17 +294,19 @@ export function ExpenseModal({ visible, initialExpense, onClose, onSubmit }: Exp
                   Haptics.selectionAsync();
                   setShowAddCustomModal(true);
                 }}
-                style={[
+                style={({ pressed }) => [
                   styles.chip,
                   {
-                    borderColor: colors.border,
+                    borderColor: `${colors.primary}50`,
                     borderStyle: "dashed",
-                    backgroundColor: dark ? "rgba(255,255,255,0.04)" : "#FAFCFB",
+                    backgroundColor: dark ? "rgba(255,255,255,0.02)" : colors.surfaceSubtle,
+                    opacity: pressed ? 0.8 : 1,
                   },
                 ]}
+                accessibilityRole="button"
               >
-                <Ionicons name="add" size={15} color={colors.primary} />
-                <Text style={[styles.chipText, { color: colors.primary, fontWeight: "600" }]}>Add</Text>
+                <Ionicons name="add" size={16} color={colors.primary} />
+                <Text style={[styles.chipText, { color: colors.primary, fontWeight: "700" }]}>Add</Text>
               </Pressable>
             </ScrollView>
 
@@ -286,21 +322,31 @@ export function ExpenseModal({ visible, initialExpense, onClose, onSubmit }: Exp
                       Haptics.selectionAsync();
                       setPayment(item);
                     }}
-                    style={[
+                    style={({ pressed }) => [
                       styles.chip,
-                      { borderColor: colors.border, backgroundColor: dark ? "rgba(255,255,255,0.06)" : "#F6FAFC" },
-                      active && {
-                        borderColor: colors.primary,
-                        backgroundColor: colors.primarySoft,
+                      {
+                        borderColor: active ? colors.primary : colors.border,
+                        backgroundColor: active
+                          ? dark
+                            ? `${colors.primary}25`
+                            : colors.primarySoft
+                          : dark
+                          ? "rgba(255,255,255,0.04)"
+                          : colors.surfaceSubtle,
+                        opacity: pressed ? 0.8 : 1,
                       },
                     ]}
+                    accessibilityRole="button"
+                    accessibilityState={{ selected: active }}
                   >
                     <PaymentIcon payment={item} size={16} color={active ? colors.primary : colors.muted} />
                     <Text
                       style={[
                         styles.chipText,
-                        { color: colors.muted },
-                        active && { color: colors.primary, fontWeight: "700" },
+                        {
+                          color: active ? colors.primary : colors.muted,
+                          fontWeight: active ? "700" : "500",
+                        },
                       ]}
                     >
                       {item}
@@ -312,11 +358,16 @@ export function ExpenseModal({ visible, initialExpense, onClose, onSubmit }: Exp
 
             {/* Submit button */}
             <Pressable
-              style={({ pressed }) => [styles.submitBtn, { backgroundColor: colors.primary }, pressed && styles.submitPressed]}
+              style={({ pressed }) => [
+                styles.submitBtn,
+                { backgroundColor: colors.primary },
+                pressed && styles.submitPressed,
+              ]}
               onPress={handleSave}
+              accessibilityRole="button"
             >
               <Text style={styles.submitBtnText}>{isEditing ? "Save changes" : "Save expense"}</Text>
-              <Ionicons name={isEditing ? "checkmark" : "arrow-up"} size={17} color="#FFFFFF" />
+              <Ionicons name={isEditing ? "checkmark" : "arrow-up"} size={18} color="#FFFFFF" />
             </Pressable>
           </ScrollView>
         </GlassSurface>
@@ -343,15 +394,15 @@ const styles = StyleSheet.create({
   backdrop: {
     flex: 1,
     justifyContent: "flex-end",
-    backgroundColor: "rgba(18, 27, 24, 0.55)",
+    backgroundColor: "rgba(7, 13, 12, 0.65)",
   },
   dismissOverlay: {
     flex: 1,
   },
   card: {
     maxHeight: "88%",
-    padding: 22,
-    paddingBottom: Platform.OS === "ios" ? 38 : 28,
+    padding: 24,
+    paddingBottom: Platform.OS === "ios" ? 40 : 28,
   },
   header: {
     flexDirection: "row",
@@ -362,7 +413,7 @@ const styles = StyleSheet.create({
   kicker: {
     fontSize: 10,
     fontWeight: "800",
-    letterSpacing: 1.4,
+    letterSpacing: 1.2,
   },
   title: {
     fontFamily: "Fraunces_700Bold",
@@ -372,13 +423,14 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   subtitle: {
-    fontSize: 11,
+    fontSize: 12,
+    lineHeight: 17,
     marginTop: 4,
   },
   closeBtn: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    width: 34,
+    height: 34,
+    borderRadius: 17,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -386,33 +438,35 @@ const styles = StyleSheet.create({
     fontSize: 10,
     fontWeight: "800",
     letterSpacing: 1.1,
-    marginTop: 14,
-    marginBottom: 7,
+    marginTop: 16,
+    marginBottom: 8,
   },
   amountWrap: {
     flexDirection: "row",
     alignItems: "center",
-    height: 60,
-    paddingHorizontal: 16,
-    borderRadius: 12,
+    height: 64,
+    paddingHorizontal: 18,
+    borderRadius: 16,
     borderWidth: 1.5,
   },
   currencySymbol: {
-    fontSize: 26,
+    fontFamily: "Fraunces_700Bold",
+    fontSize: 30,
     fontWeight: "700",
-    marginRight: 6,
+    marginRight: 8,
   },
   amountInput: {
     flex: 1,
     fontFamily: "Fraunces_700Bold",
-    fontSize: 26,
+    fontSize: 30,
     fontWeight: "700",
   },
   input: {
-    height: 44,
-    paddingHorizontal: 14,
-    fontSize: 12,
-    borderRadius: 10,
+    height: 48,
+    paddingHorizontal: 16,
+    fontSize: 14,
+    fontWeight: "600",
+    borderRadius: 14,
     borderWidth: 1,
   },
   presetRow: {
@@ -422,47 +476,46 @@ const styles = StyleSheet.create({
   presetChip: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 5,
-    height: 34,
-    paddingHorizontal: 13,
-    borderRadius: 8,
+    gap: 6,
+    height: 38,
+    paddingHorizontal: 14,
+    borderRadius: 12,
     borderWidth: 1,
   },
   presetText: {
-    fontSize: 11,
-    fontWeight: "600",
+    fontSize: 12,
   },
   chipRow: {
     flexDirection: "row",
-    gap: 7,
+    gap: 8,
+    paddingVertical: 2,
   },
   chip: {
     flexDirection: "row",
     alignItems: "center",
     gap: 6,
-    paddingHorizontal: 12,
-    height: 34,
-    borderRadius: 9,
+    paddingHorizontal: 14,
+    height: 38,
+    borderRadius: 12,
     borderWidth: 1,
   },
   chipText: {
-    fontSize: 11,
-    fontWeight: "600",
+    fontSize: 12,
   },
   submitBtn: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
     gap: 8,
-    height: 48,
-    marginTop: 24,
-    marginBottom: 6,
-    borderRadius: 12,
-    shadowColor: "#EB6F61",
-    shadowOpacity: 0.3,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 4,
+    height: 52,
+    marginTop: 26,
+    marginBottom: 8,
+    borderRadius: 16,
+    shadowColor: "#FF6554",
+    shadowOpacity: 0.35,
+    shadowRadius: 14,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 5,
   },
   submitPressed: {
     opacity: 0.85,
@@ -470,7 +523,8 @@ const styles = StyleSheet.create({
   },
   submitBtnText: {
     color: "#FFFFFF",
-    fontSize: 13,
-    fontWeight: "700",
+    fontSize: 15,
+    fontWeight: "800",
+    letterSpacing: 0.2,
   },
 });

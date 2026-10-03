@@ -7,6 +7,7 @@ import {
   Text,
   View,
 } from "react-native";
+import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { ScreenContainer } from "@/components/screen-container";
 import { GlassSurface } from "@/components/ui/glass-surface";
@@ -49,7 +50,7 @@ export default function OverviewScreen() {
     syncing,
   } = useExpenses();
   const { account } = useAuth();
-  const { colors } = useTheme();
+  const { colors, dark } = useTheme();
 
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
@@ -78,7 +79,11 @@ export default function OverviewScreen() {
   }, [monthExpenses]);
 
   const showPulseAlert = useCallback(() => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    try {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    } catch {
+      // Non-fatal
+    }
     setShowPulseModal(true);
   }, []);
 
@@ -128,17 +133,37 @@ export default function OverviewScreen() {
       >
         {/* Header */}
         <View style={styles.header}>
-          <View>
-            <Text style={[styles.kicker, { color: colors.primary }]}>{todayLabel}</Text>
+          <View style={styles.headerLeft}>
+            <View
+              style={[
+                styles.kickerPill,
+                {
+                  backgroundColor: dark ? "rgba(255, 117, 101, 0.14)" : colors.primarySoft,
+                  borderColor: dark ? "rgba(255, 117, 101, 0.28)" : "rgba(255, 101, 84, 0.22)",
+                },
+              ]}
+            >
+              <View style={[styles.kickerDot, { backgroundColor: colors.primary }]} />
+              <Text style={[styles.kicker, { color: colors.primary }]}>{todayLabel}</Text>
+            </View>
+
             <Text style={[styles.title, { color: colors.foreground }]}>
               {greeting}, {firstName}
               <Text style={[styles.dot, { color: colors.primary }]}>.</Text>
             </Text>
-            <Text style={[styles.subtitle, { color: colors.muted }]}>Here’s your financial pulse for today.</Text>
+            <Text style={[styles.subtitle, { color: colors.muted }]}>
+              Here’s your financial pulse for today.
+            </Text>
           </View>
-          <Pressable onPress={showPulseAlert}>
-            <GlassSurface variant="pill" radius={14} contentStyle={styles.bell}>
-              <Ionicons name="notifications-outline" size={20} color={colors.muted} />
+
+          <Pressable
+            onPress={showPulseAlert}
+            style={({ pressed }) => [styles.bellWrap, pressed && styles.pressed]}
+            accessibilityRole="button"
+            accessibilityLabel="Financial Pulse Health"
+          >
+            <GlassSurface variant="pill" radius={18} contentStyle={styles.bell}>
+              <Ionicons name="pulse" size={18} color={colors.primary} />
               <View style={[styles.notificationDot, { backgroundColor: colors.primary }]} />
             </GlassSurface>
           </Pressable>
@@ -150,13 +175,21 @@ export default function OverviewScreen() {
             <Ionicons name="calendar-outline" size={15} color={colors.primary} />
             <Text style={[styles.monthText, { color: colors.foreground }]}>{monthLabel}</Text>
           </GlassSurface>
+
           <Pressable
             style={({ pressed }) => [
               styles.addButton,
               { backgroundColor: colors.primary },
               pressed && styles.pressed,
             ]}
-            onPress={() => setShowAddModal(true)}
+            onPress={() => {
+              try {
+                Haptics.selectionAsync();
+              } catch {
+                // Non-fatal
+              }
+              setShowAddModal(true);
+            }}
           >
             <Ionicons name="add" size={18} color="#FFFFFF" />
             <Text style={styles.addButtonText}>Add expense</Text>
@@ -168,22 +201,22 @@ export default function OverviewScreen() {
           <MetricCard
             label="Spent this month"
             value={formatMoney(monthTotal)}
-            icon={<Ionicons name="trending-up" size={16} color="#EB6F61" />}
+            icon={<Ionicons name="trending-up" size={17} color="#FF6554" />}
             tone="coral"
             foot={monthTotal > 0 ? "Live from your records" : "No records yet"}
           />
           <MetricCard
             label="Spent today"
             value={formatMoney(todayTotal)}
-            icon={<Ionicons name="cash-outline" size={16} color="#4D8AF0" />}
+            icon={<Ionicons name="cash-outline" size={17} color="#0EA5E9" />}
             tone="blue"
-            foot={todayTotal > 0 ? "Updated live" : "No spending today"}
+            foot={todayTotal > 0 ? "Updated live today" : "No spending logged today"}
           />
           <MetricCard
             label="Remaining budget"
             value={formatMoney(remaining)}
-            icon={<Ionicons name="wallet-outline" size={16} color="#5A9E7E" />}
-            tone={budgetPercent >= 100 ? "warning" : "green"}
+            icon={<Ionicons name="wallet-outline" size={17} color="#10B981" />}
+            tone={budgetPercent >= 100 ? "coral" : budgetPercent >= 80 ? "warning" : "green"}
             foot={`${budgetPercent}% of ${formatMoney(budget)} used`}
             progress={budgetPercent}
           />
@@ -193,10 +226,23 @@ export default function OverviewScreen() {
         <GlassSurface style={styles.panel} contentStyle={styles.panelInner}>
           <View style={styles.panelHeader}>
             <View>
-              <Text style={[styles.kicker, { color: colors.primary }]}>MONEY MAP</Text>
+              <View style={styles.panelKickerRow}>
+                <View style={[styles.kickerDot, { backgroundColor: colors.primary }]} />
+                <Text style={[styles.panelKicker, { color: colors.primary }]}>MONEY MAP</Text>
+              </View>
               <Text style={[styles.panelTitle, { color: colors.foreground }]}>Spending overview</Text>
             </View>
-            <Text style={[styles.smallMuted, { color: colors.subtle }]}>This month</Text>
+            <View
+              style={[
+                styles.badge,
+                {
+                  backgroundColor: dark ? "rgba(255,255,255,0.06)" : colors.surfaceSubtle,
+                  borderColor: colors.border,
+                },
+              ]}
+            >
+              <Text style={[styles.smallMuted, { color: colors.muted }]}>This month</Text>
+            </View>
           </View>
 
           <View style={styles.overviewRow}>
@@ -217,15 +263,37 @@ export default function OverviewScreen() {
         <GlassSurface style={styles.panel} contentStyle={styles.panelInner}>
           <View style={styles.panelHeader}>
             <View>
-              <Text style={[styles.kicker, { color: colors.primary }]}>LATEST ACTIVITY</Text>
+              <View style={styles.panelKickerRow}>
+                <View style={[styles.kickerDot, { backgroundColor: colors.success }]} />
+                <Text style={[styles.panelKicker, { color: colors.success }]}>LATEST ACTIVITY</Text>
+              </View>
               <Text style={[styles.panelTitle, { color: colors.foreground }]}>Recent transactions</Text>
             </View>
-            <Ionicons name="arrow-up" size={17} color={colors.primary} />
+            <Pressable
+              style={({ pressed }) => [styles.viewAllBtn, pressed && styles.pressed]}
+              onPress={() => {
+                try {
+                  Haptics.selectionAsync();
+                } catch {
+                  // Non-fatal
+                }
+                router.push("/(tabs)/transactions");
+              }}
+            >
+              <Text style={[styles.viewAllText, { color: colors.primary }]}>View all</Text>
+              <Ionicons name="arrow-forward" size={14} color={colors.primary} />
+            </Pressable>
           </View>
 
           {recentExpenses.length === 0 ? (
             <View style={styles.emptyRecent}>
-              <Text style={[styles.emptyRecentText, { color: colors.muted }]}>No transactions yet</Text>
+              <View style={[styles.emptyIconCircle, { backgroundColor: colors.surfaceSubtle }]}>
+                <Ionicons name="receipt-outline" size={24} color={colors.subtle} />
+              </View>
+              <Text style={[styles.emptyRecentText, { color: colors.foreground }]}>No transactions yet</Text>
+              <Text style={[styles.emptyRecentSub, { color: colors.muted }]}>
+                Tap the "+ Add expense" button above to log your first record.
+              </Text>
             </View>
           ) : (
             recentExpenses.map((expense) => (
@@ -265,22 +333,6 @@ export default function OverviewScreen() {
 }
 
 const styles = StyleSheet.create({
-  loadingState: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 8,
-  },
-  loadingTitle: {
-    fontFamily: "Fraunces_700Bold",
-    fontSize: 18,
-    fontWeight: "700",
-    marginTop: 8,
-  },
-  loadingCopy: {
-    fontSize: 12,
-    textAlign: "center",
-  },
   scroll: {
     paddingBottom: 32,
   },
@@ -289,41 +341,64 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "flex-start",
     paddingTop: 8,
-    marginBottom: 18,
+    marginBottom: 20,
+  },
+  headerLeft: {
+    flex: 1,
+    paddingRight: 10,
+  },
+  kickerPill: {
+    alignSelf: "flex-start",
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    paddingHorizontal: 9,
+    paddingVertical: 4.5,
+    borderRadius: 999,
+    borderWidth: 1,
+  },
+  kickerDot: {
+    width: 5,
+    height: 5,
+    borderRadius: 2.5,
   },
   kicker: {
-    fontSize: 10,
+    fontSize: 9.5,
     fontWeight: "800",
-    letterSpacing: 1.4,
+    letterSpacing: 1.1,
   },
   title: {
     fontFamily: "Fraunces_700Bold",
     fontSize: 32,
     fontWeight: "700",
     letterSpacing: -1.2,
-    marginTop: 6,
+    marginTop: 8,
+    lineHeight: 38,
   },
   dot: {
     fontWeight: "700",
   },
   subtitle: {
-    fontSize: 12,
+    fontSize: 12.5,
     marginTop: 4,
   },
+  bellWrap: {
+    paddingTop: 4,
+  },
   bell: {
-    width: 40,
-    height: 40,
+    width: 42,
+    height: 42,
     alignItems: "center",
     justifyContent: "center",
   },
   notificationDot: {
     position: "absolute",
     top: 10,
-    right: 10,
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    borderWidth: 1,
+    right: 11,
+    width: 7,
+    height: 7,
+    borderRadius: 3.5,
+    borderWidth: 1.5,
     borderColor: "#FFFFFF",
   },
   actionRow: {
@@ -336,8 +411,8 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 7,
-    paddingHorizontal: 12,
-    height: 38,
+    paddingHorizontal: 13,
+    height: 40,
   },
   monthText: {
     fontSize: 12,
@@ -347,38 +422,49 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 6,
-    height: 38,
-    paddingHorizontal: 15,
+    height: 40,
+    paddingHorizontal: 16,
     borderRadius: 14,
-    shadowColor: "#EB6F61",
-    shadowOpacity: 0.25,
-    shadowRadius: 8,
+    shadowColor: "#FF6554",
+    shadowOpacity: 0.35,
+    shadowRadius: 10,
     shadowOffset: { width: 0, height: 4 },
-    elevation: 3,
+    elevation: 4,
   },
   addButtonText: {
     color: "#FFFFFF",
-    fontSize: 12,
-    fontWeight: "700",
+    fontSize: 12.5,
+    fontWeight: "800",
+    letterSpacing: -0.2,
   },
   pressed: {
     opacity: 0.8,
     transform: [{ scale: 0.98 }],
   },
   metricGrid: {
-    gap: 10,
+    gap: 12,
     marginBottom: 16,
   },
   panel: {
     marginBottom: 16,
   },
   panelInner: {
-    padding: 18,
+    padding: 20,
   },
   panelHeader: {
     flexDirection: "row",
     alignItems: "flex-start",
     justifyContent: "space-between",
+  },
+  panelKickerRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
+  panelKicker: {
+    fontSize: 9.5,
+    fontWeight: "800",
+    letterSpacing: 1.2,
   },
   panelTitle: {
     fontFamily: "Fraunces_700Bold",
@@ -387,17 +473,23 @@ const styles = StyleSheet.create({
     letterSpacing: -0.4,
     marginTop: 4,
   },
+  badge: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+    borderWidth: 1,
+  },
   smallMuted: {
     fontSize: 10,
-    marginTop: 3,
+    fontWeight: "600",
   },
   overviewRow: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-around",
     minHeight: 180,
-    gap: 10,
-    marginVertical: 8,
+    gap: 12,
+    marginVertical: 10,
   },
   panelFooter: {
     flexDirection: "row",
@@ -407,18 +499,45 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
   },
   footerLabel: {
-    fontSize: 10,
+    fontSize: 10.5,
     fontWeight: "500",
   },
   footerValue: {
-    fontSize: 11,
+    fontSize: 12,
+    fontWeight: "700",
+  },
+  viewAllBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+  },
+  viewAllText: {
+    fontSize: 11.5,
     fontWeight: "700",
   },
   emptyRecent: {
-    paddingVertical: 24,
+    paddingVertical: 28,
     alignItems: "center",
   },
+  emptyIconCircle: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 10,
+  },
   emptyRecentText: {
-    fontSize: 12,
+    fontSize: 13,
+    fontWeight: "700",
+  },
+  emptyRecentSub: {
+    fontSize: 11,
+    marginTop: 4,
+    textAlign: "center",
+    maxWidth: 240,
   },
 });

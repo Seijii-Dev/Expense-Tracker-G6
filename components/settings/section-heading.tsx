@@ -9,11 +9,21 @@ interface SectionHeadingProps {
 }
 
 export function SectionHeading({ icon, title, copy }: SectionHeadingProps) {
-  const { colors } = useTheme();
+  const { colors, dark } = useTheme();
 
   return (
     <View style={styles.heading}>
-      <View style={[styles.headingIcon, { backgroundColor: colors.primarySoft }]}>{icon}</View>
+      <View
+        style={[
+          styles.headingIcon,
+          {
+            backgroundColor: dark ? `${colors.primary}20` : colors.primarySoft,
+            borderColor: `${colors.primary}30`,
+          },
+        ]}
+      >
+        {icon}
+      </View>
       <View style={styles.headingTextWrap}>
         <Text style={[styles.headingTitle, { color: colors.foreground }]}>{title}</Text>
         <Text style={[styles.headingCopy, { color: colors.muted }]}>{copy}</Text>
@@ -30,21 +40,26 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   headingIcon: {
-    width: 34,
-    height: 34,
+    width: 38,
+    height: 38,
     alignItems: "center",
     justifyContent: "center",
-    borderRadius: 10,
+    borderRadius: 12,
+    borderWidth: 1,
   },
   headingTextWrap: {
     flex: 1,
   },
   headingTitle: {
-    fontSize: 16,
+    fontFamily: "Fraunces_700Bold",
+    fontSize: 17,
     fontWeight: "700",
+    letterSpacing: -0.2,
   },
   headingCopy: {
     fontSize: 11,
-    marginTop: 3,
+    marginTop: 2,
+    lineHeight: 16,
   },
 });
+

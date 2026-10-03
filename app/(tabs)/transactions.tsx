@@ -24,7 +24,7 @@ import { TransactionsSkeleton } from "@/components/ui/transactions-skeleton";
 
 export default function TransactionsScreen() {
   const { sortedExpenses, removeExpense, updateExpense, refreshExpenses, syncing, hydrated } = useExpenses();
-  const { colors } = useTheme();
+  const { colors, dark } = useTheme();
 
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
 
@@ -99,15 +99,38 @@ export default function TransactionsScreen() {
         />
 
         {/* Summary banner */}
-        <View style={[styles.summaryCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+        <View
+          style={[
+            styles.summaryCard,
+            {
+              backgroundColor: colors.surface,
+              borderColor: colors.border,
+              shadowColor: dark ? "#000000" : "#0A1F1C",
+              shadowOffset: { width: 0, height: 4 },
+              shadowOpacity: dark ? 0.35 : 0.04,
+              shadowRadius: 10,
+              elevation: 2,
+            },
+          ]}
+        >
           <View style={styles.summaryCol}>
-            <Text style={[styles.summaryLabel, { color: colors.subtle }]}>SHOWING</Text>
-            <Text style={[styles.summaryValue, { color: colors.foreground }]}>{filtered.length} records</Text>
+            <View style={styles.labelRow}>
+              <View style={[styles.statusDot, { backgroundColor: colors.primary }]} />
+              <Text style={[styles.summaryLabel, { color: colors.subtle }]}>SHOWING</Text>
+            </View>
+            <Text style={[styles.summaryValue, { color: colors.foreground }]}>
+              {filtered.length} <Text style={{ fontSize: 13, fontFamily: "DMSans_500Medium", color: colors.muted }}>records</Text>
+            </Text>
           </View>
           <View style={[styles.divider, { backgroundColor: colors.border }]} />
           <View style={styles.summaryCol}>
-            <Text style={[styles.summaryLabel, { color: colors.subtle }]}>FILTERED TOTAL</Text>
-            <Text style={[styles.summaryValue, { color: colors.foreground }]}>{formatMoney(total)}</Text>
+            <View style={styles.labelRow}>
+              <View style={[styles.statusDot, { backgroundColor: colors.success }]} />
+              <Text style={[styles.summaryLabel, { color: colors.subtle }]}>FILTERED TOTAL</Text>
+            </View>
+            <Text style={[styles.summaryValue, { color: colors.foreground }]}>
+              {formatMoney(total)}
+            </Text>
           </View>
         </View>
 
@@ -123,12 +146,24 @@ export default function TransactionsScreen() {
         {filtered.length > 0 && <View style={styles.listHeaderGap} />}
       </View>
     ),
-    [category, colors, filtered.length, query, setCategory, setQuery, setSortBy, sortBy, total]
+    [category, colors, dark, filtered.length, query, setCategory, setQuery, setSortBy, sortBy, total]
   );
 
   const ListEmpty = useMemo(
     () => (
-      <View style={[styles.emptyContainer, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+      <View
+        style={[
+          styles.emptyContainer,
+          {
+            backgroundColor: colors.surface,
+            borderColor: colors.border,
+            shadowColor: dark ? "#000000" : "#0A1F1C",
+            shadowOffset: { width: 0, height: 4 },
+            shadowOpacity: dark ? 0.25 : 0.04,
+            shadowRadius: 10,
+          },
+        ]}
+      >
         <EmptyState
           icon="receipt-outline"
           title="No records found"
@@ -139,13 +174,23 @@ export default function TransactionsScreen() {
           }
         />
         {hasActiveFilters && (
-          <Pressable onPress={resetFilters} style={[styles.resetBtn, { backgroundColor: colors.primarySoft }]}>
+          <Pressable
+            onPress={resetFilters}
+            style={({ pressed }) => [
+              styles.resetBtn,
+              {
+                backgroundColor: colors.primarySoft,
+                borderColor: `${colors.primary}40`,
+                opacity: pressed ? 0.8 : 1,
+              },
+            ]}
+          >
             <Text style={[styles.resetBtnText, { color: colors.primary }]}>Clear all filters</Text>
           </Pressable>
         )}
       </View>
     ),
-    [colors.border, colors.primary, colors.primarySoft, colors.surface, hasActiveFilters, resetFilters]
+    [colors.border, colors.primary, colors.primarySoft, colors.surface, dark, hasActiveFilters, resetFilters]
   );
 
   if (!hydrated) {
@@ -194,63 +239,72 @@ export default function TransactionsScreen() {
 const styles = StyleSheet.create({
   scroll: {
     paddingTop: 12,
-    paddingBottom: 32,
+    paddingBottom: 40,
   },
   summaryCard: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-around",
-    padding: 16,
-    borderRadius: 14,
+    paddingVertical: 18,
+    paddingHorizontal: 16,
+    borderRadius: 20,
     borderWidth: 1,
-    marginTop: 14,
+    marginTop: 16,
     marginBottom: 16,
   },
   summaryCol: {
+    flex: 1,
     alignItems: "center",
   },
+  labelRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    marginBottom: 6,
+  },
+  statusDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+  },
   summaryLabel: {
-    fontSize: 9,
+    fontSize: 10,
     fontWeight: "800",
-    letterSpacing: 1,
+    letterSpacing: 0.8,
   },
   summaryValue: {
     fontFamily: "Fraunces_700Bold",
-    fontSize: 20,
+    fontSize: 22,
     fontWeight: "700",
-    marginTop: 4,
   },
   divider: {
     width: 1,
-    height: 32,
+    height: 36,
   },
   listHeaderGap: {
-    height: 14,
+    height: 16,
   },
   listItem: {
     paddingHorizontal: 16,
   },
-  list: {
-    marginTop: 14,
-    paddingHorizontal: 16,
-    borderRadius: 16,
-    borderWidth: 1,
-  },
   emptyContainer: {
     marginTop: 16,
-    paddingVertical: 20,
-    borderRadius: 16,
+    paddingVertical: 28,
+    paddingHorizontal: 20,
+    borderRadius: 20,
     borderWidth: 1,
     alignItems: "center",
   },
   resetBtn: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 8,
-    marginTop: 4,
+    paddingHorizontal: 18,
+    paddingVertical: 10,
+    borderRadius: 12,
+    borderWidth: 1,
+    marginTop: 12,
   },
   resetBtnText: {
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: "700",
+    letterSpacing: 0.3,
   },
 });

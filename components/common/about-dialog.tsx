@@ -46,7 +46,7 @@ export function AboutDialog({ visible, onClose }: AboutDialogProps) {
       onRequestClose={onClose}
     >
       <View style={[styles.backdrop, { backgroundColor: colors.dialogBackdrop }]}>
-        <View style={[styles.card, { backgroundColor: dark ? "#14222A" : "#FFFFFF", borderColor: colors.border }]}>
+        <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
           {/* Header with App Logo and Badges */}
           <View style={styles.headerRow}>
             <Image

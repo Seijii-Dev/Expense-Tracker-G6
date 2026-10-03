@@ -13,6 +13,7 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { useTheme } from "@/lib/theme-store";
+import { AmbientBackground } from "@/components/ui/ambient-background";
 
 interface AuthFormProps {
   mode: "login" | "register";
@@ -23,7 +24,7 @@ interface AuthFormProps {
 }
 
 export function AuthForm({ mode, onModeChange, onBack, onSubmit, busy }: AuthFormProps) {
-  const { colors } = useTheme();
+  const { colors, dark } = useTheme();
   const isRegister = mode === "register";
 
   const [name, setName] = useState("");
@@ -40,6 +41,8 @@ export function AuthForm({ mode, onModeChange, onBack, onSubmit, busy }: AuthFor
       style={[styles.screen, { backgroundColor: colors.background }]}
       behavior={Platform.OS === "ios" ? "padding" : undefined}
     >
+      <AmbientBackground />
+
       <ScrollView
         contentContainerStyle={styles.formScroll}
         keyboardShouldPersistTaps="handled"
@@ -47,24 +50,40 @@ export function AuthForm({ mode, onModeChange, onBack, onSubmit, busy }: AuthFor
       >
         {/* Back Link */}
         <Pressable
-          style={styles.backButton}
+          style={({ pressed }) => [
+            styles.backButton,
+            {
+              backgroundColor: dark ? "rgba(255,255,255,0.06)" : colors.surface,
+              borderColor: colors.border,
+            },
+            pressed && styles.pressed,
+          ]}
           onPress={() => {
             Haptics.selectionAsync();
             onBack();
           }}
+          accessibilityRole="button"
         >
-          <Ionicons name="arrow-back" size={18} color={colors.muted} />
-          <Text style={[styles.backLinkText, { color: colors.muted }]}>Back to home</Text>
+          <Ionicons name="arrow-back" size={16} color={colors.foreground} />
+          <Text style={[styles.backLinkText, { color: colors.foreground }]}>Back</Text>
         </Pressable>
 
         {/* Brand Header */}
         <View style={styles.formHeader}>
-          <View style={[styles.logoPlate, { backgroundColor: colors.primarySoft }]}>
+          <View
+            style={[
+              styles.logoPlate,
+              {
+                backgroundColor: dark ? `${colors.primary}20` : colors.primarySoft,
+                borderColor: `${colors.primary}30`,
+              },
+            ]}
+          >
             <Image source={require("@/assets/images/icon.png")} style={styles.formLogo} />
           </View>
           <Text style={[styles.formTitle, { color: colors.foreground }]}>
             {isRegister ? "Start your ledger" : "Welcome back"}
-            <Text style={[styles.dot, { color: colors.primary }]}>.</Text>
+            <Text style={{ color: colors.primary }}>.</Text>
           </Text>
           <Text style={[styles.formSubtitle, { color: colors.muted }]}>
             {isRegister
@@ -74,22 +93,40 @@ export function AuthForm({ mode, onModeChange, onBack, onSubmit, busy }: AuthFor
         </View>
 
         {/* Segmented Mode Selector */}
-        <View style={[styles.segmentContainer, { backgroundColor: colors.surfaceSubtle, borderColor: colors.border }]}>
+        <View
+          style={[
+            styles.segmentContainer,
+            {
+              backgroundColor: dark ? "rgba(255,255,255,0.04)" : colors.surfaceSubtle,
+              borderColor: colors.border,
+            },
+          ]}
+        >
           <Pressable
             style={[
               styles.segmentBtn,
-              !isRegister && [styles.segmentBtnActive, { backgroundColor: colors.surface }],
+              !isRegister && [
+                styles.segmentBtnActive,
+                {
+                  backgroundColor: colors.surface,
+                  borderColor: colors.border,
+                },
+              ],
             ]}
             onPress={() => {
               Haptics.selectionAsync();
               onModeChange("login");
             }}
+            accessibilityRole="tab"
+            accessibilityState={{ selected: !isRegister }}
           >
             <Text
               style={[
                 styles.segmentText,
-                { color: !isRegister ? colors.foreground : colors.muted },
-                !isRegister && styles.segmentTextActive,
+                {
+                  color: !isRegister ? colors.foreground : colors.muted,
+                  fontWeight: !isRegister ? "800" : "600",
+                },
               ]}
             >
               Sign In
@@ -99,18 +136,28 @@ export function AuthForm({ mode, onModeChange, onBack, onSubmit, busy }: AuthFor
           <Pressable
             style={[
               styles.segmentBtn,
-              isRegister && [styles.segmentBtnActive, { backgroundColor: colors.surface }],
+              isRegister && [
+                styles.segmentBtnActive,
+                {
+                  backgroundColor: colors.surface,
+                  borderColor: colors.border,
+                },
+              ],
             ]}
             onPress={() => {
               Haptics.selectionAsync();
               onModeChange("register");
             }}
+            accessibilityRole="tab"
+            accessibilityState={{ selected: isRegister }}
           >
             <Text
               style={[
                 styles.segmentText,
-                { color: isRegister ? colors.foreground : colors.muted },
-                isRegister && styles.segmentTextActive,
+                {
+                  color: isRegister ? colors.foreground : colors.muted,
+                  fontWeight: isRegister ? "800" : "600",
+                },
               ]}
             >
               Create Account
@@ -123,8 +170,23 @@ export function AuthForm({ mode, onModeChange, onBack, onSubmit, busy }: AuthFor
           {isRegister && (
             <View>
               <Text style={[styles.fieldLabel, { color: colors.subtle }]}>FULL NAME</Text>
-              <View style={[styles.fieldWrap, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-                <Ionicons name="person-outline" size={18} color={colors.muted} />
+              <View
+                style={[
+                  styles.fieldWrap,
+                  {
+                    backgroundColor: colors.surface,
+                    borderColor: colors.border,
+                  },
+                ]}
+              >
+                <View
+                  style={[
+                    styles.fieldIconWrap,
+                    { backgroundColor: dark ? "rgba(255,255,255,0.04)" : colors.surfaceSubtle },
+                  ]}
+                >
+                  <Ionicons name="person-outline" size={17} color={colors.primary} />
+                </View>
                 <TextInput
                   placeholder="e.g. Maria Santos"
                   placeholderTextColor={colors.subtle}
@@ -139,8 +201,23 @@ export function AuthForm({ mode, onModeChange, onBack, onSubmit, busy }: AuthFor
 
           <View>
             <Text style={[styles.fieldLabel, { color: colors.subtle }]}>EMAIL ADDRESS</Text>
-            <View style={[styles.fieldWrap, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-              <Ionicons name="mail-outline" size={18} color={colors.muted} />
+            <View
+              style={[
+                styles.fieldWrap,
+                {
+                  backgroundColor: colors.surface,
+                  borderColor: colors.border,
+                },
+              ]}
+            >
+              <View
+                style={[
+                  styles.fieldIconWrap,
+                  { backgroundColor: dark ? "rgba(255,255,255,0.04)" : colors.surfaceSubtle },
+                ]}
+              >
+                <Ionicons name="mail-outline" size={17} color={colors.primary} />
+              </View>
               <TextInput
                 placeholder="you@example.com"
                 placeholderTextColor={colors.subtle}
@@ -156,8 +233,23 @@ export function AuthForm({ mode, onModeChange, onBack, onSubmit, busy }: AuthFor
 
           <View>
             <Text style={[styles.fieldLabel, { color: colors.subtle }]}>PASSWORD</Text>
-            <View style={[styles.fieldWrap, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-              <Ionicons name="lock-closed-outline" size={18} color={colors.muted} />
+            <View
+              style={[
+                styles.fieldWrap,
+                {
+                  backgroundColor: colors.surface,
+                  borderColor: colors.border,
+                },
+              ]}
+            >
+              <View
+                style={[
+                  styles.fieldIconWrap,
+                  { backgroundColor: dark ? "rgba(255,255,255,0.04)" : colors.surfaceSubtle },
+                ]}
+              >
+                <Ionicons name="lock-closed-outline" size={17} color={colors.primary} />
+              </View>
               <TextInput
                 placeholder={isRegister ? "At least 6 characters" : "Your password"}
                 placeholderTextColor={colors.subtle}
@@ -189,6 +281,7 @@ export function AuthForm({ mode, onModeChange, onBack, onSubmit, busy }: AuthFor
             busy && { opacity: 0.65 },
           ]}
           onPress={handleSubmit}
+          accessibilityRole="button"
         >
           <Text style={styles.primaryCtaText}>
             {busy ? "Please wait…" : isRegister ? "Create Free Account" : "Sign In"}
@@ -203,6 +296,7 @@ export function AuthForm({ mode, onModeChange, onBack, onSubmit, busy }: AuthFor
             Haptics.selectionAsync();
             onModeChange(isRegister ? "login" : "register");
           }}
+          accessibilityRole="button"
         >
           <Text style={[styles.switchText, { color: colors.muted }]}>
             {isRegister ? "Already have an account? " : "New to Ledgerly? "}
@@ -232,24 +326,28 @@ const styles = StyleSheet.create({
     gap: 6,
     alignSelf: "flex-start",
     marginBottom: 20,
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    borderRadius: 12,
+    borderWidth: 1,
   },
   backLinkText: {
     fontSize: 12,
-    fontWeight: "600",
+    fontWeight: "700",
   },
   formHeader: {
     marginBottom: 24,
   },
   formLogo: {
-    width: 54,
-    height: 54,
-    borderRadius: 16,
-    marginBottom: 0,
+    width: 48,
+    height: 48,
+    borderRadius: 14,
   },
   logoPlate: {
-    width: 68,
-    height: 68,
-    borderRadius: 22,
+    width: 64,
+    height: 64,
+    borderRadius: 20,
+    borderWidth: 1,
     alignItems: "center",
     justifyContent: "center",
     marginBottom: 16,
@@ -260,91 +358,94 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     letterSpacing: -1.2,
   },
-  dot: {
-    fontWeight: "700",
-  },
   formSubtitle: {
-    fontSize: 12,
-    lineHeight: 18,
+    fontSize: 13,
+    lineHeight: 19,
     marginTop: 6,
   },
   segmentContainer: {
     flexDirection: "row",
     padding: 4,
-    borderRadius: 12,
+    borderRadius: 16,
     borderWidth: 1,
-    marginBottom: 20,
+    marginBottom: 22,
   },
   segmentBtn: {
     flex: 1,
-    height: 38,
+    height: 40,
     alignItems: "center",
     justifyContent: "center",
-    borderRadius: 9,
+    borderRadius: 12,
   },
   segmentBtnActive: {
+    borderWidth: 1,
     shadowColor: "#000",
-    shadowOpacity: 0.06,
+    shadowOpacity: 0.08,
     shadowRadius: 4,
     shadowOffset: { width: 0, height: 2 },
     elevation: 2,
   },
   segmentText: {
     fontSize: 12,
-    fontWeight: "600",
-  },
-  segmentTextActive: {
-    fontWeight: "800",
   },
   formFields: {
-    gap: 14,
+    gap: 16,
   },
   fieldLabel: {
-    fontSize: 9,
+    fontSize: 10,
     fontWeight: "800",
     letterSpacing: 1,
-    marginBottom: 6,
+    marginBottom: 7,
   },
   fieldWrap: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 10,
+    gap: 12,
     height: 54,
     paddingHorizontal: 14,
-    borderRadius: 15,
+    borderRadius: 16,
     borderWidth: 1,
+  },
+  fieldIconWrap: {
+    width: 32,
+    height: 32,
+    borderRadius: 10,
+    alignItems: "center",
+    justifyContent: "center",
   },
   input: {
     flex: 1,
-    fontSize: 13,
+    fontSize: 14,
+    fontWeight: "600",
   },
   primaryCta: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
     gap: 8,
-    height: 56,
+    height: 54,
     borderRadius: 16,
-    shadowColor: "#EB6F61",
-    shadowOpacity: 0.28,
+    shadowColor: "#FF6554",
+    shadowOpacity: 0.35,
     shadowRadius: 16,
     shadowOffset: { width: 0, height: 7 },
     elevation: 6,
   },
   primaryCtaText: {
     color: "#FFFFFF",
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: "800",
+    letterSpacing: 0.2,
   },
   formSubmitBtn: {
-    marginTop: 22,
+    marginTop: 24,
   },
   switchMode: {
     alignItems: "center",
-    marginTop: 18,
+    marginTop: 20,
   },
   switchText: {
-    fontSize: 12,
+    fontSize: 13,
   },
   switchAccent: {
     fontWeight: "700",
@@ -354,3 +455,4 @@ const styles = StyleSheet.create({
     transform: [{ scale: 0.98 }],
   },
 });
+

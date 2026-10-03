@@ -26,7 +26,7 @@ import { formatMoney } from "@/utils/formatters";
 export default function AccountScreen() {
   const { account, logout } = useAuth();
   const { expenses, budget, syncing, syncError, refreshExpenses, hydrated } = useExpenses();
-  const { colors } = useTheme();
+  const { colors, dark } = useTheme();
   const [showSignOut, setShowSignOut] = useState(false);
   const [showAboutModal, setShowAboutModal] = useState(false);
 
@@ -82,8 +82,24 @@ export default function AccountScreen() {
         </View>
 
         {/* Account Actions Panel */}
-        <View style={[styles.panel, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-          <Text style={[styles.sectionKicker, { color: colors.muted }]}>ACCOUNT SETTINGS</Text>
+        <View
+          style={[
+            styles.panel,
+            {
+              backgroundColor: colors.surface,
+              borderColor: colors.border,
+              shadowColor: dark ? "#000000" : "#0A1F1C",
+              shadowOffset: { width: 0, height: 4 },
+              shadowOpacity: dark ? 0.35 : 0.04,
+              shadowRadius: 10,
+              elevation: 2,
+            },
+          ]}
+        >
+          <View style={styles.panelHeaderRow}>
+            <View style={[styles.kickerDot, { backgroundColor: colors.primary }]} />
+            <Text style={[styles.sectionKicker, { color: colors.muted }]}>ACCOUNT SETTINGS</Text>
+          </View>
           <AccountRow
             icon="settings-outline"
             title="Preferences"
@@ -109,16 +125,20 @@ export default function AccountScreen() {
         <Pressable
           style={({ pressed }) => [
             styles.signOutButton,
-            { borderColor: colors.border, backgroundColor: colors.surface },
+            {
+              borderColor: `${colors.primary}40`,
+              backgroundColor: dark ? `${colors.primary}12` : colors.primarySoft,
+            },
             pressed && styles.pressed,
           ]}
           onPress={() => {
             Haptics.selectionAsync();
             setShowSignOut(true);
           }}
+          accessibilityRole="button"
         >
-          <Ionicons name="log-out-outline" size={17} color={colors.primary} />
-          <Text style={[styles.signOutText, { color: colors.primary }]}>Sign out</Text>
+          <Ionicons name="log-out-outline" size={18} color={colors.primary} />
+          <Text style={[styles.signOutText, { color: colors.primary }]}>Sign out of account</Text>
         </Pressable>
       </ScrollView>
 
@@ -149,37 +169,49 @@ export default function AccountScreen() {
 const styles = StyleSheet.create({
   scroll: {
     paddingTop: 12,
-    paddingBottom: 36,
+    paddingBottom: 40,
   },
   statsRow: {
     flexDirection: "row",
-    gap: 8,
+    gap: 10,
     marginBottom: 16,
   },
   panel: {
-    padding: 18,
-    borderRadius: 16,
+    padding: 20,
+    borderRadius: 22,
     borderWidth: 1,
     marginBottom: 16,
   },
+  panelHeaderRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    marginBottom: 6,
+  },
+  kickerDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+  },
   sectionKicker: {
-    fontSize: 9,
+    fontSize: 10,
     fontWeight: "800",
     letterSpacing: 1.2,
-    marginBottom: 4,
   },
   signOutButton: {
-    height: 48,
-    borderRadius: 12,
+    height: 52,
+    borderRadius: 16,
     borderWidth: 1,
     alignItems: "center",
     justifyContent: "center",
     flexDirection: "row",
     gap: 8,
+    marginTop: 4,
   },
   signOutText: {
-    fontSize: 12,
+    fontSize: 14,
     fontWeight: "700",
+    letterSpacing: 0.2,
   },
   pressed: {
     opacity: 0.75,

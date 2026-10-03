@@ -12,25 +12,26 @@ export const AmbientBackground = React.memo(function AmbientBackground() {
       <LinearGradient
         colors={
           dark
-            ? ["#070E14", "#0A141C", "#081016"]
-            : ["#EDF3F7", "#E6EFF4", "#ECF0F5"]
+            ? ["#060B0A", "#081210", "#050908"]
+            : ["#F9FBFA", "#F2F6F4", "#EFF4F2"]
         }
         start={{ x: 0.1, y: 0 }}
         end={{ x: 0.9, y: 1 }}
         style={StyleSheet.absoluteFill}
       />
 
-      {/* Static Ambient Atmospheric Aura (Zero CPU/GPU overhead) */}
+      {/* Atmospheric Luminous Aura (Zero-overhead ambient glow) */}
       <View
         style={[
           styles.blob,
           {
-            width: 360,
-            height: 360,
-            borderRadius: 180,
-            backgroundColor: colors.blobSky,
-            top: -100,
-            right: -80,
+            width: 420,
+            height: 420,
+            borderRadius: 210,
+            backgroundColor: colors.blobSage,
+            top: -120,
+            right: -100,
+            opacity: dark ? 0.95 : 0.85,
           },
         ]}
       />
@@ -38,12 +39,27 @@ export const AmbientBackground = React.memo(function AmbientBackground() {
         style={[
           styles.blob,
           {
-            width: 300,
-            height: 300,
-            borderRadius: 150,
+            width: 360,
+            height: 360,
+            borderRadius: 180,
             backgroundColor: colors.blobCoral,
-            top: 200,
-            left: -120,
+            top: 220,
+            left: -140,
+            opacity: dark ? 0.9 : 0.75,
+          },
+        ]}
+      />
+      <View
+        style={[
+          styles.blob,
+          {
+            width: 320,
+            height: 320,
+            borderRadius: 160,
+            backgroundColor: colors.blobSky,
+            bottom: 80,
+            right: -90,
+            opacity: dark ? 0.85 : 0.7,
           },
         ]}
       />
@@ -54,22 +70,10 @@ export const AmbientBackground = React.memo(function AmbientBackground() {
             width: 280,
             height: 280,
             borderRadius: 140,
-            backgroundColor: colors.blobSage,
-            bottom: 60,
-            right: -80,
-          },
-        ]}
-      />
-      <View
-        style={[
-          styles.blob,
-          {
-            width: 240,
-            height: 240,
-            borderRadius: 120,
             backgroundColor: colors.blobLilac,
-            bottom: 220,
+            bottom: 240,
             left: 20,
+            opacity: dark ? 0.8 : 0.65,
           },
         ]}
       />
@@ -80,6 +84,6 @@ export const AmbientBackground = React.memo(function AmbientBackground() {
 const styles = StyleSheet.create({
   blob: {
     position: "absolute",
-    opacity: 0.8,
+    filter: "blur(40px)", // for web support
   },
 });

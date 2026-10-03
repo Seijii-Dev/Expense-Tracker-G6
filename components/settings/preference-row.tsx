@@ -19,11 +19,26 @@ export function PreferenceRow({
   onChange,
   last = false,
 }: PreferenceRowProps) {
-  const { colors } = useTheme();
+  const { colors, dark } = useTheme();
 
   return (
-    <View style={[styles.preference, !last && [styles.preferenceBorder, { borderBottomColor: colors.border }]]}>
-      <View style={[styles.preferenceIcon, { backgroundColor: colors.surfaceSubtle }]}>{icon}</View>
+    <View
+      style={[
+        styles.preference,
+        !last && [styles.preferenceBorder, { borderBottomColor: colors.border }],
+      ]}
+    >
+      <View
+        style={[
+          styles.preferenceIcon,
+          {
+            backgroundColor: dark ? "rgba(255,255,255,0.06)" : colors.surfaceSubtle,
+            borderColor: colors.border,
+          },
+        ]}
+      >
+        {icon}
+      </View>
       <View style={styles.preferenceBody}>
         <Text style={[styles.preferenceTitle, { color: colors.foreground }]}>{title}</Text>
         <Text style={[styles.preferenceCopy, { color: colors.muted }]}>{copy}</Text>
@@ -31,7 +46,10 @@ export function PreferenceRow({
       <Switch
         value={value}
         onValueChange={onChange}
-        trackColor={{ false: colors.border, true: colors.primary }}
+        trackColor={{
+          false: dark ? "rgba(255,255,255,0.12)" : colors.border,
+          true: colors.primary,
+        }}
         thumbColor="#FFFFFF"
       />
     </View>
@@ -42,29 +60,33 @@ const styles = StyleSheet.create({
   preference: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
+    gap: 14,
     paddingVertical: 14,
   },
   preferenceBorder: {
     borderBottomWidth: 1,
   },
   preferenceIcon: {
-    width: 34,
-    height: 34,
+    width: 38,
+    height: 38,
     alignItems: "center",
     justifyContent: "center",
-    borderRadius: 10,
+    borderRadius: 12,
+    borderWidth: 1,
   },
   preferenceBody: {
     flex: 1,
+    paddingRight: 8,
   },
   preferenceTitle: {
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: "700",
+    letterSpacing: -0.2,
   },
   preferenceCopy: {
-    fontSize: 10,
-    lineHeight: 15,
-    marginTop: 3,
+    fontSize: 11,
+    lineHeight: 16,
+    marginTop: 2,
   },
 });
+

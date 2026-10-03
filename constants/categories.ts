@@ -20,20 +20,20 @@ export const PAYMENT_METHODS: readonly Payment[] = [
 ] as const;
 
 export const CATEGORY_META: CategoryMeta = {
-  Food: { color: "#EB6F61", soft: "#FFF0ED" },
-  Transport: { color: "#4D8AF0", soft: "#EEF4FF" },
-  School: { color: "#8A69DC", soft: "#F2EFFF" },
-  Shopping: { color: "#D18B38", soft: "#FFF5E6" },
-  Bills: { color: "#5A9E7E", soft: "#EDF8F1" },
-  Fun: { color: "#C45BA7", soft: "#FFF0FA" },
-  Health: { color: "#45A6AD", soft: "#EAF9FA" },
-  Other: { color: "#82908D", soft: "#F1F4F3" },
+  Food: { color: "#FF6554", soft: "#FFF0ED" },
+  Transport: { color: "#0EA5E9", soft: "#E0F2FE" },
+  School: { color: "#6366F1", soft: "#EEF2FF" },
+  Shopping: { color: "#F59E0B", soft: "#FEF3C7" },
+  Bills: { color: "#10B981", soft: "#ECFDF5" },
+  Fun: { color: "#EC4899", soft: "#FDF2F8" },
+  Health: { color: "#14B8A6", soft: "#F0FDFA" },
+  Other: { color: "#64748B", soft: "#F1F5F9" },
 };
 
 // Default fallback styling for categories
 export const DEFAULT_CATEGORY_STYLE: CategoryStyle = {
-  color: "#82908D",
-  soft: "#F1F4F3",
+  color: "#64748B",
+  soft: "#F1F5F9",
 };
 
 export const CATEGORY_ICON_NAMES: Record<string, keyof typeof Ionicons.glyphMap> = {
@@ -55,10 +55,10 @@ export const PAYMENT_ICON_NAMES: Record<Payment, keyof typeof Ionicons.glyphMap>
 };
 
 export const PAYMENT_ICON_COLORS: Record<Payment, string> = {
-  Cash: "#3F8F74",
+  Cash: "#10B981",
   GCash: "#007DFE",
-  Card: "#EB6F61",
-  Bank: "#4D8AF0",
+  Card: "#8B5CF6",
+  Bank: "#3B82F6",
 };
 
 export const PRESET_CATEGORY_COLORS: readonly CategoryStyle[] = [

@@ -24,16 +24,42 @@ export function CategoryBreakdown({
   activeCount,
   customCategories,
 }: CategoryBreakdownProps) {
-  const { colors } = useTheme();
+  const { colors, dark } = useTheme();
 
   return (
-    <View style={[styles.panel, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+    <View
+      style={[
+        styles.panel,
+        {
+          backgroundColor: colors.surface,
+          borderColor: colors.border,
+          shadowColor: dark ? "#000000" : "#0A1F1C",
+          shadowOffset: { width: 0, height: 4 },
+          shadowOpacity: dark ? 0.35 : 0.04,
+          shadowRadius: 10,
+          elevation: 2,
+        },
+      ]}
+    >
       <View style={styles.panelHeader}>
         <View>
-          <Text style={[styles.kicker, { color: colors.primary }]}>BREAKDOWN</Text>
+          <View style={styles.kickerRow}>
+            <View style={[styles.kickerDot, { backgroundColor: colors.primary }]} />
+            <Text style={[styles.kicker, { color: colors.primary }]}>BREAKDOWN</Text>
+          </View>
           <Text style={[styles.panelTitle, { color: colors.foreground }]}>By category</Text>
         </View>
-        <Ionicons name="pie-chart-outline" size={19} color={colors.subtle} />
+        <View
+          style={[
+            styles.iconWrap,
+            {
+              backgroundColor: dark ? "rgba(255,255,255,0.06)" : colors.surfaceSubtle,
+              borderColor: colors.border,
+            },
+          ]}
+        >
+          <Ionicons name="pie-chart-outline" size={18} color={colors.primary} />
+        </View>
       </View>
 
       {activeCount === 0 ? (
@@ -44,28 +70,76 @@ export function CategoryBreakdown({
         />
       ) : (
         <View style={styles.bars}>
-          {categoryTotals.map(({ category, total }) => {
+          {categoryTotals.map(({ category, total }, index) => {
             const meta = getCategoryStyle(category, customCategories);
+            const percentStr = formatPercent(total, monthTotal);
+            const rank = index + 1;
+
             return (
               <View key={category} style={styles.barRow}>
                 <View style={styles.barLabels}>
                   <View style={styles.labelLeft}>
+                    <View
+                      style={[
+                        styles.rankBadge,
+                        {
+                          backgroundColor:
+                            rank === 1
+                              ? dark
+                                ? "rgba(255,101,84,0.18)"
+                                : "#FFF0ED"
+                              : dark
+                              ? "rgba(255,255,255,0.06)"
+                              : colors.surfaceSubtle,
+                          borderColor: rank === 1 ? colors.primary : colors.border,
+                        },
+                      ]}
+                    >
+                      <Text
+                        style={[
+                          styles.rankText,
+                          { color: rank === 1 ? colors.primary : colors.muted },
+                        ]}
+                      >
+                        #{rank}
+                      </Text>
+                    </View>
                     <CategoryIcon category={category} size={18} customCategories={customCategories} />
-                    <Text style={[styles.categoryLabel, { color: colors.foreground }]}>{category}</Text>
-                    <Text style={[styles.categoryPct, { color: colors.subtle }]}>
-                      ({formatPercent(total, monthTotal)})
+                    <Text style={[styles.categoryLabel, { color: colors.foreground }]}>
+                      {category}
                     </Text>
                   </View>
-                  <Text style={[styles.categoryAmount, { color: colors.foreground }]}>
-                    {formatMoney(total)}
-                  </Text>
+                  <View style={styles.labelRight}>
+                    <View
+                      style={[
+                        styles.pctPill,
+                        {
+                          backgroundColor: dark ? `${meta.color}20` : meta.soft,
+                        },
+                      ]}
+                    >
+                      <Text style={[styles.pctText, { color: meta.color }]}>{percentStr}</Text>
+                    </View>
+                    <Text style={[styles.categoryAmount, { color: colors.foreground }]}>
+                      {formatMoney(total)}
+                    </Text>
+                  </View>
                 </View>
-                <View style={[styles.track, { backgroundColor: colors.border }]}>
+                <View
+                  style={[
+                    styles.track,
+                    {
+                      backgroundColor: dark
+                        ? "rgba(255,255,255,0.08)"
+                        : "rgba(0,0,0,0.04)",
+                    },
+                  ]}
+                >
                   <View
                     style={[
                       styles.fill,
                       {
-                        width: total > 0 ? `${(total / maxCategorySpend) * 100}%` : "0%",
+                        width: total > 0 ? `${Math.min(100, Math.max(3, (total / maxCategorySpend) * 100))}%` : "0%",
                         backgroundColor: meta.color,
                       },
                     ]}
@@ -82,32 +156,50 @@ export function CategoryBreakdown({
 
 const styles = StyleSheet.create({
   panel: {
-    padding: 18,
+    padding: 20,
     marginBottom: 16,
-    borderRadius: 16,
+    borderRadius: 22,
     borderWidth: 1,
   },
   panelHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
-    alignItems: "flex-start",
-    marginBottom: 14,
+    alignItems: "center",
+    marginBottom: 16,
+  },
+  kickerRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    marginBottom: 4,
+  },
+  kickerDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
   },
   kicker: {
     fontSize: 10,
     fontWeight: "800",
-    letterSpacing: 1.4,
+    letterSpacing: 1.2,
   },
   panelTitle: {
     fontFamily: "Fraunces_700Bold",
-    fontSize: 20,
+    fontSize: 22,
     fontWeight: "700",
     letterSpacing: -0.4,
-    marginTop: 4,
+  },
+  iconWrap: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    borderWidth: 1,
+    alignItems: "center",
+    justifyContent: "center",
   },
   bars: {
     gap: 16,
-    marginTop: 10,
+    marginTop: 6,
   },
   barRow: {},
   barLabels: {
@@ -121,30 +213,49 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 8,
   },
-  dotMark: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
+  rankBadge: {
+    width: 24,
+    height: 20,
+    borderRadius: 6,
+    borderWidth: 1,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  rankText: {
+    fontSize: 10,
+    fontWeight: "800",
   },
   categoryLabel: {
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: "600",
   },
-  categoryPct: {
+  labelRight: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  pctPill: {
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 6,
+  },
+  pctText: {
     fontSize: 10,
+    fontWeight: "800",
   },
   categoryAmount: {
     fontFamily: "Fraunces_700Bold",
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: "700",
   },
   track: {
     height: 8,
     overflow: "hidden",
-    borderRadius: 8,
+    borderRadius: 4,
   },
   fill: {
     height: "100%",
-    borderRadius: 8,
+    borderRadius: 4,
   },
 });
+

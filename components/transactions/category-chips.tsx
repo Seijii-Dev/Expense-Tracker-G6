@@ -1,9 +1,11 @@
 import React, { useMemo } from "react";
-import { Pressable, ScrollView, StyleSheet, Text } from "react-native";
+import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import * as Haptics from "expo-haptics";
+import { Ionicons } from "@expo/vector-icons";
 import { Category } from "@/types/expense";
 import { useExpenses } from "@/lib/expense-store";
 import { useTheme } from "@/lib/theme-store";
+import { getCategoryIconName, getCategoryStyle } from "@/constants/categories";
 
 interface CategoryChipsProps {
   selected: "All" | Category;
@@ -11,8 +13,8 @@ interface CategoryChipsProps {
 }
 
 export function CategoryChips({ selected, onSelect }: CategoryChipsProps) {
-  const { colors } = useTheme();
-  const { allCategories } = useExpenses();
+  const { colors, dark } = useTheme();
+  const { allCategories, customCategories } = useExpenses();
 
   const options: ("All" | Category)[] = useMemo(
     () => ["All", ...allCategories],
@@ -20,9 +22,21 @@ export function CategoryChips({ selected, onSelect }: CategoryChipsProps) {
   );
 
   return (
-    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chips}>
+    <ScrollView
+      horizontal
+      showsHorizontalScrollIndicator={false}
+      contentContainerStyle={styles.chips}
+    >
       {options.map((item) => {
         const isActive = selected === item;
+        const isAll = item === "All";
+        const catStyle = isAll
+          ? { color: colors.primary, soft: colors.primarySoft }
+          : getCategoryStyle(item, customCategories);
+        const iconName = isAll
+          ? "layers-outline"
+          : getCategoryIconName(item, customCategories);
+
         return (
           <Pressable
             key={item}
@@ -30,20 +44,51 @@ export function CategoryChips({ selected, onSelect }: CategoryChipsProps) {
               Haptics.selectionAsync();
               onSelect(item);
             }}
-            style={[
+            accessibilityRole="button"
+            accessibilityState={{ selected: isActive }}
+            style={({ pressed }) => [
               styles.chip,
-              { borderColor: colors.border, backgroundColor: colors.surface },
-              isActive && {
-                borderColor: colors.primary,
-                backgroundColor: colors.primarySoft,
+              {
+                backgroundColor: isActive
+                  ? dark
+                    ? `${catStyle.color}22`
+                    : catStyle.soft
+                  : colors.surface,
+                borderColor: isActive ? catStyle.color : colors.border,
+                opacity: pressed ? 0.8 : 1,
+                transform: [{ scale: pressed ? 0.96 : 1 }],
               },
             ]}
           >
+            <View
+              style={[
+                styles.iconWrap,
+                {
+                  backgroundColor: isActive
+                    ? catStyle.color
+                    : dark
+                    ? "rgba(255,255,255,0.06)"
+                    : "rgba(0,0,0,0.04)",
+                },
+              ]}
+            >
+              <Ionicons
+                name={iconName}
+                size={12}
+                color={isActive ? "#FFFFFF" : colors.muted}
+              />
+            </View>
             <Text
               style={[
                 styles.chipText,
-                { color: colors.muted },
-                isActive && { color: colors.primary, fontWeight: "700" },
+                {
+                  color: isActive
+                    ? dark
+                      ? "#FFFFFF"
+                      : catStyle.color
+                    : colors.muted,
+                  fontWeight: isActive ? "700" : "500",
+                },
               ]}
             >
               {item}
@@ -58,18 +103,27 @@ export function CategoryChips({ selected, onSelect }: CategoryChipsProps) {
 const styles = StyleSheet.create({
   chips: {
     gap: 8,
-    paddingBottom: 6,
+    paddingVertical: 4,
+    paddingRight: 16,
   },
   chip: {
-    height: 32,
+    flexDirection: "row",
+    alignItems: "center",
+    height: 36,
     paddingHorizontal: 12,
+    borderRadius: 18,
+    borderWidth: 1,
+    gap: 6,
+  },
+  iconWrap: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
     alignItems: "center",
     justifyContent: "center",
-    borderRadius: 8,
-    borderWidth: 1,
   },
   chipText: {
-    fontSize: 11,
-    fontWeight: "500",
+    fontSize: 12,
   },
 });
+

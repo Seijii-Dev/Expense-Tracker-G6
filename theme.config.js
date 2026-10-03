@@ -3,17 +3,18 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        background: "#F6F8F5",
-        foreground: "#26312E",
-        muted: "#8D9994",
+        background: "#F4F7F6",
+        foreground: "#0F1D1A",
+        muted: "#4A605A",
         surface: "#FFFFFF",
-        border: "#E5EBE7",
-        primary: "#EB6F61",
-        success: "#5A9E7E",
-        warning: "#D18B38",
-        error: "#C95751"
+        border: "#DEE8E4",
+        primary: "#FF6554",
+        success: "#10B981",
+        warning: "#F59E0B",
+        error: "#EF4444"
       }
     }
   },
   plugins: []
 };
+

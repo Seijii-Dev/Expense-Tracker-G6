@@ -80,7 +80,7 @@ export function PulseDialog({
           variant="sheet"
           radius={28}
           style={styles.cardWrap}
-          contentStyle={[styles.card, { backgroundColor: dark ? "#14222A" : "#FFFFFF" }]}
+          contentStyle={[styles.card, { backgroundColor: colors.card }]}
         >
           {/* Pulse Header */}
           <View style={styles.topRow}>

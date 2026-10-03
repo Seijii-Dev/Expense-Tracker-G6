@@ -12,7 +12,7 @@ interface DonutChartProps {
 }
 
 export const DonutChart = React.memo(function DonutChart({ total, expenses }: DonutChartProps) {
-  const { colors } = useTheme();
+  const { colors, dark } = useTheme();
 
   const totals = React.useMemo(() => {
     const map = new Map<string, number>();
@@ -27,37 +27,61 @@ export const DonutChart = React.memo(function DonutChart({ total, expenses }: Do
       .sort((a, b) => b.total - a.total);
   }, [expenses]);
 
-  const radius = 55;
+  const size = 148;
+  const strokeWidth = 20;
+  const radius = (size - strokeWidth) / 2;
   const circumference = 2 * Math.PI * radius;
   let offset = 0;
 
   return (
     <View style={styles.donutWrap}>
-      <Svg width={135} height={135} viewBox="0 0 135 135" style={styles.svg}>
-        <Circle cx="67.5" cy="67.5" r={radius} stroke={colors.border} strokeWidth="24" fill="none" />
+      <Svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} style={styles.svg}>
+        {/* Background Track Circle */}
+        <Circle
+          cx={size / 2}
+          cy={size / 2}
+          r={radius}
+          stroke={dark ? "rgba(255, 255, 255, 0.07)" : colors.surfaceSubtle}
+          strokeWidth={strokeWidth}
+          fill="none"
+        />
+        {/* Category Segments */}
         {totals.map(({ category, total: categoryTotal }) => {
           const length = total > 0 ? (categoryTotal / total) * circumference : 0;
           const segment = (
             <Circle
               key={category}
-              cx="67.5"
-              cy="67.5"
+              cx={size / 2}
+              cy={size / 2}
               r={radius}
               stroke={getCategoryStyle(category).color || colors.primary}
-              strokeWidth="24"
+              strokeWidth={strokeWidth}
               fill="none"
-              strokeDasharray={[length, Math.max(0, circumference - length)]}
+              strokeDasharray={[Math.max(0, length - 2), Math.max(0, circumference - (length - 2))]}
               strokeDashoffset={-offset}
-              strokeLinecap="butt"
+              strokeLinecap="round"
             />
           );
           offset += length;
           return segment;
         })}
       </Svg>
-      <View style={[styles.donutHole, { backgroundColor: colors.surface }]}>
-        <Text style={[styles.donutTotal, { color: colors.foreground }]}>{formatMoney(total)}</Text>
-        <Text style={[styles.donutLabel, { color: colors.subtle }]}>total spent</Text>
+
+      {/* Donut Center Hole */}
+      <View
+        style={[
+          styles.donutHole,
+          {
+            backgroundColor: dark ? "#0F1A18" : "#FFFFFF",
+            borderColor: colors.border,
+          },
+        ]}
+      >
+        <Text style={[styles.kickerLabel, { color: colors.primary }]}>THIS MONTH</Text>
+        <Text style={[styles.donutTotal, { color: colors.foreground }]} numberOfLines={1}>
+          {formatMoney(total)}
+        </Text>
+        <Text style={[styles.donutLabel, { color: colors.muted }]}>total tracked</Text>
       </View>
     </View>
   );
@@ -65,8 +89,8 @@ export const DonutChart = React.memo(function DonutChart({ total, expenses }: Do
 
 const styles = StyleSheet.create({
   donutWrap: {
-    width: 135,
-    height: 135,
+    width: 152,
+    height: 152,
     alignItems: "center",
     justifyContent: "center",
     position: "relative",
@@ -76,19 +100,36 @@ const styles = StyleSheet.create({
   },
   donutHole: {
     position: "absolute",
-    width: 87,
-    height: 87,
+    width: 96,
+    height: 96,
     alignItems: "center",
     justifyContent: "center",
-    borderRadius: 45,
+    borderRadius: 48,
+    borderWidth: 1,
+    shadowColor: "#000",
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 2,
+    paddingHorizontal: 6,
+  },
+  kickerLabel: {
+    fontSize: 7.5,
+    fontWeight: "800",
+    letterSpacing: 0.8,
+    marginBottom: 2,
   },
   donutTotal: {
     fontFamily: "Fraunces_700Bold",
-    fontSize: 15,
+    fontSize: 14.5,
     fontWeight: "700",
+    letterSpacing: -0.3,
+    textAlign: "center",
   },
   donutLabel: {
-    fontSize: 8,
+    fontSize: 8.5,
+    fontWeight: "500",
     marginTop: 2,
   },
 });
+

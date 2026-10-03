@@ -1,6 +1,7 @@
 import React from "react";
 import { RefreshControl, ScrollView, StyleSheet, Text, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
 import { ScreenContainer } from "@/components/screen-container";
 import { ScreenHeader } from "@/components/common/screen-header";
 import { CategoryBreakdown } from "@/components/reports/category-breakdown";
@@ -14,7 +15,7 @@ import { ReportsSkeleton } from "@/components/ui/reports-skeleton";
 
 export default function ReportsScreen() {
   const { expenses, refreshExpenses, syncing, hydrated, allCategories, customCategories } = useExpenses();
-  const { colors } = useTheme();
+  const { colors, dark } = useTheme();
 
   const {
     monthExpenses,
@@ -56,26 +57,49 @@ export default function ReportsScreen() {
           kicker="MAKE SENSE OF IT"
           title="Spending reports"
           subtitle="A clear, insightful view of where your money is flowing this month."
-          rightAction={<Ionicons name="calendar-outline" size={22} color={colors.primary} />}
         />
 
-        {/* Hero Card */}
-        <View style={styles.hero}>
-          <View>
-            <Text style={styles.kickerLight}>TOTAL THIS MONTH</Text>
-            <Text style={styles.heroValue}>{formatMoney(monthTotal)}</Text>
-            <View style={styles.heroFootRow}>
-              <Ionicons name="analytics-outline" size={14} color="#A5D0BE" />
-              <Text style={styles.heroFootText}>
-                {activeCategoryCount} active {activeCategoryCount === 1 ? "category" : "categories"}
-              </Text>
+        {/* Hero Card with LinearGradient */}
+        <LinearGradient
+          colors={
+            dark
+              ? ["#132A26", "#0B1917", "#070D0C"]
+              : ["#0F3832", "#13423B", "#0A2823"]
+          }
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.hero}
+        >
+          {/* Subtle top specular line */}
+          <LinearGradient
+            colors={["rgba(255,255,255,0.3)", "rgba(255,255,255,0.02)"]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            style={styles.specularLine}
+          />
+
+          <View style={styles.heroContent}>
+            <View style={styles.heroLeft}>
+              <View style={styles.kickerBadge}>
+                <View style={styles.pulseDot} />
+                <Text style={styles.kickerLight}>THIS MONTH'S OUTFLOW</Text>
+              </View>
+              <Text style={styles.heroValue}>{formatMoney(monthTotal)}</Text>
+              <View style={styles.heroFootRow}>
+                <Ionicons name="analytics-outline" size={13} color="#A5D0BE" />
+                <Text style={styles.heroFootText}>
+                  Avg: {averageExpenseSize} per record
+                </Text>
+              </View>
+            </View>
+
+            <View style={styles.heroRing}>
+              <Text style={styles.heroRingNumber}>{activeCategoryCount}</Text>
+              <Text style={styles.heroRingLabel}>Active</Text>
+              <Text style={styles.heroRingSubLabel}>Categories</Text>
             </View>
           </View>
-          <View style={styles.heroRing}>
-            <Text style={styles.heroRingNumber}>{activeCategoryCount}</Text>
-            <Text style={styles.heroRingLabel}>categories</Text>
-          </View>
-        </View>
+        </LinearGradient>
 
         {/* Category Breakdown Panel */}
         <CategoryBreakdown
@@ -90,13 +114,39 @@ export default function ReportsScreen() {
         <PaymentMethods paymentTotals={paymentTotals} monthTotal={monthTotal} />
 
         {/* Observations Panel */}
-        <View style={[styles.panel, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+        <View
+          style={[
+            styles.panel,
+            {
+              backgroundColor: colors.surface,
+              borderColor: colors.border,
+              shadowColor: dark ? "#000000" : "#0A1F1C",
+              shadowOffset: { width: 0, height: 4 },
+              shadowOpacity: dark ? 0.35 : 0.04,
+              shadowRadius: 10,
+              elevation: 2,
+            },
+          ]}
+        >
           <View style={styles.panelHeader}>
             <View>
-              <Text style={[styles.kicker, { color: colors.primary }]}>WORTH NOTING</Text>
+              <View style={styles.kickerRow}>
+                <View style={[styles.kickerDot, { backgroundColor: colors.warning }]} />
+                <Text style={[styles.kicker, { color: colors.warning }]}>WORTH NOTING</Text>
+              </View>
               <Text style={[styles.panelTitle, { color: colors.foreground }]}>Spending highlights</Text>
             </View>
-            <Ionicons name="sparkles" size={19} color={colors.subtle} />
+            <View
+              style={[
+                styles.iconWrap,
+                {
+                  backgroundColor: dark ? "rgba(255,255,255,0.06)" : colors.surfaceSubtle,
+                  borderColor: colors.border,
+                },
+              ]}
+            >
+              <Ionicons name="sparkles" size={18} color={colors.warning} />
+            </View>
           </View>
 
           <ReportNote
@@ -139,36 +189,63 @@ export default function ReportsScreen() {
 const styles = StyleSheet.create({
   scroll: {
     paddingTop: 12,
-    paddingBottom: 32,
-  },
-  kicker: {
-    fontSize: 10,
-    fontWeight: "800",
-    letterSpacing: 1.4,
-  },
-  kickerLight: {
-    color: "#A5C9BB",
-    fontSize: 9,
-    fontWeight: "800",
-    letterSpacing: 1.3,
+    paddingBottom: 40,
   },
   hero: {
+    position: "relative",
+    overflow: "hidden",
+    minHeight: 160,
+    marginTop: 10,
+    marginBottom: 16,
+    borderRadius: 24,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.12)",
+    shadowColor: "#051A15",
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.35,
+    shadowRadius: 18,
+    elevation: 6,
+  },
+  specularLine: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 1,
+  },
+  heroContent: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    minHeight: 160,
-    paddingHorizontal: 20,
-    marginTop: 8,
-    marginBottom: 16,
-    borderRadius: 18,
-    backgroundColor: "#2A4740",
+    padding: 22,
+  },
+  heroLeft: {
+    flex: 1,
+    paddingRight: 12,
+  },
+  kickerBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
+  pulseDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: "#10B981",
+  },
+  kickerLight: {
+    color: "#A5D0BE",
+    fontSize: 10,
+    fontWeight: "800",
+    letterSpacing: 1.2,
   },
   heroValue: {
     fontFamily: "Fraunces_700Bold",
     color: "#FFFFFF",
-    fontSize: 36,
+    fontSize: 34,
     fontWeight: "700",
-    letterSpacing: -1.2,
+    letterSpacing: -1,
     marginTop: 6,
   },
   heroFootRow: {
@@ -179,17 +256,18 @@ const styles = StyleSheet.create({
   },
   heroFootText: {
     color: "#B5D0C7",
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: "600",
   },
   heroRing: {
-    width: 96,
-    height: 96,
+    width: 88,
+    height: 88,
     alignItems: "center",
     justifyContent: "center",
-    borderRadius: 48,
+    borderRadius: 44,
     borderWidth: 1.5,
-    borderColor: "rgba(255,255,255,0.3)",
+    borderColor: "rgba(255,255,255,0.22)",
+    backgroundColor: "rgba(255,255,255,0.04)",
   },
   heroRingNumber: {
     fontFamily: "Fraunces_700Bold",
@@ -198,27 +276,58 @@ const styles = StyleSheet.create({
     fontWeight: "700",
   },
   heroRingLabel: {
-    color: "#B5D0C7",
+    color: "#A5D0BE",
     fontSize: 9,
+    fontWeight: "700",
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
+    marginTop: -2,
+  },
+  heroRingSubLabel: {
+    color: "#A5D0BE",
+    fontSize: 8,
     fontWeight: "600",
   },
   panel: {
-    padding: 18,
+    padding: 20,
     marginBottom: 16,
-    borderRadius: 16,
+    borderRadius: 22,
     borderWidth: 1,
   },
   panelHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
-    alignItems: "flex-start",
-    marginBottom: 14,
+    alignItems: "center",
+    marginBottom: 16,
+  },
+  kickerRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    marginBottom: 4,
+  },
+  kickerDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+  },
+  kicker: {
+    fontSize: 10,
+    fontWeight: "800",
+    letterSpacing: 1.2,
   },
   panelTitle: {
     fontFamily: "Fraunces_700Bold",
-    fontSize: 20,
+    fontSize: 22,
     fontWeight: "700",
     letterSpacing: -0.4,
-    marginTop: 4,
+  },
+  iconWrap: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    borderWidth: 1,
+    alignItems: "center",
+    justifyContent: "center",
   },
 });

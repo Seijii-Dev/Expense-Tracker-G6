@@ -1,27 +1,30 @@
 import React, { useMemo } from "react";
 import { StyleSheet, Text, View } from "react-native";
 import { Expense } from "@/types/expense";
-import { CATEGORIES } from "@/constants/categories";
 import { CategoryIcon } from "@/components/ui/category-icon";
+import { getCategoryStyle } from "@/constants/categories";
 import { useTheme } from "@/lib/theme-store";
-import { formatMoney } from "@/utils/formatters";
+import { formatMoney, formatPercent } from "@/utils/formatters";
 
 interface CategoryLegendProps {
   expenses: Expense[];
 }
 
 export const CategoryLegend = React.memo(function CategoryLegend({ expenses }: CategoryLegendProps) {
-  const { colors } = useTheme();
+  const { colors, dark } = useTheme();
 
-  const totals = useMemo(() => {
+  const { totals, grandTotal } = useMemo(() => {
     const map = new Map<string, number>();
+    let sum = 0;
     for (const exp of expenses) {
       if (exp.category) {
-        map.set(exp.category, (map.get(exp.category) || 0) + (exp.amount || 0));
+        const val = exp.amount || 0;
+        map.set(exp.category, (map.get(exp.category) || 0) + val);
+        sum += val;
       }
     }
 
-    return Array.from(map.entries())
+    const items = Array.from(map.entries())
       .map(([category, total]) => ({
         category,
         total,
@@ -29,6 +32,8 @@ export const CategoryLegend = React.memo(function CategoryLegend({ expenses }: C
       .filter((item) => item.total > 0)
       .sort((a, b) => b.total - a.total)
       .slice(0, 5);
+
+    return { totals: items, grandTotal: sum };
   }, [expenses]);
 
   if (totals.length === 0) {
@@ -41,15 +46,47 @@ export const CategoryLegend = React.memo(function CategoryLegend({ expenses }: C
 
   return (
     <View style={styles.legend}>
-      {totals.map(({ category, total }) => (
-        <View style={styles.legendRow} key={category}>
-          <View style={styles.legendName}>
-            <CategoryIcon category={category} size={16} />
-            <Text style={[styles.legendText, { color: colors.muted }]}>{category}</Text>
+      {totals.map(({ category, total }) => {
+        const meta = getCategoryStyle(category);
+        return (
+          <View style={styles.legendRow} key={category}>
+            <View style={styles.legendName}>
+              <View
+                style={[
+                  styles.iconWrap,
+                  {
+                    backgroundColor: dark ? `${meta.color}25` : meta.soft,
+                    borderColor: dark ? `${meta.color}40` : `${meta.color}30`,
+                  },
+                ]}
+              >
+                <CategoryIcon category={category} size={14} />
+              </View>
+              <Text style={[styles.legendText, { color: colors.foreground }]} numberOfLines={1}>
+                {category}
+              </Text>
+            </View>
+
+            <View style={styles.rightCluster}>
+              <View
+                style={[
+                  styles.pctBadge,
+                  {
+                    backgroundColor: dark ? "rgba(255,255,255,0.06)" : colors.surfaceSubtle,
+                  },
+                ]}
+              >
+                <Text style={[styles.pctText, { color: colors.muted }]}>
+                  {formatPercent(total, grandTotal)}
+                </Text>
+              </View>
+              <Text style={[styles.legendAmount, { color: colors.foreground }]}>
+                {formatMoney(total)}
+              </Text>
+            </View>
           </View>
-          <Text style={[styles.legendAmount, { color: colors.foreground }]}>{formatMoney(total)}</Text>
-        </View>
-      ))}
+        );
+      })}
     </View>
   );
 });
@@ -57,12 +94,14 @@ export const CategoryLegend = React.memo(function CategoryLegend({ expenses }: C
 const styles = StyleSheet.create({
   legend: {
     flex: 1,
-    gap: 10,
+    gap: 9,
+    justifyContent: "center",
   },
   legendEmpty: {
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
+    paddingVertical: 20,
   },
   legendEmptyText: {
     fontSize: 11,
@@ -76,18 +115,41 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 8,
+    flex: 1,
+    paddingRight: 6,
   },
-  legendDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
+  iconWrap: {
+    width: 24,
+    height: 24,
+    borderRadius: 7,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 0.5,
   },
   legendText: {
-    fontSize: 11,
-    fontWeight: "500",
+    fontSize: 11.5,
+    fontWeight: "600",
   },
-  legendAmount: {
-    fontSize: 11,
+  rightCluster: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
+  pctBadge: {
+    paddingHorizontal: 5,
+    paddingVertical: 2,
+    borderRadius: 5,
+  },
+  pctText: {
+    fontSize: 9.5,
     fontWeight: "700",
   },
+  legendAmount: {
+    fontFamily: "Fraunces_700Bold",
+    fontSize: 11.5,
+    fontWeight: "700",
+    minWidth: 54,
+    textAlign: "right",
+  },
 });
+

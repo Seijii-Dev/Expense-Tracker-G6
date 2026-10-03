@@ -138,9 +138,22 @@ export default function SettingsScreen() {
         )}
 
         {/* Account Group */}
-        <View style={[styles.panel, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+        <View
+          style={[
+            styles.panel,
+            {
+              backgroundColor: colors.surface,
+              borderColor: colors.border,
+              shadowColor: dark ? "#000000" : "#0A1F1C",
+              shadowOffset: { width: 0, height: 4 },
+              shadowOpacity: dark ? 0.35 : 0.04,
+              shadowRadius: 10,
+              elevation: 2,
+            },
+          ]}
+        >
           <SectionHeading
-            icon={<Ionicons name="person-outline" size={17} color={colors.primary} />}
+            icon={<Ionicons name="person-outline" size={18} color={colors.primary} />}
             title="Account"
             copy={account ? account.email : "Not signed in"}
           />
@@ -151,10 +164,14 @@ export default function SettingsScreen() {
           <Pressable
             style={({ pressed }) => [
               styles.outlineButton,
-              { borderColor: colors.border },
+              {
+                borderColor: `${colors.primary}40`,
+                backgroundColor: dark ? `${colors.primary}12` : colors.primarySoft,
+              },
               pressed && styles.pressed,
             ]}
             onPress={handleLogout}
+            accessibilityRole="button"
           >
             <Ionicons name="log-out-outline" size={15} color={colors.primary} />
             <Text style={[styles.outlineText, { color: colors.primary }]}>Sign out</Text>
@@ -162,22 +179,35 @@ export default function SettingsScreen() {
         </View>
 
         {/* Budget Preferences Group */}
-        <View style={[styles.panel, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+        <View
+          style={[
+            styles.panel,
+            {
+              backgroundColor: colors.surface,
+              borderColor: colors.border,
+              shadowColor: dark ? "#000000" : "#0A1F1C",
+              shadowOffset: { width: 0, height: 4 },
+              shadowOpacity: dark ? 0.35 : 0.04,
+              shadowRadius: 10,
+              elevation: 2,
+            },
+          ]}
+        >
           <SectionHeading
-            icon={<Ionicons name="cash-outline" size={17} color={colors.primary} />}
+            icon={<Ionicons name="cash-outline" size={18} color={colors.primary} />}
             title="Money preferences"
             copy="Set your default currency and monthly spending targets."
           />
 
           <Text style={[styles.fieldLabel, { color: colors.subtle }]}>CURRENCY</Text>
-          <View style={[styles.select, { borderColor: colors.border }]}>
+          <View style={[styles.select, { borderColor: colors.border, backgroundColor: dark ? "rgba(255,255,255,0.03)" : colors.surfaceSubtle }]}>
             <Text style={[styles.selectText, { color: colors.foreground }]}>PHP — Philippine peso (₱)</Text>
-            <Ionicons name="checkmark-circle" size={16} color={colors.success} />
+            <Ionicons name="checkmark-circle" size={18} color={colors.success} />
           </View>
 
           <Text style={[styles.fieldLabel, { color: colors.subtle }]}>MONTHLY BUDGET TARGET</Text>
-          <View style={[styles.inputWrap, { borderColor: colors.border }]}>
-            <Text style={[styles.inputPrefix, { color: colors.muted }]}>₱</Text>
+          <View style={[styles.inputWrap, { borderColor: colors.border, backgroundColor: dark ? "rgba(255,255,255,0.03)" : colors.surfaceSubtle }]}>
+            <Text style={[styles.inputPrefix, { color: colors.primary }]}>₱</Text>
             <TextInput
               value={budgetText}
               onChangeText={setBudgetText}
@@ -197,20 +227,29 @@ export default function SettingsScreen() {
                 <Pressable
                   key={preset}
                   onPress={() => commitBudget(preset)}
-                  style={[
+                  style={({ pressed }) => [
                     styles.presetBtn,
-                    { borderColor: colors.border, backgroundColor: colors.surfaceSubtle },
-                    active && {
-                      borderColor: colors.primary,
-                      backgroundColor: colors.primarySoft,
+                    {
+                      borderColor: active ? colors.primary : colors.border,
+                      backgroundColor: active
+                        ? dark
+                          ? `${colors.primary}25`
+                          : colors.primarySoft
+                        : dark
+                        ? "rgba(255,255,255,0.04)"
+                        : colors.surfaceSubtle,
+                      opacity: pressed ? 0.8 : 1,
+                      transform: [{ scale: pressed ? 0.96 : 1 }],
                     },
                   ]}
                 >
                   <Text
                     style={[
                       styles.presetBtnText,
-                      { color: colors.muted },
-                      active && { color: colors.primary, fontWeight: "700" },
+                      {
+                        color: active ? colors.primary : colors.muted,
+                        fontWeight: active ? "700" : "500",
+                      },
                     ]}
                   >
                     {formatMoney(preset)}
@@ -223,7 +262,7 @@ export default function SettingsScreen() {
           <View style={[styles.divider, { backgroundColor: colors.border }]} />
 
           <SectionHeading
-            icon={<Ionicons name="pricetag-outline" size={17} color={colors.primary} />}
+            icon={<Ionicons name="pricetag-outline" size={18} color={colors.primary} />}
             title="Active Categories"
             copy={`${allCategories.length} categories active across your records.`}
           />
@@ -255,10 +294,12 @@ export default function SettingsScreen() {
                       );
                     }
                   }}
-                  style={[
+                  style={({ pressed }) => [
                     styles.pill,
                     {
                       backgroundColor: dark ? `${catStyle.color}25` : catStyle.soft,
+                      borderColor: `${catStyle.color}40`,
+                      opacity: pressed ? 0.8 : 1,
                     },
                   ]}
                 >
@@ -267,9 +308,9 @@ export default function SettingsScreen() {
                   {isCustom && (
                     <Ionicons
                       name="close-circle"
-                      size={13}
+                      size={14}
                       color={catStyle.color}
-                      style={{ opacity: 0.65, marginLeft: 2 }}
+                      style={{ opacity: 0.75, marginLeft: 2 }}
                     />
                   )}
                 </Pressable>
@@ -279,30 +320,47 @@ export default function SettingsScreen() {
           <Pressable
             style={({ pressed }) => [
               styles.outlineButton,
-              { borderColor: colors.border },
+              {
+                borderColor: `${colors.primary}40`,
+                backgroundColor: dark ? `${colors.primary}12` : colors.primarySoft,
+              },
               pressed && styles.pressed,
             ]}
             onPress={() => {
               Haptics.selectionAsync();
               setShowCategoryModal(true);
             }}
+            accessibilityRole="button"
           >
-            <Ionicons name="add" size={15} color={colors.primary} />
+            <Ionicons name="add" size={16} color={colors.primary} />
             <Text style={[styles.outlineText, { color: colors.primary }]}>Add custom category</Text>
           </Pressable>
         </View>
 
         {/* Display & Notifications Group */}
-        <View style={[styles.panel, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+        <View
+          style={[
+            styles.panel,
+            {
+              backgroundColor: colors.surface,
+              borderColor: colors.border,
+              shadowColor: dark ? "#000000" : "#0A1F1C",
+              shadowOffset: { width: 0, height: 4 },
+              shadowOpacity: dark ? 0.35 : 0.04,
+              shadowRadius: 10,
+              elevation: 2,
+            },
+          ]}
+        >
           <PreferenceRow
-            icon={<Ionicons name="moon-outline" size={17} color={colors.muted} />}
+            icon={<Ionicons name="moon-outline" size={18} color={colors.primary} />}
             title="Dark mode"
             copy="Use a darker, high-contrast palette for late hours"
             value={dark}
             onChange={toggleDarkMode}
           />
           <PreferenceRow
-            icon={<Ionicons name="notifications-outline" size={17} color={colors.muted} />}
+            icon={<Ionicons name="notifications-outline" size={18} color={colors.primary} />}
             title="Budget nudges"
             copy="Receive visual warnings when reaching 80% and 100% of budget"
             value={budgetNudges}
@@ -315,10 +373,26 @@ export default function SettingsScreen() {
         <View
           style={[
             styles.backup,
-            { backgroundColor: dark ? colors.surfaceSubtle : "#FFF9F7", borderColor: colors.border },
+            {
+              backgroundColor: dark ? "rgba(255,255,255,0.03)" : "#FFF9F7",
+              borderColor: colors.border,
+              shadowColor: dark ? "#000000" : "#0A1F1C",
+              shadowOffset: { width: 0, height: 4 },
+              shadowOpacity: dark ? 0.35 : 0.04,
+              shadowRadius: 10,
+              elevation: 2,
+            },
           ]}
         >
-          <View style={[styles.backupIcon, { backgroundColor: colors.primarySoft }]}>
+          <View
+            style={[
+              styles.backupIcon,
+              {
+                backgroundColor: dark ? `${colors.primary}20` : colors.primarySoft,
+                borderColor: `${colors.primary}30`,
+              },
+            ]}
+          >
             <Ionicons name="download-outline" size={20} color={colors.primary} />
           </View>
           <Text style={[styles.kicker, { color: colors.primary }]}>YOUR DATA, YOUR SAY</Text>
@@ -333,6 +407,7 @@ export default function SettingsScreen() {
               pressed && styles.pressed,
             ]}
             onPress={handleExport}
+            accessibilityRole="button"
           >
             <Ionicons name="download-outline" size={16} color="#FFFFFF" />
             <Text style={styles.exportText}>Export as CSV</Text>
@@ -341,13 +416,20 @@ export default function SettingsScreen() {
           <Pressable
             style={({ pressed }) => [
               styles.outlineButton,
-              { borderColor: colors.border, marginTop: 12, alignSelf: "stretch", justifyContent: "center" },
+              {
+                borderColor: colors.border,
+                marginTop: 12,
+                alignSelf: "stretch",
+                justifyContent: "center",
+                backgroundColor: colors.surface,
+              },
               pressed && styles.pressed,
             ]}
             onPress={() => {
               Haptics.selectionAsync();
               setShowStorageDialog(true);
             }}
+            accessibilityRole="button"
           >
             <Ionicons name="shield-checkmark-outline" size={15} color={colors.primary} />
             <Text style={[styles.outlineText, { color: colors.primary }]}>
@@ -377,7 +459,7 @@ export default function SettingsScreen() {
 const styles = StyleSheet.create({
   scroll: {
     paddingTop: 12,
-    paddingBottom: 36,
+    paddingBottom: 40,
   },
   syncBanner: {
     flexDirection: "row",
@@ -385,7 +467,7 @@ const styles = StyleSheet.create({
     gap: 10,
     padding: 14,
     marginBottom: 16,
-    borderRadius: 12,
+    borderRadius: 14,
     backgroundColor: "#FFF3EE",
     borderWidth: 1,
     borderColor: "#F4CBB5",
@@ -393,71 +475,74 @@ const styles = StyleSheet.create({
   syncBannerText: {
     flex: 1,
     color: "#B5502E",
-    fontSize: 11,
-    lineHeight: 16,
+    fontSize: 12,
+    lineHeight: 17,
   },
   panel: {
-    padding: 18,
+    padding: 20,
     marginBottom: 16,
-    borderRadius: 16,
+    borderRadius: 22,
     borderWidth: 1,
   },
   accountRow: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    marginBottom: 14,
+    marginBottom: 16,
   },
   accountName: {
-    fontSize: 14,
+    fontFamily: "Fraunces_700Bold",
+    fontSize: 16,
     fontWeight: "700",
   },
   syncingText: {
     fontSize: 11,
   },
   fieldLabel: {
-    fontSize: 9,
+    fontSize: 10,
     fontWeight: "800",
     letterSpacing: 1.1,
-    marginTop: 8,
-    marginBottom: 7,
+    marginTop: 10,
+    marginBottom: 8,
   },
   select: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    height: 44,
-    paddingHorizontal: 14,
-    borderRadius: 10,
+    height: 48,
+    paddingHorizontal: 16,
+    borderRadius: 14,
     borderWidth: 1,
   },
   selectText: {
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: "600",
   },
   inputWrap: {
     flexDirection: "row",
     alignItems: "center",
-    height: 44,
-    paddingHorizontal: 14,
-    borderRadius: 10,
+    height: 52,
+    paddingHorizontal: 16,
+    borderRadius: 14,
     borderWidth: 1,
   },
   inputPrefix: {
-    fontSize: 14,
+    fontFamily: "Fraunces_700Bold",
+    fontSize: 20,
     fontWeight: "700",
   },
   input: {
     flex: 1,
-    fontSize: 13,
+    fontFamily: "Fraunces_700Bold",
+    fontSize: 18,
     marginLeft: 8,
-    fontWeight: "600",
+    fontWeight: "700",
   },
   presetLabel: {
-    fontSize: 9,
+    fontSize: 10,
     fontWeight: "800",
     letterSpacing: 1,
-    marginTop: 12,
+    marginTop: 14,
     marginBottom: 8,
   },
   presetRow: {
@@ -466,14 +551,13 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   presetBtn: {
-    paddingHorizontal: 11,
-    paddingVertical: 6,
-    borderRadius: 8,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 12,
     borderWidth: 1,
   },
   presetBtnText: {
-    fontSize: 10,
-    fontWeight: "600",
+    fontSize: 12,
   },
   divider: {
     height: 1,
@@ -488,76 +572,73 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 6,
-    paddingHorizontal: 10,
-    paddingVertical: 7,
-    borderRadius: 12,
-  },
-  pillDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 14,
+    borderWidth: 1,
   },
   pillText: {
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: "700",
   },
   outlineButton: {
     flexDirection: "row",
     alignItems: "center",
     alignSelf: "flex-start",
-    gap: 6,
-    height: 36,
-    paddingHorizontal: 13,
+    gap: 8,
+    height: 40,
+    paddingHorizontal: 14,
     marginTop: 16,
-    borderRadius: 9,
+    borderRadius: 12,
     borderWidth: 1,
   },
   outlineText: {
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: "700",
   },
   backup: {
-    padding: 20,
+    padding: 22,
     marginBottom: 16,
-    borderRadius: 16,
+    borderRadius: 22,
     borderWidth: 1,
   },
   backupIcon: {
-    width: 40,
-    height: 40,
+    width: 44,
+    height: 44,
     alignItems: "center",
     justifyContent: "center",
     marginBottom: 14,
-    borderRadius: 12,
+    borderRadius: 14,
+    borderWidth: 1,
   },
   kicker: {
     fontSize: 10,
     fontWeight: "800",
-    letterSpacing: 1.4,
+    letterSpacing: 1.2,
   },
   backupTitle: {
     fontFamily: "Fraunces_700Bold",
     fontSize: 22,
     fontWeight: "700",
-    marginTop: 6,
+    marginTop: 4,
   },
   backupCopy: {
-    fontSize: 11,
-    lineHeight: 17,
+    fontSize: 12,
+    lineHeight: 18,
     marginTop: 6,
-    marginBottom: 18,
+    marginBottom: 20,
   },
   exportButton: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
     gap: 8,
-    height: 44,
-    borderRadius: 10,
+    height: 48,
+    borderRadius: 14,
   },
   exportText: {
     color: "#FFFFFF",
-    fontSize: 12,
+    fontSize: 14,
     fontWeight: "700",
   },
   pressed: {

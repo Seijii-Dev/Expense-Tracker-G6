@@ -1,15 +1,59 @@
 import React from "react";
 import { Tabs } from "expo-router";
-import { Platform, StyleSheet, View, useWindowDimensions } from "react-native";
+import { Platform, StyleSheet, Text, View, useWindowDimensions } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import * as Haptics from "expo-haptics";
 import { useTheme } from "@/lib/theme-store";
 import { GlassSurface } from "@/components/ui/glass-surface";
 
 type TabBarIconProps = {
-  color: string;
   focused: boolean;
+  color: string;
+  name: keyof typeof Ionicons.glyphMap;
+  activeName: keyof typeof Ionicons.glyphMap;
+  label: string;
 };
+
+function CustomTabItem({ focused, name, activeName, label }: TabBarIconProps) {
+  const { colors, dark } = useTheme();
+
+  return (
+    <View style={styles.itemWrap}>
+      <View
+        style={[
+          styles.iconPill,
+          focused && [
+            styles.activeIconPill,
+            {
+              backgroundColor: dark ? "rgba(255, 117, 101, 0.16)" : colors.primarySoft,
+              borderColor: dark ? "rgba(255, 117, 101, 0.35)" : "rgba(255, 101, 84, 0.2)",
+            },
+          ],
+        ]}
+      >
+        <Ionicons
+          name={focused ? activeName : name}
+          color={focused ? colors.primary : colors.muted}
+          size={focused ? 21 : 20}
+        />
+      </View>
+      <Text
+        style={[
+          styles.label,
+          { color: focused ? colors.primary : colors.muted },
+          focused && styles.activeLabel,
+        ]}
+        numberOfLines={1}
+      >
+        {label}
+      </Text>
+      {focused && (
+        <View style={[styles.activeDot, { backgroundColor: colors.primary }]} />
+      )}
+    </View>
+  );
+}
 
 export default function TabsLayout() {
   const { colors, dark } = useTheme();
@@ -17,70 +61,66 @@ export default function TabsLayout() {
   const { width: windowWidth } = useWindowDimensions();
 
   // Balanced floating pill navigation bar on all screen sizes
-  const maxBarWidth = 420;
+  const maxBarWidth = 460;
   const horizontalInset = Math.max(16, Math.floor((windowWidth - maxBarWidth) / 2));
-  const bottomInset = Math.max(insets.bottom + 6, Platform.OS === "ios" ? 16 : 14);
+  const bottomInset = Math.max(insets.bottom + 6, Platform.OS === "ios" ? 18 : 14);
 
   return (
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: colors.primary,
-        tabBarInactiveTintColor: colors.muted,
-        tabBarLabelStyle: {
-          fontSize: 10,
-          fontWeight: "600",
-          letterSpacing: 0.15,
-          marginTop: 2,
-          marginBottom: 2,
-        },
+        tabBarShowLabel: false,
         tabBarItemStyle: {
-          paddingTop: 5,
-          paddingBottom: 6,
           height: 64,
           justifyContent: "center",
           alignItems: "center",
+          paddingVertical: 4,
         },
         tabBarBackground: () => (
-          <GlassSurface variant="nav" radius={28} style={StyleSheet.absoluteFill} />
+          <GlassSurface variant="nav" radius={32} style={StyleSheet.absoluteFill} />
         ),
         tabBarStyle: {
           position: "absolute",
           left: horizontalInset,
           right: horizontalInset,
           bottom: bottomInset,
-          height: 68,
+          height: 66,
           paddingTop: 0,
           paddingBottom: 0,
           borderTopWidth: 0,
           backgroundColor: "transparent",
-          elevation: 8,
-          borderRadius: 30,
+          elevation: 10,
+          borderRadius: 32,
           overflow: "hidden",
-          shadowColor: dark ? "#000000" : "#2C3E50",
-          shadowOffset: { width: 0, height: 6 },
-          shadowOpacity: dark ? 0.42 : 0.10,
-          shadowRadius: 20,
+          shadowColor: dark ? "#000000" : "#172E27",
+          shadowOffset: { width: 0, height: 8 },
+          shadowOpacity: dark ? 0.5 : 0.12,
+          shadowRadius: 24,
         },
         tabBarHideOnKeyboard: true,
+      }}
+      screenListeners={{
+        tabPress: () => {
+          try {
+            Haptics.selectionAsync();
+          } catch {
+            // Non-fatal
+          }
+        },
       }}
     >
       <Tabs.Screen
         name="index"
         options={{
           title: "Overview",
-          tabBarIcon: ({ color, focused }: TabBarIconProps) => (
-            <View
-              style={[
-                styles.iconWrap,
-                focused && [
-                  styles.activeIconWrap,
-                  { backgroundColor: dark ? `${colors.primary}25` : colors.primarySoft },
-                ],
-              ]}
-            >
-              <Ionicons name={focused ? "grid" : "grid-outline"} color={color} size={21} />
-            </View>
+          tabBarIcon: ({ focused, color }) => (
+            <CustomTabItem
+              focused={focused}
+              color={color}
+              name="grid-outline"
+              activeName="grid"
+              label="Overview"
+            />
           ),
         }}
       />
@@ -88,18 +128,14 @@ export default function TabsLayout() {
         name="transactions"
         options={{
           title: "Records",
-          tabBarIcon: ({ color, focused }: TabBarIconProps) => (
-            <View
-              style={[
-                styles.iconWrap,
-                focused && [
-                  styles.activeIconWrap,
-                  { backgroundColor: dark ? `${colors.primary}25` : colors.primarySoft },
-                ],
-              ]}
-            >
-              <Ionicons name={focused ? "receipt" : "receipt-outline"} color={color} size={22} />
-            </View>
+          tabBarIcon: ({ focused, color }) => (
+            <CustomTabItem
+              focused={focused}
+              color={color}
+              name="receipt-outline"
+              activeName="receipt"
+              label="Records"
+            />
           ),
         }}
       />
@@ -107,18 +143,14 @@ export default function TabsLayout() {
         name="reports"
         options={{
           title: "Reports",
-          tabBarIcon: ({ color, focused }: TabBarIconProps) => (
-            <View
-              style={[
-                styles.iconWrap,
-                focused && [
-                  styles.activeIconWrap,
-                  { backgroundColor: dark ? `${colors.primary}25` : colors.primarySoft },
-                ],
-              ]}
-            >
-              <Ionicons name={focused ? "bar-chart" : "bar-chart-outline"} color={color} size={22} />
-            </View>
+          tabBarIcon: ({ focused, color }) => (
+            <CustomTabItem
+              focused={focused}
+              color={color}
+              name="bar-chart-outline"
+              activeName="bar-chart"
+              label="Reports"
+            />
           ),
         }}
       />
@@ -126,18 +158,14 @@ export default function TabsLayout() {
         name="settings"
         options={{
           title: "Settings",
-          tabBarIcon: ({ color, focused }: TabBarIconProps) => (
-            <View
-              style={[
-                styles.iconWrap,
-                focused && [
-                  styles.activeIconWrap,
-                  { backgroundColor: dark ? `${colors.primary}25` : colors.primarySoft },
-                ],
-              ]}
-            >
-              <Ionicons name={focused ? "settings" : "settings-outline"} color={color} size={22} />
-            </View>
+          tabBarIcon: ({ focused, color }) => (
+            <CustomTabItem
+              focused={focused}
+              color={color}
+              name="settings-outline"
+              activeName="settings"
+              label="Settings"
+            />
           ),
         }}
       />
@@ -145,22 +173,14 @@ export default function TabsLayout() {
         name="account"
         options={{
           title: "Account",
-          tabBarIcon: ({ color, focused }: TabBarIconProps) => (
-            <View
-              style={[
-                styles.iconWrap,
-                focused && [
-                  styles.activeIconWrap,
-                  { backgroundColor: dark ? `${colors.primary}25` : colors.primarySoft },
-                ],
-              ]}
-            >
-              <Ionicons
-                name={focused ? "person-circle" : "person-circle-outline"}
-                color={color}
-                size={23}
-              />
-            </View>
+          tabBarIcon: ({ focused, color }) => (
+            <CustomTabItem
+              focused={focused}
+              color={color}
+              name="person-circle-outline"
+              activeName="person-circle"
+              label="Account"
+            />
           ),
         }}
       />
@@ -169,15 +189,38 @@ export default function TabsLayout() {
 }
 
 const styles = StyleSheet.create({
-  iconWrap: {
-    height: 28,
-    paddingHorizontal: 10,
+  itemWrap: {
     alignItems: "center",
     justifyContent: "center",
-    borderRadius: 14,
+    width: "100%",
+    paddingVertical: 2,
   },
-  activeIconWrap: {
+  iconPill: {
+    height: 30,
     paddingHorizontal: 12,
-    transform: [{ scale: 1.05 }],
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: "transparent",
+  },
+  activeIconPill: {
+    transform: [{ scale: 1.04 }],
+  },
+  label: {
+    fontSize: 9.5,
+    fontWeight: "600",
+    letterSpacing: 0.2,
+    marginTop: 2,
+  },
+  activeLabel: {
+    fontWeight: "800",
+  },
+  activeDot: {
+    width: 4,
+    height: 4,
+    borderRadius: 2,
+    marginTop: 2,
   },
 });
+
