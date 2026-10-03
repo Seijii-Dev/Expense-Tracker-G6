@@ -26,6 +26,16 @@ export function GlassSurface({
 }: GlassSurfaceProps) {
   const { dark, colors } = useTheme();
   const tint: BlurTint = dark ? "dark" : "light";
+  const isWeb = Platform.OS === "web";
+
+  // On web, BlurView causes severe rendering lag because it triggers
+  // expensive compositing. Instead we use CSS backdrop-filter (GPU-accelerated).
+  const webBlurStyle: ViewStyle | undefined = isWeb
+    ? ({
+        backdropFilter: `blur(${(intensity ?? INTENSITY[variant]) * 0.4}px) saturate(1.6)`,
+        WebkitBackdropFilter: `blur(${(intensity ?? INTENSITY[variant]) * 0.4}px) saturate(1.6)`,
+      } as ViewStyle)
+    : undefined;
 
   return (
     <View
@@ -47,11 +57,17 @@ export function GlassSurface({
         style,
       ]}
     >
-      <BlurView
-        intensity={intensity ?? INTENSITY[variant]}
-        tint={tint}
-        style={StyleSheet.absoluteFill}
-      />
+      {isWeb ? (
+        // CSS backdrop-filter: smooth, GPU-accelerated blur on web
+        <View style={[StyleSheet.absoluteFill, webBlurStyle]} />
+      ) : (
+        // Native BlurView (iOS / Android)
+        <BlurView
+          intensity={intensity ?? INTENSITY[variant]}
+          tint={tint}
+          style={StyleSheet.absoluteFill}
+        />
+      )}
       <View
         pointerEvents="none"
         style={[StyleSheet.absoluteFill, { backgroundColor: colors.glassFill }]}

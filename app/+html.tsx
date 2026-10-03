@@ -68,9 +68,10 @@ export default function RootHtml({ children }: PropsWithChildren) {
                 font-display: swap;
               }
 
-              /* Smooth transition for interactive elements on web */
+              /* Interactive element cursor and tap styling */
               button, [role="button"] {
-                transition: transform 0.15s ease, opacity 0.15s ease;
+                cursor: pointer;
+                -webkit-tap-highlight-color: transparent;
               }
             `,
           }}

@@ -10,6 +10,7 @@ import { Platform, View, StyleSheet } from "react-native";
 import { ExpenseProvider } from "@/lib/expense-store";
 import { AuthProvider } from "@/lib/auth-store";
 import { ThemeProvider, useTheme } from "@/lib/theme-store";
+import { FontsLoadedProvider } from "@/lib/fonts-loaded-store";
 import { StoragePermissionPrompt } from "@/components/common/storage-permission-dialog";
 import { SplashScreen } from "@/components/common/splash-screen";
 
@@ -25,13 +26,14 @@ export default function RootLayout() {
     DMSans_700Bold,
     Fraunces_600SemiBold,
     Fraunces_700Bold,
-    // Explicitly load both lowercase and uppercase font keys for universal web/native compatibility
+    // Load Ionicons under both casing keys so Font.isLoaded('ionicons') resolves on web
     ...Ionicons.font,
     Ionicons: require("@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/Ionicons.ttf"),
   });
 
   useEffect(() => {
     if (Platform.OS === "web" && typeof document !== "undefined") {
+      // Belt-and-suspenders: ensure ionicons @font-face is always declared in DOM
       const styleId = "expo-vector-icons-ionicons";
       if (!document.getElementById(styleId)) {
         const style = document.createElement("style");
@@ -40,12 +42,12 @@ export default function RootLayout() {
           @font-face {
             font-family: 'ionicons';
             src: url('https://cdn.jsdelivr.net/npm/@expo/vector-icons@15.1.1/build/vendor/react-native-vector-icons/Fonts/Ionicons.ttf') format('truetype');
-            font-display: swap;
+            font-display: block;
           }
           @font-face {
             font-family: 'Ionicons';
             src: url('https://cdn.jsdelivr.net/npm/@expo/vector-icons@15.1.1/build/vendor/react-native-vector-icons/Fonts/Ionicons.ttf') format('truetype');
-            font-display: swap;
+            font-display: block;
           }
         `;
         document.head.appendChild(style);
@@ -58,19 +60,21 @@ export default function RootLayout() {
       <AuthProvider>
         <ThemeProvider>
           <ExpenseProvider>
-            <ThemedStatusBar />
-            <View style={styles.rootWrap}>
-              <Stack
-                screenOptions={{
-                  headerShown: false,
-                  animation: Platform.OS === "web" ? "fade" : "default",
-                  animationDuration: 200,
-                }}
-              />
-              <StoragePermissionPrompt />
-              {/* Branded Application Launch Screen */}
-              <SplashScreen isReady={Boolean(fontsLoaded)} />
-            </View>
+            <FontsLoadedProvider loaded={Boolean(fontsLoaded)}>
+              <ThemedStatusBar />
+              <View style={styles.rootWrap}>
+                <Stack
+                  screenOptions={{
+                    headerShown: false,
+                    // Use none on web to avoid the JS-animated fade which is laggy
+                    animation: Platform.OS === "web" ? "none" : "default",
+                  }}
+                />
+                <StoragePermissionPrompt />
+                {/* Branded Application Launch Screen */}
+                <SplashScreen isReady={Boolean(fontsLoaded)} />
+              </View>
+            </FontsLoadedProvider>
           </ExpenseProvider>
         </ThemeProvider>
       </AuthProvider>

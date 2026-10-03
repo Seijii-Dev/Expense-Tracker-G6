@@ -1,20 +1,30 @@
 import { PropsWithChildren, useEffect, useRef } from "react";
-import { Animated, Platform, StyleSheet, View } from "react-native";
+import { Animated, Easing, Platform, StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { AmbientBackground } from "@/components/ui/ambient-background";
 
 export function ScreenContainer({ children, style }: PropsWithChildren<{ style?: object }>) {
-  const progress = useRef(new Animated.Value(0)).current;
+  const isWeb = Platform.OS === "web";
+  const progress = useRef(new Animated.Value(isWeb ? 0.3 : 0)).current;
 
   useEffect(() => {
-    Animated.spring(progress, {
-      toValue: 1,
-      damping: 22,
-      stiffness: 180,
-      mass: 0.8,
-      useNativeDriver: true,
-    }).start();
-  }, [progress]);
+    if (isWeb) {
+      Animated.timing(progress, {
+        toValue: 1,
+        duration: 150,
+        easing: Easing.out(Easing.cubic),
+        useNativeDriver: true,
+      }).start();
+    } else {
+      Animated.spring(progress, {
+        toValue: 1,
+        damping: 24,
+        stiffness: 220,
+        mass: 0.8,
+        useNativeDriver: true,
+      }).start();
+    }
+  }, [progress, isWeb]);
 
   return (
     <View style={styles.root}>
@@ -31,7 +41,7 @@ export function ScreenContainer({ children, style }: PropsWithChildren<{ style?:
                   {
                     translateY: progress.interpolate({
                       inputRange: [0, 1],
-                      outputRange: [12, 0],
+                      outputRange: [isWeb ? 6 : 12, 0],
                     }),
                   },
                 ],

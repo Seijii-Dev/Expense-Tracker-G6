@@ -1,24 +1,23 @@
 import React from "react";
 import { Redirect, Tabs } from "expo-router";
 import { Platform, StyleSheet, Text, View, useWindowDimensions } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import * as Haptics from "expo-haptics";
 import { useTheme } from "@/lib/theme-store";
 import { useAuth } from "@/lib/auth-store";
+import { NavIcon, NavTabName } from "@/components/navigation/nav-icons";
 import { GlassSurface } from "@/components/ui/glass-surface";
 import { ScreenContainer } from "@/components/screen-container";
 import { DashboardSkeleton } from "@/components/ui/dashboard-skeleton";
 
-type TabBarIconProps = {
+type TabBarItemProps = {
   focused: boolean;
   color: string;
-  name: keyof typeof Ionicons.glyphMap;
-  activeName: keyof typeof Ionicons.glyphMap;
+  tab: NavTabName;
   label: string;
 };
 
-function CustomTabItem({ focused, name, activeName, label }: TabBarIconProps) {
+function CustomTabItem({ focused, tab, label }: TabBarItemProps) {
   const { colors, dark } = useTheme();
 
   return (
@@ -41,10 +40,11 @@ function CustomTabItem({ focused, name, activeName, label }: TabBarIconProps) {
           focused && styles.activeIconPill,
         ]}
       >
-        <Ionicons
-          name={focused ? activeName : name}
+        <NavIcon
+          name={tab}
+          focused={focused}
           color={focused ? colors.primary : colors.muted}
-          size={19}
+          size={21}
         />
       </View>
       <Text
@@ -97,6 +97,7 @@ export default function TabsLayout() {
     <Tabs
       screenOptions={{
         headerShown: false,
+        lazy: true,
         tabBarShowLabel: false,
         tabBarItemStyle: {
           height: 64,
@@ -148,8 +149,7 @@ export default function TabsLayout() {
             <CustomTabItem
               focused={focused}
               color={color}
-              name="wallet-outline"
-              activeName="wallet"
+              tab="overview"
               label="Overview"
             />
           ),
@@ -163,8 +163,7 @@ export default function TabsLayout() {
             <CustomTabItem
               focused={focused}
               color={color}
-              name="receipt-outline"
-              activeName="receipt"
+              tab="records"
               label="Records"
             />
           ),
@@ -178,8 +177,7 @@ export default function TabsLayout() {
             <CustomTabItem
               focused={focused}
               color={color}
-              name="stats-chart-outline"
-              activeName="stats-chart"
+              tab="reports"
               label="Reports"
             />
           ),
@@ -193,8 +191,7 @@ export default function TabsLayout() {
             <CustomTabItem
               focused={focused}
               color={color}
-              name="settings-outline"
-              activeName="settings"
+              tab="settings"
               label="Settings"
             />
           ),
@@ -208,8 +205,7 @@ export default function TabsLayout() {
             <CustomTabItem
               focused={focused}
               color={color}
-              name="person-circle-outline"
-              activeName="person-circle"
+              tab="account"
               label="Account"
             />
           ),
