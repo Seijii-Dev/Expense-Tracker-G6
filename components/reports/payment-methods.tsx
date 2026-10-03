@@ -1,5 +1,5 @@
 import React from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { StyleSheet, Text, View, useWindowDimensions } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { PaymentIcon } from "@/components/ui/payment-icon";
 import { PaymentTotal } from "@/hooks/useReportMetrics";
@@ -14,6 +14,8 @@ interface PaymentMethodsProps {
 
 export function PaymentMethods({ paymentTotals, monthTotal }: PaymentMethodsProps) {
   const { colors, dark } = useTheme();
+  const { width: windowWidth } = useWindowDimensions();
+  const isNarrow = windowWidth < 380;
 
   if (paymentTotals.length === 0) return null;
 
@@ -64,6 +66,7 @@ export function PaymentMethods({ paymentTotals, monthTotal }: PaymentMethodsProp
               style={[
                 styles.paymentCard,
                 {
+                  width: isNarrow ? "100%" : "48%",
                   backgroundColor: dark ? "rgba(255,255,255,0.03)" : colors.surfaceSubtle,
                   borderColor: colors.border,
                 },
@@ -72,7 +75,10 @@ export function PaymentMethods({ paymentTotals, monthTotal }: PaymentMethodsProp
               <View style={styles.paymentCardHeader}>
                 <PaymentIcon payment={payment} size={22} />
                 <View style={styles.paymentTitleWrap}>
-                  <Text style={[styles.paymentMethod, { color: colors.foreground }]}>
+                  <Text
+                    style={[styles.paymentMethod, { color: colors.foreground }]}
+                    numberOfLines={1}
+                  >
                     {payment}
                   </Text>
                   <Text style={[styles.paymentPct, { color: colors.muted }]}>
@@ -81,7 +87,11 @@ export function PaymentMethods({ paymentTotals, monthTotal }: PaymentMethodsProp
                 </View>
               </View>
 
-              <Text style={[styles.paymentAmount, { color: colors.foreground }]}>
+              <Text
+                style={[styles.paymentAmount, { color: colors.foreground }]}
+                numberOfLines={1}
+                adjustsFontSizeToFit
+              >
                 {formatMoney(total)}
               </Text>
 
@@ -113,6 +123,7 @@ export function PaymentMethods({ paymentTotals, monthTotal }: PaymentMethodsProp
     </View>
   );
 }
+
 
 const styles = StyleSheet.create({
   panel: {

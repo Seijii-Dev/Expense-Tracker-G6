@@ -105,7 +105,10 @@ export function CategoryBreakdown({
                       </Text>
                     </View>
                     <CategoryIcon category={category} size={18} customCategories={customCategories} />
-                    <Text style={[styles.categoryLabel, { color: colors.foreground }]}>
+                    <Text
+                      style={[styles.categoryLabel, { color: colors.foreground }]}
+                      numberOfLines={1}
+                    >
                       {category}
                     </Text>
                   </View>
@@ -212,6 +215,8 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 8,
+    flex: 1,
+    paddingRight: 6,
   },
   rankBadge: {
     width: 24,

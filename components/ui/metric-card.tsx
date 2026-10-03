@@ -1,5 +1,5 @@
 import React from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { StyleProp, StyleSheet, Text, View, ViewStyle } from "react-native";
 import { useTheme } from "@/lib/theme-store";
 import { GlassSurface } from "@/components/ui/glass-surface";
 
@@ -13,6 +13,7 @@ interface MetricCardProps {
   foot?: string;
   progress?: number;
   progressColor?: string;
+  style?: StyleProp<ViewStyle>;
 }
 
 export function MetricCard({
@@ -23,6 +24,7 @@ export function MetricCard({
   foot,
   progress,
   progressColor,
+  style,
 }: MetricCardProps) {
   const { colors, dark } = useTheme();
 
@@ -44,7 +46,7 @@ export function MetricCard({
       : colors.success);
 
   return (
-    <GlassSurface radius={24} contentStyle={styles.card}>
+    <GlassSurface radius={24} style={style} contentStyle={styles.card}>
       <View style={styles.topRow}>
         <View style={styles.labelRow}>
           <View style={[styles.toneDot, { backgroundColor: toneColor }]} />
@@ -63,7 +65,14 @@ export function MetricCard({
         </View>
       </View>
 
-      <Text style={[styles.value, { color: colors.foreground }]}>{value}</Text>
+      <Text
+        style={[styles.value, { color: colors.foreground }]}
+        numberOfLines={1}
+        adjustsFontSizeToFit
+      >
+        {value}
+      </Text>
+
 
       {progress !== undefined ? (
         <View style={styles.progressContainer}>

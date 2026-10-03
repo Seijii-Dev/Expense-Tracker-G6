@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, Text, View, useWindowDimensions } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { Expense } from "@/types/expense";
@@ -14,7 +14,10 @@ interface DailyRhythmProps {
 
 export const DailyRhythm = React.memo(function DailyRhythm({ expenses }: DailyRhythmProps) {
   const { colors, dark } = useTheme();
+  const { width: windowWidth } = useWindowDimensions();
+  const isNarrow = windowWidth < 360;
   const [selectedDayKey, setSelectedDayKey] = useState<string | null>(null);
+
 
   const { days, max, weekTotal } = React.useMemo(() => {
     const anchor = new Date(`${getPhilippinesDate()}T12:00:00Z`);
@@ -111,7 +114,7 @@ export const DailyRhythm = React.memo(function DailyRhythm({ expenses }: DailyRh
       </View>
 
       {/* Bars Chart */}
-      <View style={[styles.bars, { borderBottomColor: colors.border }]}>
+      <View style={[styles.bars, { borderBottomColor: colors.border }, isNarrow && { gap: 4 }]}>
         {days.map((day, index) => {
           const isToday = index === days.length - 1;
           const isSelected = selectedDayKey === day.key;
@@ -136,6 +139,7 @@ export const DailyRhythm = React.memo(function DailyRhythm({ expenses }: DailyRh
                     styles.bar,
                     {
                       height: `${pct}%`,
+                      width: isNarrow ? 16 : 22,
                       backgroundColor: isToday
                         ? colors.primary
                         : isSelected

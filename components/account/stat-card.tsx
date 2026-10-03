@@ -37,7 +37,11 @@ export function StatCard({ label, value, icon }: StatCardProps) {
       >
         <Ionicons name={icon} size={15} color={colors.primary} />
       </View>
-      <Text style={[styles.statValue, { color: colors.foreground }]} numberOfLines={1}>
+      <Text
+        style={[styles.statValue, { color: colors.foreground }]}
+        numberOfLines={1}
+        adjustsFontSizeToFit
+      >
         {value}
       </Text>
       <Text style={[styles.statLabel, { color: colors.muted }]} numberOfLines={1}>
@@ -50,8 +54,9 @@ export function StatCard({ label, value, icon }: StatCardProps) {
 const styles = StyleSheet.create({
   stat: {
     flex: 1,
+    minWidth: 0,
     paddingVertical: 14,
-    paddingHorizontal: 12,
+    paddingHorizontal: 8,
     borderRadius: 18,
     borderWidth: 1,
     alignItems: "center",

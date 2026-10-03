@@ -118,7 +118,11 @@ export default function TransactionsScreen() {
               <View style={[styles.statusDot, { backgroundColor: colors.primary }]} />
               <Text style={[styles.summaryLabel, { color: colors.subtle }]}>SHOWING</Text>
             </View>
-            <Text style={[styles.summaryValue, { color: colors.foreground }]}>
+            <Text
+              style={[styles.summaryValue, { color: colors.foreground }]}
+              numberOfLines={1}
+              adjustsFontSizeToFit
+            >
               {filtered.length} <Text style={{ fontSize: 13, fontFamily: "DMSans_500Medium", color: colors.muted }}>records</Text>
             </Text>
           </View>
@@ -128,7 +132,11 @@ export default function TransactionsScreen() {
               <View style={[styles.statusDot, { backgroundColor: colors.success }]} />
               <Text style={[styles.summaryLabel, { color: colors.subtle }]}>FILTERED TOTAL</Text>
             </View>
-            <Text style={[styles.summaryValue, { color: colors.foreground }]}>
+            <Text
+              style={[styles.summaryValue, { color: colors.foreground }]}
+              numberOfLines={1}
+              adjustsFontSizeToFit
+            >
               {formatMoney(total)}
             </Text>
           </View>

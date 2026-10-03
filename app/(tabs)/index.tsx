@@ -7,6 +7,7 @@ import {
   StyleSheet,
   Text,
   View,
+  useWindowDimensions,
 } from "react-native";
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
@@ -52,6 +53,10 @@ export default function OverviewScreen() {
   } = useExpenses();
   const { account } = useAuth();
   const { colors, dark } = useTheme();
+  const { width: windowWidth } = useWindowDimensions();
+
+  const isNarrowMobile = windowWidth < 380;
+  const isTablet = windowWidth >= 620;
 
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
@@ -197,14 +202,15 @@ export default function OverviewScreen() {
           </Pressable>
         </View>
 
-        {/* Metrics Grid */}
-        <View style={styles.metricGrid}>
+        {/* Responsive Metrics Grid */}
+        <View style={[styles.metricGrid, isTablet && styles.metricGridTablet]}>
           <MetricCard
             label="Spent this month"
             value={formatMoney(monthTotal)}
             icon={<Ionicons name="trending-up" size={17} color="#FF6554" />}
             tone="coral"
             foot={monthTotal > 0 ? "Live from your records" : "No records yet"}
+            style={isTablet ? styles.metricCardFlex : undefined}
           />
           <MetricCard
             label="Spent today"
@@ -212,6 +218,7 @@ export default function OverviewScreen() {
             icon={<Ionicons name="cash-outline" size={17} color="#0EA5E9" />}
             tone="blue"
             foot={todayTotal > 0 ? "Updated live today" : "No spending logged today"}
+            style={isTablet ? styles.metricCardFlex : undefined}
           />
           <MetricCard
             label="Remaining budget"
@@ -220,6 +227,7 @@ export default function OverviewScreen() {
             tone={budgetPercent >= 100 ? "coral" : budgetPercent >= 80 ? "warning" : "green"}
             foot={`${budgetPercent}% of ${formatMoney(budget)} used`}
             progress={budgetPercent}
+            style={isTablet ? styles.metricCardFlex : undefined}
           />
         </View>
 
@@ -246,7 +254,7 @@ export default function OverviewScreen() {
             </View>
           </View>
 
-          <View style={styles.overviewRow}>
+          <View style={[styles.overviewRow, isNarrowMobile && styles.overviewRowNarrow]}>
             <DonutChart total={monthTotal} expenses={monthExpenses} />
             <CategoryLegend expenses={monthExpenses} />
           </View>
@@ -263,6 +271,7 @@ export default function OverviewScreen() {
         {/* Latest Activity Panel */}
         <GlassSurface style={styles.panel} contentStyle={styles.panelInner}>
           <View style={styles.panelHeader}>
+
             <View>
               <View style={styles.panelKickerRow}>
                 <View style={[styles.kickerDot, { backgroundColor: colors.success }]} />
@@ -448,6 +457,13 @@ const styles = StyleSheet.create({
     gap: 12,
     marginBottom: 16,
   },
+  metricGridTablet: {
+    flexDirection: "row",
+    alignItems: "stretch",
+  },
+  metricCardFlex: {
+    flex: 1,
+  },
   panel: {
     marginBottom: 16,
   },
@@ -493,6 +509,13 @@ const styles = StyleSheet.create({
     minHeight: 180,
     gap: 12,
     marginVertical: 10,
+  },
+  overviewRowNarrow: {
+    flexDirection: "column",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 18,
+    paddingVertical: 8,
   },
   panelFooter: {
     flexDirection: "row",

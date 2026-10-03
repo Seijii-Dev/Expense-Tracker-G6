@@ -9,6 +9,7 @@ import {
   Text,
   TextInput,
   View,
+  useWindowDimensions,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
@@ -32,6 +33,8 @@ interface ExpenseModalProps {
 export function ExpenseModal({ visible, initialExpense, onClose, onSubmit }: ExpenseModalProps) {
   const { colors, dark } = useTheme();
   const { allCategories, customCategories, addCustomCategory } = useExpenses();
+  const { width: windowWidth } = useWindowDimensions();
+
 
   const isEditing = Boolean(initialExpense);
 
@@ -113,7 +116,10 @@ export function ExpenseModal({ visible, initialExpense, onClose, onSubmit }: Exp
         <GlassSurface
           variant="sheet"
           radius={28}
-          contentStyle={[styles.card, { backgroundColor: colors.card }]}
+          contentStyle={[
+            styles.card,
+            { backgroundColor: colors.card, padding: windowWidth < 360 ? 16 : 22 },
+          ]}
         >
           {/* Header */}
           <View style={styles.header}>

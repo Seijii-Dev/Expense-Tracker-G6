@@ -1,5 +1,14 @@
 import React from "react";
-import { Image, Platform, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import {
+  Image,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+  useWindowDimensions,
+} from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import * as Haptics from "expo-haptics";
@@ -13,13 +22,18 @@ interface WelcomeHeroProps {
 
 export function WelcomeHero({ onSignIn, onRegister }: WelcomeHeroProps) {
   const { colors, dark } = useTheme();
+  const { width: windowWidth } = useWindowDimensions();
+  const isSmallScreen = windowWidth < 360;
 
   return (
     <View style={[styles.screen, { backgroundColor: colors.background }]}>
       <AmbientBackground />
 
       <ScrollView
-        contentContainerStyle={styles.welcomeScroll}
+        contentContainerStyle={[
+          styles.welcomeScroll,
+          { paddingHorizontal: isSmallScreen ? 14 : 22 },
+        ]}
         showsVerticalScrollIndicator={false}
         bounces={true}
       >
@@ -118,7 +132,13 @@ export function WelcomeHero({ onSignIn, onRegister }: WelcomeHeroProps) {
 
               <View style={styles.mockBalanceWrap}>
                 <Text style={styles.mockBalanceLabel}>OCTOBER CASHFLOW</Text>
-                <Text style={styles.mockBalanceAmount}>₱24,850.00</Text>
+                <Text
+                  style={styles.mockBalanceAmount}
+                  numberOfLines={1}
+                  adjustsFontSizeToFit
+                >
+                  ₱24,850.00
+                </Text>
               </View>
 
               <View style={styles.mockBottomRow}>

@@ -1,11 +1,24 @@
 import { PropsWithChildren, useEffect, useRef } from "react";
-import { Animated, Easing, Platform, StyleSheet, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import {
+  Animated,
+  Easing,
+  Platform,
+  StyleSheet,
+  View,
+  useWindowDimensions,
+} from "react-native";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { AmbientBackground } from "@/components/ui/ambient-background";
 
-export function ScreenContainer({ children, style }: PropsWithChildren<{ style?: object }>) {
+export function ScreenContainer({
+  children,
+  style,
+  noBottomPadding = false,
+}: PropsWithChildren<{ style?: object; noBottomPadding?: boolean }>) {
   const isWeb = Platform.OS === "web";
   const progress = useRef(new Animated.Value(isWeb ? 0.3 : 0)).current;
+  const insets = useSafeAreaInsets();
+  const { width: windowWidth } = useWindowDimensions();
 
   useEffect(() => {
     if (isWeb) {
@@ -26,6 +39,10 @@ export function ScreenContainer({ children, style }: PropsWithChildren<{ style?:
     }
   }, [progress, isWeb]);
 
+  // Ensure ample clearance for the floating navigation bar + device safe area
+  const bottomClearance = noBottomPadding ? 0 : Math.max(insets.bottom + 84, 108);
+  const horizontalPadding = windowWidth < 360 ? 12 : windowWidth < 480 ? 16 : 24;
+
   return (
     <View style={styles.root}>
       <AmbientBackground />
@@ -34,6 +51,10 @@ export function ScreenContainer({ children, style }: PropsWithChildren<{ style?:
           <Animated.View
             style={[
               styles.content,
+              {
+                paddingHorizontal: horizontalPadding,
+                paddingBottom: bottomClearance,
+              },
               style,
               {
                 opacity: progress,
@@ -73,9 +94,8 @@ const styles = StyleSheet.create({
     flex: 1,
     width: "100%",
     maxWidth: 720, // Clean max-width for web/tablet viewing
-    paddingHorizontal: Platform.OS === "web" ? 24 : 18,
     paddingTop: Platform.OS === "android" ? 6 : 2,
-    paddingBottom: 92,
   },
 });
+
 

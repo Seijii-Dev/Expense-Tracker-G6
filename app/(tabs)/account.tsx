@@ -7,6 +7,7 @@ import {
   StyleSheet,
   Text,
   View,
+  useWindowDimensions,
 } from "react-native";
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
@@ -28,6 +29,7 @@ export default function AccountScreen() {
   const { account, logout } = useAuth();
   const { expenses, budget, syncing, syncError, refreshExpenses, hydrated } = useExpenses();
   const { colors, dark } = useTheme();
+  const { width: windowWidth } = useWindowDimensions();
   const [showSignOut, setShowSignOut] = useState(false);
   const [showAboutModal, setShowAboutModal] = useState(false);
 
@@ -80,7 +82,7 @@ export default function AccountScreen() {
         <ProfileCard account={account} syncing={syncing} syncError={syncError} />
 
         {/* Stats Row */}
-        <View style={styles.statsRow}>
+        <View style={[styles.statsRow, windowWidth < 360 && { gap: 6 }]}>
           <StatCard label="Records" value={String(expenses.length)} icon="receipt-outline" />
           <StatCard label="Tracked" value={formatMoney(totalTracked)} icon="trending-up-outline" />
           <StatCard label="Budget" value={formatMoney(budget)} icon="wallet-outline" />

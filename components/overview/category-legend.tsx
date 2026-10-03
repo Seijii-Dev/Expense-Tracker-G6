@@ -131,6 +131,7 @@ const styles = StyleSheet.create({
   legendText: {
     fontSize: 11.5,
     fontWeight: "600",
+    flexShrink: 1,
   },
   rightCluster: {
     flexDirection: "row",
