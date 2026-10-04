@@ -10,6 +10,7 @@ import {
   StyleSheet,
   Text,
   View,
+  useWindowDimensions,
 } from "react-native";
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
@@ -41,10 +42,17 @@ import type { ProfileBannerMedia } from "@/types/auth";
 
 export default function AccountScreen() {
   const insets = useSafeAreaInsets();
+  const { width: windowWidth } = useWindowDimensions();
   const { account, logout, updateProfilePicture, updateProfileBanner } = useAuth();
   const { expenses, budget, syncing, syncError, refreshExpenses, hydrated, isBalanceHidden } =
     useExpenses();
   const { colors, dark } = useTheme();
+
+  const isSmallScreen = windowWidth < 360;
+  // Responsive banner height: scales appropriately with device width, accounting for safe area top
+  const bannerBaseHeight = isSmallScreen ? 136 : Math.min(Math.round(windowWidth * 0.42), 180);
+  const bannerHeight = bannerBaseHeight + Math.max(insets.top, Platform.OS === "android" ? 10 : 0);
+  const bottomClearance = Math.max(insets.bottom + 92, 116);
 
   const [showSignOut, setShowSignOut] = useState(false);
   const [showAboutModal, setShowAboutModal] = useState(false);
@@ -265,7 +273,7 @@ export default function AccountScreen() {
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <ScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.scroll}
+        contentContainerStyle={[styles.scroll, { paddingBottom: bottomClearance }]}
         refreshControl={
           <RefreshControl
             refreshing={syncing}
@@ -275,20 +283,36 @@ export default function AccountScreen() {
           />
         }
       >
-        {/* Top Curved Emerald Banner matching Mockup Screen 5 */}
-        <View style={[styles.emeraldBanner, { paddingTop: Math.max(insets.top + 10, 24) }]}>
-          <ProfileBannerLayer
-            banner={account?.profileBanner}
-            visible={!showBannerActions && !showBannerPreview && !showBannerProcessing}
-          />
-          <LinearGradient
-            pointerEvents="none"
-            colors={["rgba(8, 31, 24, 0.54)", "rgba(8, 31, 24, 0.72)", "rgba(8, 31, 24, 0.86)"]}
-            locations={[0, 0.55, 1]}
-            style={StyleSheet.absoluteFillObject}
-          />
-          <View style={styles.bannerForeground}>
-            <View style={styles.bannerTopBar}>
+        {/* Top Curved Emerald Header Card matching Ledgerly branding */}
+        <View style={styles.headerCard}>
+          {/* Dedicated Responsive Profile Banner Area */}
+          <View style={[styles.bannerArea, { height: bannerHeight }]}>
+            <ProfileBannerLayer
+              banner={account?.profileBanner}
+              visible={!showBannerActions && !showBannerPreview && !showBannerProcessing}
+            />
+
+            {/* Protective subtle gradient over banner media for controls legibility */}
+            <LinearGradient
+              pointerEvents="none"
+              colors={[
+                "rgba(8, 31, 24, 0.65)",
+                "rgba(8, 31, 24, 0.05)",
+                "rgba(8, 31, 24, 0.55)",
+              ]}
+              locations={[0, 0.45, 1]}
+              style={StyleSheet.absoluteFillObject}
+            />
+
+            {/* Banner Top Navigation Bar with Safe Area Handling */}
+            <View
+              style={[
+                styles.bannerTopBar,
+                {
+                  paddingTop: Math.max(insets.top + 6, 14),
+                },
+              ]}
+            >
               <Pressable
                 style={({ pressed }) => [styles.bannerEditTopButton, pressed && styles.pressed]}
                 onPress={() => {
@@ -297,10 +321,12 @@ export default function AccountScreen() {
                 }}
                 accessibilityRole="button"
                 accessibilityLabel="Edit profile banner. Choose a photo or video, or remove the banner."
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
               >
-                <Ionicons name="image-outline" size={16} color="#FFFFFF" />
+                <Ionicons name="image-outline" size={15} color="#FFFFFF" />
                 <Text style={styles.bannerEditTopText}>Edit Banner</Text>
               </Pressable>
+
               <Pressable
                 style={({ pressed }) => [styles.gearBtn, pressed && styles.pressed]}
                 onPress={() => {
@@ -311,48 +337,57 @@ export default function AccountScreen() {
                 }}
                 accessibilityRole="button"
                 accessibilityLabel="Open Settings"
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
               >
-                <Ionicons name="settings-outline" size={22} color="#FFFFFF" />
+                <Ionicons name="settings-outline" size={20} color="#FFFFFF" />
               </Pressable>
             </View>
+          </View>
 
-            <View style={styles.profileSection}>
-              <View style={styles.avatarEditWrap}>
-                <View style={styles.avatarBorder}>
-                  <ProfileAvatar
-                    account={account}
-                    size={70}
-                    backgroundColor="#245844"
-                    textColor="#FFFFFF"
-                    fontSize={24}
-                  />
-                </View>
-                <Pressable
-                  style={({ pressed }) => [styles.photoEditButton, pressed && styles.pressed]}
-                  onPress={() => {
-                    setPhotoError(null);
-                    setShowPhotoActions(true);
-                  }}
-                  accessibilityRole="button"
-                  accessibilityLabel="Change profile picture"
-                >
-                  <Ionicons name="camera" size={15} color="#16382B" />
-                </Pressable>
+          {/* Profile Section with Avatar Overlapping the Banner */}
+          <View style={styles.profileSection}>
+            <View style={styles.avatarEditWrap}>
+              <View style={styles.avatarBorder}>
+                <ProfileAvatar
+                  account={account}
+                  size={70}
+                  backgroundColor="#245844"
+                  textColor="#FFFFFF"
+                  fontSize={24}
+                />
               </View>
               <Pressable
+                style={({ pressed }) => [styles.photoEditButton, pressed && styles.pressed]}
                 onPress={() => {
                   setPhotoError(null);
                   setShowPhotoActions(true);
                 }}
                 accessibilityRole="button"
-                accessibilityLabel="Edit profile picture"
+                accessibilityLabel="Change profile picture"
+                hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
               >
-                <Text style={styles.photoEditLabel}>Edit photo</Text>
+                <Ionicons name="camera" size={14} color="#16382B" />
               </Pressable>
-              <Text style={styles.userName}>{account?.name || "Alex Johnson"}</Text>
-              <Text style={styles.userEmail}>{account?.email || "alex.johnson@example.com"}</Text>
-              {bannerNotice ? <Text style={styles.bannerNotice}>{bannerNotice}</Text> : null}
             </View>
+
+            <Pressable
+              onPress={() => {
+                setPhotoError(null);
+                setShowPhotoActions(true);
+              }}
+              accessibilityRole="button"
+              accessibilityLabel="Edit profile picture"
+            >
+              <Text style={styles.photoEditLabel}>Edit photo</Text>
+            </Pressable>
+
+            <Text style={styles.userName} numberOfLines={1} ellipsizeMode="tail">
+              {account?.name || "Alex Johnson"}
+            </Text>
+            <Text style={styles.userEmail} numberOfLines={1} ellipsizeMode="tail">
+              {account?.email || "alex.johnson@example.com"}
+            </Text>
+            {bannerNotice ? <Text style={styles.bannerNotice}>{bannerNotice}</Text> : null}
           </View>
         </View>
 
@@ -789,12 +824,17 @@ export default function AccountScreen() {
               {pendingBanner ? <ProfileBannerLayer banner={pendingBanner} visible /> : null}
               <LinearGradient
                 pointerEvents="none"
-                colors={["rgba(8,31,24,0.16)", "rgba(8,31,24,0.78)"]}
+                colors={["rgba(8,31,24,0.35)", "transparent", "rgba(8,31,24,0.65)"]}
+                locations={[0, 0.5, 1]}
                 style={StyleSheet.absoluteFillObject}
               />
               <View style={styles.bannerPreviewCopy}>
-                <Text style={styles.bannerPreviewName}>{account?.name || "Your profile"}</Text>
-                <Text style={styles.bannerPreviewEmail}>{account?.email || ""}</Text>
+                <Text style={styles.bannerPreviewName} numberOfLines={1}>
+                  {account?.name || "Your profile"}
+                </Text>
+                <Text style={styles.bannerPreviewEmail} numberOfLines={1}>
+                  {account?.email || ""}
+                </Text>
               </View>
             </View>
             <Text style={[styles.bannerActionDescription, { color: colors.muted }]}>
@@ -899,118 +939,161 @@ const styles = StyleSheet.create({
   scroll: {
     paddingBottom: 96,
   },
-  emeraldBanner: {
+  headerCard: {
     position: "relative",
     overflow: "hidden",
     backgroundColor: "#16382B",
     borderBottomLeftRadius: 32,
     borderBottomRightRadius: 32,
-    paddingHorizontal: 20,
-    paddingBottom: 28,
+    width: "100%",
+    maxWidth: 640,
+    alignSelf: "center",
+  },
+  bannerArea: {
+    width: "100%",
+    position: "relative",
+    overflow: "hidden",
+    backgroundColor: "#112C22",
   },
   bannerTopBar: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    zIndex: 10,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    marginBottom: 8,
-  },
-  bannerForeground: {
-    position: "relative",
-    zIndex: 1,
+    paddingHorizontal: 16,
   },
   bannerEditTopButton: {
-    minHeight: 38,
+    minHeight: 36,
     flexDirection: "row",
     alignItems: "center",
-    gap: 7,
+    gap: 6,
     paddingHorizontal: 12,
-    borderRadius: 13,
-    backgroundColor: "rgba(255,255,255,0.14)",
+    borderRadius: 18,
+    backgroundColor: "rgba(8, 31, 24, 0.65)",
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.2)",
+    borderColor: "rgba(255, 255, 255, 0.22)",
+    shadowColor: "#000000",
+    shadowOpacity: 0.25,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 3,
     ...(Platform.OS === "web" ? ({ cursor: "pointer" } as any) : {}),
   },
-  bannerEditTopText: { color: "#FFFFFF", fontSize: 11, fontWeight: "800" },
+  bannerEditTopText: {
+    color: "#FFFFFF",
+    fontSize: 11.5,
+    fontWeight: "700",
+    letterSpacing: 0.1,
+  },
   topBarSpacer: {
     width: 36,
   },
   gearBtn: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    backgroundColor: "rgba(255, 255, 255, 0.12)",
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: "rgba(8, 31, 24, 0.65)",
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.22)",
     alignItems: "center",
     justifyContent: "center",
+    shadowColor: "#000000",
+    shadowOpacity: 0.25,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 3,
     ...(Platform.OS === "web" ? ({ cursor: "pointer" } as any) : {}),
   },
   profileSection: {
     alignItems: "center",
-    marginTop: 4,
+    paddingHorizontal: 20,
+    paddingBottom: 24,
   },
   avatarEditWrap: {
     position: "relative",
+    marginTop: -38,
     marginBottom: 8,
+    zIndex: 10,
   },
   avatarBorder: {
     width: 76,
     height: 76,
     borderRadius: 38,
-    borderWidth: 3,
-    borderColor: "#FFFFFF",
+    borderWidth: 3.5,
+    borderColor: "#16382B",
+    backgroundColor: "#245844",
     alignItems: "center",
     justifyContent: "center",
     shadowColor: "#000000",
-    shadowOpacity: 0.25,
+    shadowOpacity: 0.35,
     shadowRadius: 10,
     shadowOffset: { width: 0, height: 4 },
+    elevation: 6,
   },
   photoEditButton: {
     position: "absolute",
     right: -2,
-    bottom: 2,
+    bottom: 0,
     width: 28,
     height: 28,
     borderRadius: 14,
     borderWidth: 2,
-    borderColor: "#FFFFFF",
+    borderColor: "#16382B",
     backgroundColor: "#A7F3D0",
     alignItems: "center",
     justifyContent: "center",
+    shadowColor: "#000000",
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 4,
     ...(Platform.OS === "web" ? ({ cursor: "pointer" } as any) : {}),
   },
   photoEditLabel: {
     color: "#A7F3D0",
     fontSize: 11,
     fontWeight: "700",
-    marginBottom: 7,
+    marginBottom: 6,
+    letterSpacing: 0.2,
+    ...(Platform.OS === "web" ? ({ cursor: "pointer" } as any) : {}),
   },
   userName: {
-    fontSize: 20,
+    fontSize: 21,
     fontFamily: "Fraunces_700Bold",
     color: "#FFFFFF",
     letterSpacing: -0.3,
-    textShadowColor: "rgba(0,0,0,0.34)",
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 4,
+    textAlign: "center",
   },
   userEmail: {
     fontSize: 12.5,
     color: "#A7F3D0",
     marginTop: 2,
     fontWeight: "500",
-    textShadowColor: "rgba(0,0,0,0.4)",
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 3,
+    textAlign: "center",
   },
   bannerNotice: {
     color: "#A7F3D0",
-    fontSize: 10,
+    fontSize: 11,
     fontWeight: "700",
     marginTop: 8,
+    textAlign: "center",
+    backgroundColor: "rgba(167, 243, 208, 0.12)",
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "rgba(167, 243, 208, 0.25)",
   },
   bodyContent: {
     paddingHorizontal: 16,
     paddingTop: 16,
+    width: "100%",
+    maxWidth: 640,
+    alignSelf: "center",
   },
   overviewCard: {
     borderRadius: 22,
@@ -1206,13 +1289,15 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
   bannerPreviewFrame: {
-    height: 180,
     width: "100%",
+    aspectRatio: 16 / 9,
+    maxHeight: 180,
     overflow: "hidden",
     position: "relative",
     borderRadius: 16,
     backgroundColor: "#16382B",
-    marginTop: 4,
+    marginTop: 6,
+    marginBottom: 8,
   },
   bannerPreviewCopy: {
     ...StyleSheet.absoluteFillObject,

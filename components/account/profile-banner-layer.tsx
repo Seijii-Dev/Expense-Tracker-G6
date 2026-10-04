@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { AppState, Image, Platform, StyleSheet, View } from "react-native";
+import { AppState, Image, Platform, StyleProp, StyleSheet, View, ViewStyle } from "react-native";
 import { usePathname } from "expo-router";
 import { VideoView, useVideoPlayer } from "expo-video";
 import type { ProfileBannerMedia } from "@/types/auth";
@@ -8,9 +8,10 @@ import { resolveProfileBannerSource } from "@/utils/profile-banner-media";
 type ProfileBannerLayerProps = {
   banner?: ProfileBannerMedia | null;
   visible: boolean;
+  style?: StyleProp<ViewStyle>;
 };
 
-export function ProfileBannerLayer({ banner, visible }: ProfileBannerLayerProps) {
+export function ProfileBannerLayer({ banner, visible, style }: ProfileBannerLayerProps) {
   const [sourceUri, setSourceUri] = useState<string | null>(null);
 
   useEffect(() => {
@@ -35,20 +36,33 @@ export function ProfileBannerLayer({ banner, visible }: ProfileBannerLayerProps)
     };
   }, [banner?.uri]);
 
-  if (!banner || !sourceUri) return <View pointerEvents="none" style={styles.fallback} />;
+  if (!banner || !sourceUri) {
+    return <View pointerEvents="none" style={[styles.fallback, style]} />;
+  }
+
   if (banner.type === "image") {
     return (
-      <View pointerEvents="none" style={styles.media}>
-        <Image source={{ uri: sourceUri }} resizeMode="cover" style={styles.media} />
+      <View pointerEvents="none" style={[styles.media, style]}>
+        <Image
+          source={{ uri: sourceUri }}
+          resizeMode="cover"
+          style={styles.media}
+          accessibilityIgnoresInvertColors
+        />
       </View>
     );
   }
 
-  return <ProfileBannerVideo key={sourceUri} uri={sourceUri} visible={visible} />;
+  return (
+    <View pointerEvents="none" style={[styles.media, style]}>
+      <ProfileBannerVideo key={sourceUri} uri={sourceUri} visible={visible} />
+    </View>
+  );
 }
 
 function ProfileBannerVideo({ uri, visible }: { uri: string; visible: boolean }) {
-  const focused = usePathname().includes("account");
+  const pathname = usePathname();
+  const focused = pathname.includes("account") || visible;
   const [appIsActive, setAppIsActive] = useState(AppState.currentState === "active");
   const player = useVideoPlayer(uri, (videoPlayer) => {
     videoPlayer.loop = true;
@@ -57,13 +71,18 @@ function ProfileBannerVideo({ uri, visible }: { uri: string; visible: boolean })
   });
 
   useEffect(() => {
-    const subscription = AppState.addEventListener("change", (state) => setAppIsActive(state === "active"));
+    const subscription = AppState.addEventListener("change", (state) => {
+      setAppIsActive(state === "active");
+    });
     return () => subscription.remove();
   }, []);
 
   useEffect(() => {
-    if (visible && focused && appIsActive) player.play();
-    else player.pause();
+    if (visible && focused && appIsActive) {
+      player.play();
+    } else {
+      player.pause();
+    }
   }, [appIsActive, focused, player, visible]);
 
   return (
@@ -90,3 +109,4 @@ const styles = StyleSheet.create({
     height: "100%",
   },
 });
+
