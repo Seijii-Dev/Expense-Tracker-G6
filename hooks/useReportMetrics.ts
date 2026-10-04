@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { Category, Expense, Payment } from "@/types/expense";
 import { CATEGORIES, PAYMENT_METHODS } from "@/constants/categories";
-import { getPhilippinesMonth, normalizeDate } from "@/utils/date";
+import { getExpenseDateKey, getPhilippinesMonth } from "@/utils/date";
 
 export type CategoryTotal = {
   category: Category;
@@ -13,12 +13,18 @@ export type PaymentTotal = {
   total: number;
 };
 
-export function useReportMetrics(expenses: Expense[], customCategoryList?: string[]) {
+export function useReportMetrics(
+  expenses: Expense[],
+  customCategoryList?: string[],
+  selectedPeriodExpenses?: Expense[]
+) {
   const currentMonth = getPhilippinesMonth();
 
   const monthExpenses = useMemo(
-    () => expenses.filter((expense) => normalizeDate(expense.date).startsWith(currentMonth)),
-    [expenses, currentMonth]
+    () =>
+      selectedPeriodExpenses ??
+      expenses.filter((expense) => getExpenseDateKey(expense.date).startsWith(currentMonth)),
+    [expenses, currentMonth, selectedPeriodExpenses]
   );
 
   const monthTotal = useMemo(

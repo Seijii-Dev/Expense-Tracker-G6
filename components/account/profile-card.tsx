@@ -3,6 +3,7 @@ import { StyleSheet, Text, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { Account } from "@/types/auth";
 import { useTheme } from "@/lib/theme-store";
+import { ProfileAvatar } from "@/components/account/profile-avatar";
 
 interface ProfileCardProps {
   account: Account | null;
@@ -12,16 +13,6 @@ interface ProfileCardProps {
 
 export function ProfileCard({ account, syncing, syncError }: ProfileCardProps) {
   const { colors, dark } = useTheme();
-
-  const initials =
-    (account?.name || "User")
-      .trim()
-      .split(/\s+/)
-      .map((part) => part[0])
-      .filter(Boolean)
-      .join("")
-      .slice(0, 2)
-      .toUpperCase() || "U";
 
   const getStatusText = () => {
     if (syncing) return "Syncing ledger…";
@@ -61,7 +52,14 @@ export function ProfileCard({ account, syncing, syncError }: ProfileCardProps) {
           },
         ]}
       >
-        <Text style={[styles.avatarText, { color: colors.primary }]}>{initials}</Text>
+        <ProfileAvatar
+          account={account}
+          size={55}
+          borderRadius={19}
+          backgroundColor={dark ? `${colors.primary}25` : colors.primarySoft}
+          textColor={colors.primary}
+          fontSize={22}
+        />
       </View>
 
       <View style={styles.profileBody}>
@@ -110,10 +108,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     marginRight: 16,
   },
-  avatarText: {
-    fontFamily: "Fraunces_700Bold",
-    fontSize: 22,
-  },
   profileBody: {
     flex: 1,
     justifyContent: "center",
@@ -154,4 +148,3 @@ const styles = StyleSheet.create({
     letterSpacing: 0.2,
   },
 });
-

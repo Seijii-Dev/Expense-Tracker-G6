@@ -92,12 +92,14 @@ export function ExpenseModal({ visible, initialExpense, onClose, onSubmit }: Exp
     } catch {
       // Non-fatal
     }
+    const submittedDate =
+      initialExpense && date === normalizeDate(initialExpense.date) ? initialExpense.date : date;
     onSubmit({
       amount: Math.round(numeric * 100) / 100,
       description: description.trim(),
       category,
       payment,
-      date,
+      date: submittedDate,
     });
     setValidationError(null);
     onClose();

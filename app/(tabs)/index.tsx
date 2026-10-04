@@ -15,6 +15,7 @@ import { ScreenContainer } from "@/components/screen-container";
 import { GlassSurface } from "@/components/ui/glass-surface";
 import { MetricCard } from "@/components/ui/metric-card";
 import { ExpenseRow } from "@/components/ui/expense-row";
+import { ProfileAvatar } from "@/components/account/profile-avatar";
 import { ExpenseModal } from "@/components/expense-modal";
 import { DonutChart } from "@/components/overview/donut-chart";
 import { CategoryLegend } from "@/components/overview/category-legend";
@@ -31,9 +32,9 @@ import { DashboardSkeleton } from "@/components/ui/dashboard-skeleton";
 import {
   getFormattedMonthHeader,
   getFormattedTodayHeader,
+  getExpenseDateKey,
   getPhilippinesMonth,
   getTimeGreeting,
-  normalizeDate,
 } from "@/utils/date";
 
 export default function OverviewScreen() {
@@ -65,7 +66,7 @@ export default function OverviewScreen() {
 
   const currentMonth = getPhilippinesMonth();
   const monthExpenses = useMemo(
-    () => sortedExpenses.filter((expense) => normalizeDate(expense.date).startsWith(currentMonth)),
+    () => sortedExpenses.filter((expense) => getExpenseDateKey(expense.date).startsWith(currentMonth)),
     [sortedExpenses, currentMonth]
   );
 
@@ -173,12 +174,16 @@ export default function OverviewScreen() {
               style={({ pressed }) => [styles.avatarBtn, pressed && styles.pressed]}
               accessibilityRole="button"
               accessibilityLabel="Open Account Profile"
-            >
-              <View style={styles.avatarCircle}>
-                <Text style={styles.avatarInitials}>
-                  {firstName.charAt(0).toUpperCase()}
-                </Text>
-              </View>
+              >
+                <View style={styles.avatarCircle}>
+                  <ProfileAvatar
+                    account={account}
+                    size={36}
+                    backgroundColor="#1B6A4B"
+                    textColor="#FFFFFF"
+                    fontSize={14}
+                  />
+                </View>
             </Pressable>
           </View>
         </View>
@@ -422,11 +427,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     borderWidth: 2,
     borderColor: "#10B981",
-  },
-  avatarInitials: {
-    color: "#FFFFFF",
-    fontSize: 15,
-    fontWeight: "800",
   },
   heroCard: {
     backgroundColor: "#16382B",

@@ -1,6 +1,6 @@
 import * as SecureStore from "expo-secure-store";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { Platform } from "react-native";
 import { api, RemoteAccount } from "@/lib/api-client";
 import { Account, AuthContextValue } from "@/types/auth";
@@ -69,6 +69,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [account, setAccount] = useState<Account | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const accountRef = useRef<Account | null>(null);
+  accountRef.current = account;
+
+  useEffect(() => {
+    const email = account?.email;
+    if (!email) return;
+
+    let mounted = true;
+    AsyncStorage.getItem(STORAGE_KEYS.profilePicture(email))
+      .then((uri) => {
+        if (!mounted) return;
+        setAccount((current) =>
+          current?.email === email && current.profilePictureUri !== uri
+            ? { ...current, profilePictureUri: uri }
+            : current
+        );
+      })
+      .catch(() => undefined);
+
+    return () => {
+      mounted = false;
+    };
+  }, [account?.email]);
 
   // On app start: read cached account & token so app opens instantly, even offline
   useEffect(() => {
@@ -115,9 +138,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (!mounted) return;
 
         if (result.ok) {
+          const profilePictureUri = await AsyncStorage.getItem(
+            STORAGE_KEYS.profilePicture(result.account.email)
+          ).catch(() => null);
+          const refreshedAccount: Account = { ...result.account, profilePictureUri };
           setToken(savedToken);
-          setAccount(result.account);
-          await AsyncStorage.setItem(STORAGE_KEYS.cachedAccount, JSON.stringify(result.account));
+          setAccount(refreshedAccount);
+          await AsyncStorage.setItem(STORAGE_KEYS.cachedAccount, JSON.stringify(refreshedAccount));
         } else {
           // If server explicitly rejected token (not a network error), clear session
           if (!isNetworkError(result.message)) {
@@ -282,29 +309,57 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       safeSecureDelete(STORAGE_KEYS.authToken),
       AsyncStorage.removeItem(STORAGE_KEYS.cachedAccount),
     ]);
+    accountRef.current = null;
     setToken(null);
     setAccount(null);
   }, []);
 
   const refreshAccount = useCallback((updated: RemoteAccount) => {
-    setAccount((current) => {
-      if (
-        current &&
-        current.id === updated.id &&
-        current.email === updated.email &&
-        current.name === updated.name &&
-        current.budget === updated.budget
-      ) {
-        return current;
-      }
-      return updated;
-    });
+    const current = accountRef.current;
+    const nextAccount: Account = {
+      ...updated,
+      profilePictureUri:
+        current?.email === updated.email ? current.profilePictureUri : updated.profilePictureUri,
+    };
+    if (
+      current &&
+      current.id === nextAccount.id &&
+      current.email === nextAccount.email &&
+      current.name === nextAccount.name &&
+      current.budget === nextAccount.budget &&
+      current.profilePictureUri === nextAccount.profilePictureUri
+    ) return;
+
+    accountRef.current = nextAccount;
+    setAccount(nextAccount);
+    AsyncStorage.setItem(STORAGE_KEYS.cachedAccount, JSON.stringify(nextAccount)).catch(() => undefined);
+  }, []);
+
+  const updateProfilePicture = useCallback(async (uri: string | null) => {
+    const current = accountRef.current;
+    if (!current) throw new Error("Sign in to update your profile picture.");
+
+    const email = current.email;
+    const key = STORAGE_KEYS.profilePicture(email);
+    if (uri) await AsyncStorage.setItem(key, uri);
+    else await AsyncStorage.removeItem(key);
+
+    const latest = accountRef.current;
+    if (!latest || latest.email !== email) {
+      if (current.profilePictureUri) await AsyncStorage.setItem(key, current.profilePictureUri);
+      else await AsyncStorage.removeItem(key);
+      throw new Error("Your account changed before the photo could be saved.");
+    }
+
+    const updated = { ...latest, profilePictureUri: uri };
+    accountRef.current = updated;
+    setAccount(updated);
     AsyncStorage.setItem(STORAGE_KEYS.cachedAccount, JSON.stringify(updated)).catch(() => undefined);
   }, []);
 
   const value = useMemo(
-    () => ({ account, token, loading, register, login, logout, refreshAccount }),
-    [account, token, loading, register, login, logout, refreshAccount]
+    () => ({ account, token, loading, register, login, logout, refreshAccount, updateProfilePicture }),
+    [account, token, loading, register, login, logout, refreshAccount, updateProfilePicture]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

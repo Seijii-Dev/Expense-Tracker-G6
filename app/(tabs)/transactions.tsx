@@ -21,9 +21,11 @@ import { CategoryChips } from "@/components/transactions/category-chips";
 import { Expense, NewExpenseData } from "@/types/expense";
 import { useExpenses } from "@/lib/expense-store";
 import { useTheme } from "@/lib/theme-store";
-import { formatMoney } from "@/utils/formatters";
+import { formatDate, formatMoney } from "@/utils/formatters";
 import { useFilteredExpenses } from "@/hooks/useFilteredExpenses";
 import { TransactionsSkeleton } from "@/components/ui/transactions-skeleton";
+import { DatePickerModal } from "@/components/common/date-picker-modal";
+import { addCalendarDays, getExpenseDateKey, getPhilippinesDate } from "@/utils/date";
 
 export default function TransactionsScreen() {
   const { sortedExpenses, removeExpense, updateExpense, addExpense, refreshExpenses, syncing, hydrated } = useExpenses();
@@ -32,6 +34,9 @@ export default function TransactionsScreen() {
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
   const [showSortFilter, setShowSortFilter] = useState(false);
+  const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const todayDate = getPhilippinesDate();
 
   const {
     query,
@@ -42,9 +47,23 @@ export default function TransactionsScreen() {
     setSortBy,
     filtered,
     total,
-    resetFilters,
+    resetFilters: resetTextFilters,
     hasActiveFilters,
-  } = useFilteredExpenses(sortedExpenses);
+  } = useFilteredExpenses(sortedExpenses, selectedDate);
+
+  const resetFilters = useCallback(() => {
+    resetTextFilters();
+    setSelectedDate(null);
+  }, [resetTextFilters]);
+
+  const navigateDate = useCallback(
+    (direction: -1 | 1) => {
+      const base = selectedDate ?? addCalendarDays(todayDate, -1);
+      const nextDate = addCalendarDays(base, direction);
+      setSelectedDate(nextDate > todayDate ? todayDate : nextDate);
+    },
+    [selectedDate, todayDate]
+  );
 
   const handleModalSubmit = useCallback(
     (data: NewExpenseData) => {
@@ -62,10 +81,12 @@ export default function TransactionsScreen() {
     setShowAddModal(false);
   }, []);
 
-  const currentMonthName = useMemo(
-    () => new Date().toLocaleString("en-US", { month: "long" }).toUpperCase(),
-    []
-  );
+  const summaryLabel = selectedDate
+    ? `${formatDate(selectedDate).toUpperCase()} SUMMARY`
+    : "ALL DATES SUMMARY";
+  const hasTransactionsForSelectedDate = selectedDate
+    ? sortedExpenses.some((expense) => getExpenseDateKey(expense.date) === selectedDate)
+    : false;
 
   const renderItem = useCallback(
     ({ item, index }: { item: Expense; index: number }) => {
@@ -144,6 +165,65 @@ export default function TransactionsScreen() {
           hasActiveFilters={hasActiveFilters}
         />
 
+        <View style={styles.dateFilterBlock}>
+          <View style={styles.dateNavigator}>
+            <Pressable
+              style={styles.dateArrow}
+              onPress={() => navigateDate(-1)}
+              accessibilityRole="button"
+              accessibilityLabel="Show previous day"
+            >
+              <Ionicons name="chevron-back" size={18} color={colors.muted} />
+            </Pressable>
+            <Pressable
+              style={[styles.datePickerButton, { backgroundColor: colors.surface, borderColor: colors.border }]}
+              onPress={() => setShowDatePicker(true)}
+              accessibilityRole="button"
+              accessibilityLabel={
+                selectedDate
+                  ? `Choose date, currently ${formatDate(selectedDate)}`
+                  : "Choose a date, currently showing all dates"
+              }
+            >
+              <Ionicons name="calendar-outline" size={16} color={colors.primary} />
+              <Text style={[styles.datePickerText, { color: colors.foreground }]} numberOfLines={1}>
+                {selectedDate ? formatDate(selectedDate) : "All dates"}
+              </Text>
+              <Ionicons name="chevron-down" size={15} color={colors.muted} />
+            </Pressable>
+            <Pressable
+              style={[styles.dateArrow, (!selectedDate || selectedDate >= todayDate) && styles.disabledDateArrow]}
+              onPress={() => navigateDate(1)}
+              disabled={!selectedDate || selectedDate >= todayDate}
+              accessibilityRole="button"
+              accessibilityLabel="Show next day"
+              accessibilityState={{ disabled: !selectedDate || selectedDate >= todayDate }}
+            >
+              <Ionicons name="chevron-forward" size={18} color={colors.muted} />
+            </Pressable>
+          </View>
+          <View style={styles.dateActions}>
+            {selectedDate !== todayDate && (
+              <Pressable
+                onPress={() => setSelectedDate(todayDate)}
+                accessibilityRole="button"
+                style={styles.dateAction}
+              >
+                <Text style={[styles.dateActionText, { color: colors.primary }]}>Today</Text>
+              </Pressable>
+            )}
+            {selectedDate && (
+              <Pressable
+                onPress={() => setSelectedDate(null)}
+                accessibilityRole="button"
+                style={styles.dateAction}
+              >
+                <Text style={[styles.dateActionText, { color: colors.muted }]}>All dates</Text>
+              </Pressable>
+            )}
+          </View>
+        </View>
+
         {/* Category Filter Chips */}
         <View style={{ marginTop: 10 }}>
           <CategoryChips selected={category} onSelect={setCategory} />
@@ -173,18 +253,19 @@ export default function TransactionsScreen() {
         >
           <View style={styles.summaryCol}>
             <Text style={[styles.summaryKicker, { color: colors.muted }]}>
-              {currentMonthName} SUMMARY
+              {summaryLabel}
             </Text>
             <Text style={[styles.summarySubLabel, { color: colors.subtle }]}>Transactions</Text>
             <Text style={[styles.summaryValue, { color: colors.foreground }]}>
-              {filtered.length}{" "}
-              <Text style={{ fontSize: 12, color: "#10B981", fontWeight: "700" }}>18%^</Text>
+              {filtered.length}
             </Text>
           </View>
           <View style={[styles.divider, { backgroundColor: colors.border }]} />
           <View style={styles.summaryCol}>
             <Text style={[styles.summaryKicker, { color: colors.muted }]}>TOTAL EXPENSE</Text>
-            <Text style={[styles.summarySubLabel, { color: colors.subtle }]}>All Categories</Text>
+            <Text style={[styles.summarySubLabel, { color: colors.subtle }]}>
+              {category === "All" ? "All Categories" : category}
+            </Text>
             <Text style={[styles.summaryValue, { color: colors.foreground }]}>
               {formatMoney(total)}
             </Text>
@@ -194,7 +275,7 @@ export default function TransactionsScreen() {
         {filtered.length > 0 && <View style={styles.listHeaderGap} />}
       </View>
     ),
-    [category, colors, currentMonthName, dark, filtered.length, hasActiveFilters, query, setCategory, setQuery, setSortBy, showSortFilter, sortBy, total]
+    [category, colors, dark, filtered.length, hasActiveFilters, navigateDate, query, selectedDate, setCategory, setQuery, setSortBy, showSortFilter, sortBy, summaryLabel, todayDate, total]
   );
 
   const ListEmpty = useMemo(
@@ -214,10 +295,20 @@ export default function TransactionsScreen() {
       >
         <EmptyState
           icon="receipt-outline"
-          title="No records found"
+          title={
+            selectedDate && !hasTransactionsForSelectedDate
+              ? "No records for this date"
+              : hasActiveFilters
+                ? "No matching records"
+                : "No records found"
+          }
           description={
             hasActiveFilters
-              ? "No transactions match your search or filter. Try clearing filters."
+              ? selectedDate
+                ? hasTransactionsForSelectedDate
+                  ? `No transactions on ${formatDate(selectedDate)} match your search or category filter.`
+                  : `No transactions were recorded on ${formatDate(selectedDate)}. Try another date or clear filters.`
+                : "No transactions match your search or category filter. Try clearing filters."
               : "You haven't logged any transactions yet."
           }
         />
@@ -238,7 +329,7 @@ export default function TransactionsScreen() {
         )}
       </View>
     ),
-    [colors.border, colors.primary, colors.primarySoft, colors.surface, dark, hasActiveFilters, resetFilters]
+    [colors.border, colors.primary, colors.primarySoft, colors.surface, dark, hasActiveFilters, hasTransactionsForSelectedDate, resetFilters, selectedDate]
   );
 
   if (!hydrated) {
@@ -279,6 +370,16 @@ export default function TransactionsScreen() {
         initialExpense={editingExpense}
         onClose={handleCloseModal}
         onSubmit={handleModalSubmit}
+      />
+      <DatePickerModal
+        visible={showDatePicker}
+        selectedDate={selectedDate}
+        maxDate={todayDate}
+        onClose={() => setShowDatePicker(false)}
+        onSelect={(date) => {
+          setSelectedDate(date);
+          setShowDatePicker(false);
+        }}
       />
     </ScreenContainer>
   );
@@ -409,5 +510,57 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: "700",
     letterSpacing: 0.3,
+  },
+  dateFilterBlock: {
+    marginTop: 14,
+  },
+  dateNavigator: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 10,
+  },
+  dateArrow: {
+    width: 40,
+    height: 40,
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: 12,
+  },
+  disabledDateArrow: {
+    opacity: 0.35,
+  },
+  datePickerButton: {
+    flex: 1,
+    minWidth: 120,
+    height: 42,
+    paddingHorizontal: 12,
+    borderRadius: 13,
+    borderWidth: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+  },
+  datePickerText: {
+    fontSize: 13,
+    fontWeight: "700",
+    flexShrink: 1,
+  },
+  dateActions: {
+    flexDirection: "row",
+    justifyContent: "flex-end",
+    gap: 18,
+    marginTop: 4,
+    minHeight: 24,
+  },
+  dateAction: {
+    minHeight: 28,
+    justifyContent: "center",
+    paddingHorizontal: 4,
+  },
+  dateActionText: {
+    fontSize: 11,
+    fontWeight: "700",
   },
 });

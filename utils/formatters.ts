@@ -1,12 +1,12 @@
-import { getWeekdayShort } from "./date";
+import { getExpenseDateKey, getWeekdayShort } from "./date";
 
 /**
  * Currency formatter for Philippine Peso (PHP)
  */
-export function formatMoney(amount: number, showDecimals = false): string {
-  const safeAmount = isNaN(amount) ? 0 : amount;
+export function formatMoney(amount: number): string {
+  const safeAmount = Number.isFinite(amount) ? amount : 0;
   return `₱${safeAmount.toLocaleString("en-PH", {
-    minimumFractionDigits: showDecimals ? 2 : 0,
+    minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   })}`;
 }
@@ -17,13 +17,15 @@ export function formatMoney(amount: number, showDecimals = false): string {
 export function formatDate(dateString?: string, includeYear = true): string {
   if (!dateString) return "";
   try {
-    const clean = dateString.slice(0, 10);
-    const date = new Date(`${clean}T12:00:00`);
-    if (isNaN(date.getTime())) return dateString;
+    const clean = getExpenseDateKey(dateString);
+    if (!clean) return dateString;
+    const [year, month, day] = clean.split("-").map(Number);
+    const date = new Date(Date.UTC(year, month - 1, day, 12));
     return new Intl.DateTimeFormat("en-US", {
       month: "short",
       day: "numeric",
       ...(includeYear ? { year: "numeric" } : {}),
+      timeZone: "UTC",
     }).format(date);
   } catch {
     return dateString;

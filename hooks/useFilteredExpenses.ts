@@ -1,9 +1,10 @@
 import { useCallback, useMemo, useState } from "react";
 import { Category, Expense } from "@/types/expense";
+import { getExpenseDateKey } from "@/utils/date";
 
 export type SortOption = "newest" | "oldest" | "highest" | "lowest";
 
-export function useFilteredExpenses(expenses: Expense[]) {
+export function useFilteredExpenses(expenses: Expense[], selectedDate: string | null = null) {
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState<"All" | Category>("All");
   const [sortBy, setSortBy] = useState<SortOption>("newest");
@@ -13,6 +14,7 @@ export function useFilteredExpenses(expenses: Expense[]) {
     const result = expenses.filter((expense) => {
       const matchCategory = category === "All" || expense.category === category;
       if (!matchCategory) return false;
+      if (selectedDate && getExpenseDateKey(expense.date) !== selectedDate) return false;
       if (!q) return true;
 
       return (
@@ -36,7 +38,7 @@ export function useFilteredExpenses(expenses: Expense[]) {
           return (b.date || "").localeCompare(a.date || "") || (b.id || "").localeCompare(a.id || "");
       }
     });
-  }, [expenses, query, category, sortBy]);
+  }, [expenses, query, category, sortBy, selectedDate]);
 
   const total = useMemo(
     () => filtered.reduce((sum, expense) => sum + (expense.amount || 0), 0),
@@ -48,7 +50,7 @@ export function useFilteredExpenses(expenses: Expense[]) {
     setCategory("All");
   }, []);
 
-  const hasActiveFilters = query.length > 0 || category !== "All";
+  const hasActiveFilters = query.length > 0 || category !== "All" || selectedDate !== null;
 
   return {
     query,

@@ -32,6 +32,57 @@ const PH_WEEKDAY_SHORT_FORMATTER = new Intl.DateTimeFormat("en-US", {
   timeZone: MANILA_TIMEZONE,
 });
 
+function isValidDateKey(value: string): boolean {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+  const [year, month, day] = value.split("-").map(Number);
+  const parsed = new Date(Date.UTC(year, month - 1, day));
+  return (
+    parsed.getUTCFullYear() === year &&
+    parsed.getUTCMonth() === month - 1 &&
+    parsed.getUTCDate() === day
+  );
+}
+
+/**
+ * Returns the Manila calendar day represented by a stored date. Date-only values
+ * stay date-only; timestamps with an explicit timezone are interpreted as instants.
+ */
+export function getExpenseDateKey(value?: string): string {
+  if (!value || typeof value !== "string") return "";
+  const trimmed = value.trim();
+  const dayPart = trimmed.slice(0, 10);
+  if (!isValidDateKey(dayPart)) return "";
+
+  const timePart = trimmed.slice(10);
+  const hasExplicitTimezone =
+    timePart.length > 0 && (/[z]$/i.test(timePart) || /[+-]\d{2}:?\d{2}$/.test(timePart));
+  if (hasExplicitTimezone) {
+    const instant = new Date(trimmed);
+    if (!Number.isNaN(instant.getTime())) return getPhilippinesDate(instant);
+  }
+
+  return dayPart;
+}
+
+/** Adds calendar days without relying on the device's local timezone. */
+export function addCalendarDays(day: string, amount: number): string {
+  if (!isValidDateKey(day)) return day;
+  const [year, month, date] = day.split("-").map(Number);
+  const shifted = new Date(Date.UTC(year, month - 1, date + amount));
+  return `${shifted.getUTCFullYear()}-${String(shifted.getUTCMonth() + 1).padStart(2, "0")}-${String(
+    shifted.getUTCDate()
+  ).padStart(2, "0")}`;
+}
+
+/** Shifts a YYYY-MM calendar month without local-timezone or DST effects. */
+export function shiftCalendarMonth(month: string, amount: number): string {
+  if (!/^\d{4}-\d{2}$/.test(month)) return getPhilippinesDate().slice(0, 7);
+  const [year, monthNumber] = month.split("-").map(Number);
+  if (monthNumber < 1 || monthNumber > 12) return getPhilippinesDate().slice(0, 7);
+  const shifted = new Date(Date.UTC(year, monthNumber - 1 + amount, 1));
+  return `${shifted.getUTCFullYear()}-${String(shifted.getUTCMonth() + 1).padStart(2, "0")}`;
+}
+
 /**
  * Returns ISO date format YYYY-MM-DD in Asia/Manila timezone
  */
@@ -50,17 +101,14 @@ export function getPhilippinesMonth(date = new Date()): string {
  * Returns yesterday's date in YYYY-MM-DD in Asia/Manila timezone
  */
 export function getYesterdayDate(referenceDate = new Date()): string {
-  const yesterday = new Date(referenceDate);
-  yesterday.setDate(yesterday.getDate() - 1);
-  return getPhilippinesDate(yesterday);
+  return addCalendarDays(getPhilippinesDate(referenceDate), -1);
 }
 
 /**
  * Normalizes input date string to 10-character YYYY-MM-DD or defaults to today's Manila date
  */
 export function normalizeDate(date?: string): string {
-  if (!date || typeof date !== "string") return getPhilippinesDate();
-  return date.slice(0, 10);
+  return getExpenseDateKey(date) || getPhilippinesDate();
 }
 
 /**

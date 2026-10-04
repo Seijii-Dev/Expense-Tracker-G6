@@ -1,5 +1,7 @@
 import React, { useState } from "react";
 import {
+  ActivityIndicator,
+  Image,
   Modal,
   Platform,
   Pressable,
@@ -12,6 +14,8 @@ import {
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
+import * as ImagePicker from "expo-image-picker";
+import type { ImagePickerAsset } from "expo-image-picker";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ConfirmDialog } from "@/components/common/confirm-dialog";
 import { AboutDialog } from "@/components/common/about-dialog";
@@ -20,10 +24,16 @@ import { useAuth } from "@/lib/auth-store";
 import { useExpenses } from "@/lib/expense-store";
 import { useTheme } from "@/lib/theme-store";
 import { formatMoney } from "@/utils/formatters";
+import { ProfileAvatar } from "@/components/account/profile-avatar";
+import {
+  persistProfilePicture,
+  removeStoredProfilePicture,
+  validateProfileImage,
+} from "@/utils/profile-picture";
 
 export default function AccountScreen() {
   const insets = useSafeAreaInsets();
-  const { account, logout } = useAuth();
+  const { account, logout, updateProfilePicture } = useAuth();
   const { expenses, budget, syncing, syncError, refreshExpenses, hydrated, isBalanceHidden } =
     useExpenses();
   const { colors, dark } = useTheme();
@@ -32,6 +42,12 @@ export default function AccountScreen() {
   const [showAboutModal, setShowAboutModal] = useState(false);
   const [infoModalTitle, setInfoModalTitle] = useState<string | null>(null);
   const [infoModalBody, setInfoModalBody] = useState<string | null>(null);
+  const [showPhotoActions, setShowPhotoActions] = useState(false);
+  const [showPhotoPreview, setShowPhotoPreview] = useState(false);
+  const [pendingPhoto, setPendingPhoto] = useState<ImagePickerAsset | null>(null);
+  const [photoError, setPhotoError] = useState<string | null>(null);
+  const [isPickingPhoto, setIsPickingPhoto] = useState(false);
+  const [isSavingPhoto, setIsSavingPhoto] = useState(false);
 
   const totalTracked = expenses.reduce((sum, expense) => sum + (expense.amount || 0), 0);
   const totalBalance = Math.max(0, budget - totalTracked);
@@ -50,6 +66,74 @@ export default function AccountScreen() {
     setInfoModalBody(body);
   };
 
+  const choosePhoto = async () => {
+    setPhotoError(null);
+    setShowPhotoActions(false);
+    setIsPickingPhoto(true);
+
+    try {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ["images"],
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.85,
+      });
+
+      if (result.canceled || !result.assets?.[0]) return;
+      const asset = result.assets[0];
+      const validationError = validateProfileImage(asset);
+      if (validationError) {
+        setPhotoError(validationError);
+        setShowPhotoActions(true);
+        return;
+      }
+
+      setPendingPhoto(asset);
+      setShowPhotoPreview(true);
+    } catch {
+      setPhotoError("The photo picker could not open. Please try again.");
+      setShowPhotoActions(true);
+    } finally {
+      setIsPickingPhoto(false);
+    }
+  };
+
+  const confirmPhotoChange = async () => {
+    if (!pendingPhoto || !account) return;
+    setIsSavingPhoto(true);
+    setPhotoError(null);
+
+    let savedUri: string | null = null;
+    try {
+      savedUri = await persistProfilePicture(pendingPhoto, account.email);
+      await updateProfilePicture(savedUri);
+      removeStoredProfilePicture(account.profilePictureUri);
+      setShowPhotoPreview(false);
+      setPendingPhoto(null);
+    } catch (error) {
+      if (savedUri) removeStoredProfilePicture(savedUri);
+      setPhotoError(error instanceof Error ? error.message : "Could not save this photo. Please try again.");
+    } finally {
+      setIsSavingPhoto(false);
+    }
+  };
+
+  const removePhoto = async () => {
+    if (!account?.profilePictureUri) return;
+    setIsSavingPhoto(true);
+    setPhotoError(null);
+
+    try {
+      await updateProfilePicture(null);
+      removeStoredProfilePicture(account.profilePictureUri);
+      setShowPhotoActions(false);
+    } catch {
+      setPhotoError("Could not remove this photo. Please try again.");
+    } finally {
+      setIsSavingPhoto(false);
+    }
+  };
+
   if (!hydrated) {
     return (
       <View style={[styles.container, { backgroundColor: colors.background }]}>
@@ -57,16 +141,6 @@ export default function AccountScreen() {
       </View>
     );
   }
-
-  const initials =
-    (account?.name || "Alex Johnson")
-      .trim()
-      .split(/\s+/)
-      .map((part) => part[0])
-      .filter(Boolean)
-      .join("")
-      .slice(0, 2)
-      .toUpperCase() || "AJ";
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
@@ -104,11 +178,38 @@ export default function AccountScreen() {
 
           {/* User Profile Info */}
           <View style={styles.profileSection}>
-            <View style={styles.avatarBorder}>
-              <View style={styles.avatarInner}>
-                <Text style={styles.avatarInitials}>{initials}</Text>
+            <View style={styles.avatarEditWrap}>
+              <View style={styles.avatarBorder}>
+                <ProfileAvatar
+                  account={account}
+                  size={70}
+                  backgroundColor="#245844"
+                  textColor="#FFFFFF"
+                  fontSize={24}
+                />
               </View>
+              <Pressable
+                style={({ pressed }) => [styles.photoEditButton, pressed && styles.pressed]}
+                onPress={() => {
+                  setPhotoError(null);
+                  setShowPhotoActions(true);
+                }}
+                accessibilityRole="button"
+                accessibilityLabel="Change profile picture"
+              >
+                <Ionicons name="camera" size={15} color="#16382B" />
+              </Pressable>
             </View>
+            <Pressable
+              onPress={() => {
+                setPhotoError(null);
+                setShowPhotoActions(true);
+              }}
+              accessibilityRole="button"
+              accessibilityLabel="Edit profile picture"
+            >
+              <Text style={styles.photoEditLabel}>Edit photo</Text>
+            </Pressable>
             <Text style={styles.userName}>{account?.name || "Alex Johnson"}</Text>
             <Text style={styles.userEmail}>{account?.email || "alex.johnson@example.com"}</Text>
           </View>
@@ -306,6 +407,132 @@ export default function AccountScreen() {
         </View>
       </ScrollView>
 
+      <Modal
+        visible={showPhotoActions}
+        animationType="fade"
+        transparent
+        onRequestClose={() => setShowPhotoActions(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <Pressable style={styles.modalBackdrop} onPress={() => setShowPhotoActions(false)} />
+          <View style={[styles.photoModalSheet, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+            <View style={styles.infoModalHeader}>
+              <Text style={[styles.infoModalTitle, { color: colors.foreground }]}>Profile photo</Text>
+              <Pressable
+                onPress={() => setShowPhotoActions(false)}
+                style={({ pressed }) => [styles.closeBtn, pressed && { opacity: 0.7 }]}
+                accessibilityRole="button"
+                accessibilityLabel="Close profile photo options"
+              >
+                <Ionicons name="close" size={22} color={colors.muted} />
+              </Pressable>
+            </View>
+
+            {photoError ? <Text style={styles.photoErrorText}>{photoError}</Text> : null}
+
+            <Pressable
+              style={({ pressed }) => [styles.photoActionButton, { backgroundColor: "#16382B" }, pressed && styles.pressed]}
+              onPress={choosePhoto}
+              disabled={isPickingPhoto || isSavingPhoto}
+              accessibilityRole="button"
+            >
+              {isPickingPhoto ? (
+                <ActivityIndicator color="#FFFFFF" />
+              ) : (
+                <>
+                  <Ionicons name="image-outline" size={19} color="#FFFFFF" />
+                  <Text style={styles.photoPrimaryActionText}>Choose Photo</Text>
+                </>
+              )}
+            </Pressable>
+
+            {account?.profilePictureUri ? (
+              <Pressable
+                style={({ pressed }) => [styles.photoActionButton, styles.photoRemoveButton, pressed && styles.pressed]}
+                onPress={removePhoto}
+                disabled={isSavingPhoto}
+                accessibilityRole="button"
+              >
+                {isSavingPhoto ? (
+                  <ActivityIndicator color="#FF6554" />
+                ) : (
+                  <>
+                    <Ionicons name="trash-outline" size={18} color="#FF6554" />
+                    <Text style={styles.photoRemoveText}>Remove Photo</Text>
+                  </>
+                )}
+              </Pressable>
+            ) : null}
+
+            <Pressable
+              style={({ pressed }) => [styles.photoCancelButton, pressed && styles.pressed]}
+              onPress={() => setShowPhotoActions(false)}
+              accessibilityRole="button"
+            >
+              <Text style={[styles.photoCancelText, { color: colors.muted }]}>Cancel</Text>
+            </Pressable>
+          </View>
+        </View>
+      </Modal>
+
+      <Modal
+        visible={showPhotoPreview}
+        animationType="fade"
+        transparent
+        onRequestClose={() => {
+          if (!isSavingPhoto) {
+            setShowPhotoPreview(false);
+            setPendingPhoto(null);
+            setPhotoError(null);
+          }
+        }}
+      >
+        <View style={styles.modalOverlay}>
+          <Pressable
+            style={styles.modalBackdrop}
+            onPress={() => {
+              if (!isSavingPhoto) {
+                setShowPhotoPreview(false);
+                setPendingPhoto(null);
+                setPhotoError(null);
+              }
+            }}
+          />
+          <View style={[styles.photoPreviewSheet, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+            <Text style={[styles.infoModalTitle, { color: colors.foreground, textAlign: "center" }]}>Preview photo</Text>
+            {pendingPhoto ? (
+              <Image source={{ uri: pendingPhoto.uri }} style={styles.photoPreviewImage} resizeMode="cover" />
+            ) : null}
+            {photoError ? <Text style={styles.photoErrorText}>{photoError}</Text> : null}
+            <Pressable
+              style={({ pressed }) => [styles.photoActionButton, { backgroundColor: "#16382B" }, pressed && styles.pressed]}
+              onPress={confirmPhotoChange}
+              disabled={isSavingPhoto || !pendingPhoto}
+              accessibilityRole="button"
+            >
+              {isSavingPhoto ? (
+                <ActivityIndicator color="#FFFFFF" />
+              ) : (
+                <Text style={styles.photoPrimaryActionText}>Use Photo</Text>
+              )}
+            </Pressable>
+            <Pressable
+              style={({ pressed }) => [styles.photoCancelButton, pressed && styles.pressed]}
+              onPress={() => {
+                if (isSavingPhoto) return;
+                setShowPhotoPreview(false);
+                setPendingPhoto(null);
+                setPhotoError(null);
+              }}
+              disabled={isSavingPhoto}
+              accessibilityRole="button"
+            >
+              <Text style={[styles.photoCancelText, { color: colors.muted }]}>Cancel</Text>
+            </Pressable>
+          </View>
+        </View>
+      </Modal>
+
       {/* Info Dialog Modal */}
       <Modal
         visible={Boolean(infoModalTitle)}
@@ -408,6 +635,10 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginTop: 4,
   },
+  avatarEditWrap: {
+    position: "relative",
+    marginBottom: 8,
+  },
   avatarBorder: {
     width: 76,
     height: 76,
@@ -416,24 +647,30 @@ const styles = StyleSheet.create({
     borderColor: "#FFFFFF",
     alignItems: "center",
     justifyContent: "center",
-    marginBottom: 10,
     shadowColor: "#000000",
     shadowOpacity: 0.25,
     shadowRadius: 10,
     shadowOffset: { width: 0, height: 4 },
   },
-  avatarInner: {
-    width: 70,
-    height: 70,
-    borderRadius: 35,
-    backgroundColor: "#245844",
+  photoEditButton: {
+    position: "absolute",
+    right: -2,
+    bottom: 2,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    borderWidth: 2,
+    borderColor: "#FFFFFF",
+    backgroundColor: "#A7F3D0",
     alignItems: "center",
     justifyContent: "center",
+    ...(Platform.OS === "web" ? ({ cursor: "pointer" } as any) : {}),
   },
-  avatarInitials: {
-    fontSize: 24,
-    color: "#FFFFFF",
-    fontFamily: "Fraunces_700Bold",
+  photoEditLabel: {
+    color: "#A7F3D0",
+    fontSize: 11,
+    fontWeight: "700",
+    marginBottom: 7,
   },
   userName: {
     fontSize: 20,
@@ -533,6 +770,79 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.25,
     shadowRadius: 16,
     elevation: 4,
+  },
+  photoModalSheet: {
+    width: "100%",
+    maxWidth: 380,
+    borderRadius: 22,
+    borderWidth: 1,
+    padding: 20,
+    shadowColor: "#000000",
+    shadowOpacity: 0.25,
+    shadowRadius: 16,
+    elevation: 4,
+  },
+  photoPreviewSheet: {
+    width: "100%",
+    maxWidth: 380,
+    alignItems: "center",
+    borderRadius: 22,
+    borderWidth: 1,
+    padding: 20,
+    shadowColor: "#000000",
+    shadowOpacity: 0.25,
+    shadowRadius: 16,
+    elevation: 4,
+  },
+  photoPreviewImage: {
+    width: 208,
+    height: 208,
+    borderRadius: 104,
+    marginTop: 20,
+    marginBottom: 10,
+    backgroundColor: "#245844",
+  },
+  photoErrorText: {
+    color: "#FF6554",
+    fontSize: 12.5,
+    lineHeight: 18,
+    fontWeight: "600",
+    marginBottom: 12,
+  },
+  photoActionButton: {
+    minHeight: 48,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 9,
+    borderRadius: 14,
+    marginTop: 8,
+    paddingHorizontal: 14,
+  },
+  photoPrimaryActionText: {
+    color: "#FFFFFF",
+    fontSize: 14,
+    fontWeight: "700",
+  },
+  photoRemoveButton: {
+    borderWidth: 1,
+    borderColor: "rgba(255,101,84,0.35)",
+    backgroundColor: "rgba(255,101,84,0.07)",
+  },
+  photoRemoveText: {
+    color: "#FF6554",
+    fontSize: 14,
+    fontWeight: "700",
+  },
+  photoCancelButton: {
+    minHeight: 42,
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: 4,
+  },
+  photoCancelText: {
+    fontSize: 13,
+    fontWeight: "600",
   },
   infoModalHeader: {
     flexDirection: "row",

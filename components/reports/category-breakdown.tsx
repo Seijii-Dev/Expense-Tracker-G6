@@ -11,7 +11,7 @@ import { formatMoney, formatPercent } from "@/utils/formatters";
 
 interface CategoryBreakdownProps {
   categoryTotals: CategoryTotal[];
-  monthTotal: number;
+  periodTotal: number;
   maxCategorySpend: number;
   activeCount: number;
   customCategories?: CustomCategory[];
@@ -19,7 +19,7 @@ interface CategoryBreakdownProps {
 
 export function CategoryBreakdown({
   categoryTotals,
-  monthTotal,
+  periodTotal,
   maxCategorySpend,
   activeCount,
   customCategories,
@@ -65,14 +65,14 @@ export function CategoryBreakdown({
       {activeCount === 0 ? (
         <EmptyState
           icon="pie-chart-outline"
-          title="No spending this month"
+          title="No spending in this period"
           description="Log expenses to see your category breakdown and spending share."
         />
       ) : (
         <View style={styles.bars}>
           {categoryTotals.map(({ category, total }, index) => {
             const meta = getCategoryStyle(category, customCategories);
-            const percentStr = formatPercent(total, monthTotal);
+            const percentStr = formatPercent(total, periodTotal);
             const rank = index + 1;
 
             return (
@@ -261,4 +261,3 @@ const styles = StyleSheet.create({
     borderRadius: 4,
   },
 });
-

@@ -9,10 +9,10 @@ import { PAYMENT_ICON_COLORS } from "@/constants/categories";
 
 interface PaymentMethodsProps {
   paymentTotals: PaymentTotal[];
-  monthTotal: number;
+  periodTotal: number;
 }
 
-export function PaymentMethods({ paymentTotals, monthTotal }: PaymentMethodsProps) {
+export function PaymentMethods({ paymentTotals, periodTotal }: PaymentMethodsProps) {
   const { colors, dark } = useTheme();
   const { width: windowWidth } = useWindowDimensions();
   const isNarrow = windowWidth < 380;
@@ -58,7 +58,7 @@ export function PaymentMethods({ paymentTotals, monthTotal }: PaymentMethodsProp
       <View style={styles.paymentGrid}>
         {paymentTotals.map(({ payment, total }) => {
           const brandColor = PAYMENT_ICON_COLORS[payment] || colors.primary;
-          const pct = monthTotal > 0 ? (total / monthTotal) * 100 : 0;
+          const pct = periodTotal > 0 ? (total / periodTotal) * 100 : 0;
 
           return (
             <View
@@ -82,7 +82,7 @@ export function PaymentMethods({ paymentTotals, monthTotal }: PaymentMethodsProp
                     {payment}
                   </Text>
                   <Text style={[styles.paymentPct, { color: colors.muted }]}>
-                    {formatPercent(total, monthTotal)}
+                    {formatPercent(total, periodTotal)}
                   </Text>
                 </View>
               </View>
@@ -211,4 +211,3 @@ const styles = StyleSheet.create({
     borderRadius: 3,
   },
 });
-

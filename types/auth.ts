@@ -3,6 +3,7 @@ export type Account = {
   name: string;
   email: string;
   budget: number;
+  profilePictureUri?: string | null;
 };
 
 export type RemoteAccount = Account;
@@ -15,4 +16,5 @@ export type AuthContextValue = {
   login: (email: string, password: string) => Promise<{ ok: boolean; message?: string }>;
   logout: () => Promise<void>;
   refreshAccount: (account: RemoteAccount) => void;
+  updateProfilePicture: (uri: string | null) => Promise<void>;
 };

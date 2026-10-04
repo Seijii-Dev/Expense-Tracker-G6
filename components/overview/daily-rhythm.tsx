@@ -6,7 +6,7 @@ import { Expense } from "@/types/expense";
 import { useTheme } from "@/lib/theme-store";
 import { GlassSurface } from "@/components/ui/glass-surface";
 import { formatMoney } from "@/utils/formatters";
-import { getPhilippinesDate, getWeekdayShort, normalizeDate } from "@/utils/date";
+import { addCalendarDays, getExpenseDateKey, getPhilippinesDate, getWeekdayShort } from "@/utils/date";
 
 interface DailyRhythmProps {
   expenses: Expense[];
@@ -20,11 +20,10 @@ export const DailyRhythm = React.memo(function DailyRhythm({ expenses }: DailyRh
 
 
   const { days, max, weekTotal } = React.useMemo(() => {
-    const anchor = new Date(`${getPhilippinesDate()}T12:00:00Z`);
     const dayList = Array.from({ length: 7 }, (_, index) => {
-      const date = new Date(anchor);
-      date.setUTCDate(anchor.getUTCDate() - (6 - index));
-      const key = getPhilippinesDate(date);
+      const key = addCalendarDays(getPhilippinesDate(), index - 6);
+      const [year, month, day] = key.split("-").map(Number);
+      const date = new Date(Date.UTC(year, month - 1, day, 12));
       return {
         key,
         dayName: getWeekdayShort(date),
@@ -39,7 +38,7 @@ export const DailyRhythm = React.memo(function DailyRhythm({ expenses }: DailyRh
     }
 
     for (const exp of expenses) {
-      const k = normalizeDate(exp.date);
+      const k = getExpenseDateKey(exp.date);
       if (dayMap.has(k)) {
         dayMap.set(k, (dayMap.get(k) || 0) + (exp.amount || 0));
       }
@@ -312,4 +311,3 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
 });
-

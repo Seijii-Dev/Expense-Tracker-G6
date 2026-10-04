@@ -1,7 +1,6 @@
-import React from "react";
-import { Platform, RefreshControl, ScrollView, StyleSheet, Text, View } from "react-native";
+import React, { useMemo, useState } from "react";
+import { Platform, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { LinearGradient } from "expo-linear-gradient";
 import { ScreenContainer } from "@/components/screen-container";
 import { ScreenHeader } from "@/components/common/screen-header";
 import { CategoryBreakdown } from "@/components/reports/category-breakdown";
@@ -13,33 +12,52 @@ import { formatMoney, formatPercent } from "@/utils/formatters";
 import { useReportMetrics } from "@/hooks/useReportMetrics";
 import { ReportsSkeleton } from "@/components/ui/reports-skeleton";
 
-import { useState } from "react";
-import { Pressable } from "react-native";
 import * as Haptics from "expo-haptics";
 import { SpendingTrendChart } from "@/components/reports/spending-trend-chart";
+import { getPhilippinesDate } from "@/utils/date";
+import { DatePickerModal } from "@/components/common/date-picker-modal";
+import {
+  buildSpendingTimeline,
+  shiftTrajectoryAnchorDate,
+  TrajectoryInterval,
+} from "@/utils/spending-trajectory";
 
 export default function ReportsScreen() {
   const { expenses, refreshExpenses, syncing, hydrated, allCategories, customCategories } = useExpenses();
   const { colors, dark } = useTheme();
 
-  const [timeframe, setTimeframe] = useState<"Monthly" | "Weekly" | "Yearly">("Monthly");
-  const [currentDate] = useState(new Date());
-
-  const formattedMonthYear = currentDate.toLocaleString("en-US", { month: "long", year: "numeric" });
+  const [timeframe, setTimeframe] = useState<TrajectoryInterval>("Day");
+  const [selectedDate, setSelectedDate] = useState(() => getPhilippinesDate());
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const todayDate = getPhilippinesDate();
+  const timeline = useMemo(
+    () => buildSpendingTimeline(expenses, timeframe, selectedDate),
+    [expenses, timeframe, selectedDate]
+  );
 
   const {
-    monthExpenses,
-    monthTotal,
+    monthExpenses: periodExpenses,
+    monthTotal: periodTotal,
     categoryTotals,
     paymentTotals,
     activeCategoryCount,
     maxCategorySpend,
     topCategory,
-  } = useReportMetrics(expenses, allCategories);
+  } = useReportMetrics(expenses, allCategories, timeline.expenses);
 
-  const averageExpenseSize = monthExpenses.length
-    ? formatMoney(monthTotal / monthExpenses.length)
-    : "₱0";
+  const averageExpenseSize = periodExpenses.length
+    ? formatMoney(periodTotal / periodExpenses.length)
+    : formatMoney(0);
+
+  const navigateDate = (direction: -1 | 1) => {
+    try {
+      Haptics.selectionAsync();
+    } catch {
+      // Non-fatal
+    }
+    const nextDate = shiftTrajectoryAnchorDate(timeframe, selectedDate, direction);
+    setSelectedDate(direction > 0 && nextDate > todayDate ? todayDate : nextDate);
+  };
 
   if (!hydrated) {
     return (
@@ -71,11 +89,13 @@ export default function ReportsScreen() {
 
         {/* Timeframe Segmented Control (Screen 3 Mockup) */}
         <View style={[styles.timeframeRow, { backgroundColor: dark ? "rgba(255,255,255,0.06)" : colors.surfaceSubtle }]}>
-          {(["Monthly", "Weekly", "Yearly"] as const).map((tab) => {
+          {(["Day", "Weekly", "Monthly", "Yearly"] as const).map((tab) => {
             const isActive = timeframe === tab;
             return (
               <Pressable
                 key={tab}
+                accessibilityRole="button"
+                accessibilityState={{ selected: isActive }}
                 onPress={() => {
                   try {
                     Haptics.selectionAsync();
@@ -111,21 +131,55 @@ export default function ReportsScreen() {
           })}
         </View>
 
-        {/* Month Navigator Header (Screen 3 Mockup) */}
+        {/* Selected period navigation */}
         <View style={styles.dateNavigator}>
-          <Pressable style={styles.navArrowBtn}>
+          <Pressable
+            style={styles.navArrowBtn}
+            onPress={() => navigateDate(-1)}
+            accessibilityRole="button"
+            accessibilityLabel="Show previous period"
+          >
             <Ionicons name="chevron-back" size={18} color={colors.muted} />
           </Pressable>
-          <View style={styles.dateLabelRow}>
-            <Text style={[styles.dateNavigatorText, { color: colors.foreground }]}>
-              {formattedMonthYear}
+          <Pressable
+            style={styles.dateLabelRow}
+            onPress={() => setShowDatePicker(true)}
+            accessibilityRole="button"
+            accessibilityLabel={`Choose reporting date, currently ${timeline.rangeLabel}`}
+          >
+            <Text
+              style={[styles.dateNavigatorText, { color: colors.foreground }]}
+              numberOfLines={1}
+              adjustsFontSizeToFit
+            >
+              {timeline.rangeLabel}
             </Text>
             <Ionicons name="calendar-outline" size={15} color="#10B981" style={{ marginLeft: 6 }} />
-          </View>
-          <Pressable style={styles.navArrowBtn}>
-            <Ionicons name="chevron-forward" size={18} color={colors.muted} />
+          </Pressable>
+          <Pressable
+            style={[styles.navArrowBtn, selectedDate >= todayDate && styles.disabledNavArrow]}
+            onPress={() => navigateDate(1)}
+            disabled={selectedDate >= todayDate}
+            accessibilityRole="button"
+            accessibilityLabel="Show next period"
+          >
+            <Ionicons name="chevron-forward" size={18} color={selectedDate >= todayDate ? colors.subtle : colors.muted} />
           </Pressable>
         </View>
+
+        {selectedDate !== todayDate && (
+          <View style={styles.todayActionRow}>
+            <Pressable
+              onPress={() => setSelectedDate(todayDate)}
+              accessibilityRole="button"
+              accessibilityLabel="Show today's report"
+              style={[styles.todayAction, { backgroundColor: dark ? "rgba(16,185,129,0.18)" : colors.primarySoft }]}
+            >
+              <Ionicons name="today-outline" size={14} color={colors.primary} />
+              <Text style={[styles.todayActionText, { color: colors.primary }]}>Today</Text>
+            </Pressable>
+          </View>
+        )}
 
         {/* Total Spending Card matching Mockup Screen 3 */}
         <View
@@ -143,7 +197,7 @@ export default function ReportsScreen() {
             <View>
               <Text style={[styles.spendCardLabel, { color: colors.muted }]}>Total Spending</Text>
               <Text style={[styles.spendCardAmount, { color: colors.foreground }]}>
-                {formatMoney(monthTotal)}
+                {formatMoney(timeline.total)}
               </Text>
             </View>
             <View style={styles.chartIconBadge}>
@@ -152,25 +206,25 @@ export default function ReportsScreen() {
           </View>
 
           <View style={styles.spendTrendBadge}>
-            <Ionicons name="arrow-down" size={13} color="#10B981" />
-            <Text style={styles.spendTrendText}>12% vs. last month</Text>
+            <Ionicons name="calendar-outline" size={13} color="#10B981" />
+            <Text style={styles.spendTrendText}>{timeline.intervalLabel} spending · {timeline.rangeLabel}</Text>
           </View>
         </View>
 
         {/* Spending Trajectory Area Curve Chart */}
-        <SpendingTrendChart expenses={monthExpenses} monthTotal={monthTotal} />
+        <SpendingTrendChart timeline={timeline} />
 
         {/* Category Breakdown Panel */}
         <CategoryBreakdown
           categoryTotals={categoryTotals}
-          monthTotal={monthTotal}
+          periodTotal={timeline.total}
           maxCategorySpend={maxCategorySpend}
           activeCount={activeCategoryCount}
           customCategories={customCategories}
         />
 
         {/* Payment Methods Panel */}
-        <PaymentMethods paymentTotals={paymentTotals} monthTotal={monthTotal} />
+        <PaymentMethods paymentTotals={paymentTotals} periodTotal={timeline.total} />
 
         {/* Observations Panel */}
         <View
@@ -215,17 +269,17 @@ export default function ReportsScreen() {
               topCategory
                 ? `You’ve logged ${formatMoney(topCategory.total)} on ${topCategory.category.toLowerCase()} (${formatPercent(
                     topCategory.total,
-                    monthTotal
-                  )} of this month's spending).`
+                    timeline.total
+                  )} of this period's spending).`
                 : "Add expenses to see category breakdown insights."
             }
           />
           <ReportNote
             number="02"
-            title={`${expenses.length} expense ${expenses.length === 1 ? "record" : "records"} so far`}
+            title={`${periodExpenses.length} expense ${periodExpenses.length === 1 ? "record" : "records"} in this period`}
             copy={
-              expenses.length
-                ? "Your records automatically sync to your secure account and remain cached offline."
+              periodExpenses.length
+                ? "These records are included in the selected spending range. Your ledger remains available offline."
                 : "Your transaction activity patterns will appear here once you log expenses."
             }
           />
@@ -233,14 +287,25 @@ export default function ReportsScreen() {
             number="03"
             title="Average expense size"
             copy={
-              monthExpenses.length
-                ? `Your average transaction this month is ${averageExpenseSize}.`
+              periodExpenses.length
+                ? `Your average transaction in this period is ${averageExpenseSize}.`
                 : "Add transactions to calculate your average expense size."
             }
             last
           />
         </View>
       </ScrollView>
+      <DatePickerModal
+        visible={showDatePicker}
+        selectedDate={selectedDate}
+        maxDate={todayDate}
+        title={timeframe === "Day" ? "Choose reporting day" : "Choose report date"}
+        onClose={() => setShowDatePicker(false)}
+        onSelect={(date) => {
+          setSelectedDate(date);
+          setShowDatePicker(false);
+        }}
+      />
     </ScreenContainer>
   );
 }
@@ -284,6 +349,9 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     ...(Platform.OS === "web" ? ({ cursor: "pointer" } as any) : {}),
   },
+  disabledNavArrow: {
+    opacity: 0.45,
+  },
   dateLabelRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -292,6 +360,23 @@ const styles = StyleSheet.create({
     fontFamily: "Fraunces_700Bold",
     fontSize: 16,
     letterSpacing: -0.2,
+  },
+  todayActionRow: {
+    alignItems: "flex-end",
+    marginTop: -10,
+    marginBottom: 10,
+  },
+  todayAction: {
+    minHeight: 34,
+    borderRadius: 11,
+    paddingHorizontal: 11,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+  },
+  todayActionText: {
+    fontSize: 11,
+    fontWeight: "800",
   },
   spendCard: {
     padding: 18,

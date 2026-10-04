@@ -5,7 +5,7 @@ import { api } from "@/lib/api-client";
 import { Category, CustomCategory, Expense, NewExpenseData, Payment } from "@/types/expense";
 import { CATEGORIES, CATEGORY_META } from "@/constants/categories";
 import { STORAGE_KEYS } from "@/constants/storage";
-import { getPhilippinesDate, getPhilippinesMonth, normalizeDate } from "@/utils/date";
+import { getExpenseDateKey, getPhilippinesDate, getPhilippinesMonth, normalizeDate } from "@/utils/date";
 
 export type { Category, Payment, Expense };
 export const categoryMeta = CATEGORY_META;
@@ -46,10 +46,13 @@ type PendingSyncItem =
 const ExpenseContext = createContext<ExpenseContextValue | null>(null);
 
 function sanitizeExpense(expense: NewExpenseData): NewExpenseData {
+  const hasValidTimestamp =
+    /^\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}/.test(expense.date) &&
+    Number.isFinite(Date.parse(expense.date));
   return {
     ...expense,
     amount: Math.max(0.01, isNaN(expense.amount) ? 0 : Math.round(expense.amount * 100) / 100),
-    date: normalizeDate(expense.date),
+    date: hasValidTimestamp ? expense.date : normalizeDate(expense.date),
   };
 }
 
@@ -127,7 +130,7 @@ export function ExpenseProvider({ children }: { children: React.ReactNode }) {
                     e.id === item.tempId
                       ? {
                           ...res.expense,
-                          date: normalizeDate(res.expense.date),
+                          date: res.expense.date,
                           category: res.expense.category as Category,
                           payment: res.expense.payment as Payment,
                         }
@@ -160,7 +163,7 @@ export function ExpenseProvider({ children }: { children: React.ReactNode }) {
       if (expensesResult.ok) {
         const remote: Expense[] = expensesResult.expenses.map((e) => ({
           ...e,
-          date: normalizeDate(e.date),
+          date: e.date,
           category: e.category as Category,
           payment: e.payment as Payment,
         }));
@@ -243,7 +246,7 @@ export function ExpenseProvider({ children }: { children: React.ReactNode }) {
                 setExpenses(
                   parsed.map((item) => ({
                     ...item,
-                    date: normalizeDate(item.date),
+                    date: String(item.date ?? ""),
                   }))
                 );
               }
@@ -293,7 +296,7 @@ export function ExpenseProvider({ children }: { children: React.ReactNode }) {
     let tTotal = 0;
 
     for (const expense of expenses) {
-      const normDate = normalizeDate(expense.date);
+      const normDate = getExpenseDateKey(expense.date);
       const amt = expense.amount || 0;
       if (normDate.startsWith(currentMonth)) {
         mTotal += amt;
@@ -363,7 +366,7 @@ export function ExpenseProvider({ children }: { children: React.ReactNode }) {
                 item.id === localId
                   ? {
                       ...result.expense,
-                      date: normalizeDate(result.expense.date),
+                      date: result.expense.date,
                       category: result.expense.category as Category,
                       payment: result.expense.payment as Payment,
                     }

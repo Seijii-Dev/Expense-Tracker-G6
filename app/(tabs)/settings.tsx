@@ -13,6 +13,7 @@ import {
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Ionicons } from "@expo/vector-icons";
+import { router } from "expo-router";
 import * as Haptics from "expo-haptics";
 import { ScreenContainer } from "@/components/screen-container";
 import { CategoryIcon } from "@/components/ui/category-icon";
@@ -51,7 +52,6 @@ export default function SettingsScreen() {
   const [showStorageDialog, setShowStorageDialog] = useState(false);
   const [showCategoryModal, setShowCategoryModal] = useState(false);
   const [showBudgetModal, setShowBudgetModal] = useState(false);
-  const [showCurrencyModal, setShowCurrencyModal] = useState(false);
   const [showBackupModal, setShowBackupModal] = useState(false);
   const [showAboutModal, setShowAboutModal] = useState(false);
   const [categoryToDelete, setCategoryToDelete] = useState<string | null>(null);
@@ -208,6 +208,34 @@ export default function SettingsScreen() {
             />
           </Pressable>
 
+          {/* Account shortcut */}
+          <Pressable
+            style={({ pressed }) => [
+              styles.settingRow,
+              { borderBottomColor: colors.border },
+              pressed && styles.pressed,
+            ]}
+            onPress={() => router.push("/(tabs)/account")}
+            accessibilityRole="button"
+            accessibilityLabel="Account. Manage your profile and account information"
+          >
+            <View
+              style={[
+                styles.iconCircle,
+                { backgroundColor: dark ? "rgba(16, 185, 129, 0.2)" : "#D1FAE5" },
+              ]}
+            >
+              <Ionicons name="person-outline" size={20} color="#10B981" />
+            </View>
+            <View style={styles.rowContent}>
+              <Text style={[styles.rowTitle, { color: colors.foreground }]}>Account</Text>
+              <Text style={[styles.rowSubtitle, { color: colors.muted }]}>
+                Manage your profile and account information
+              </Text>
+            </View>
+            <Ionicons name="chevron-forward" size={18} color={colors.muted} />
+          </Pressable>
+
           {/* 2. Notifications */}
           <Pressable
             style={({ pressed }) => [
@@ -276,19 +304,12 @@ export default function SettingsScreen() {
           </Pressable>
 
           {/* 4. Currency */}
-          <Pressable
-            style={({ pressed }) => [
+          <View
+            style={[
               styles.settingRow,
               { borderBottomColor: colors.border },
-              pressed && styles.pressed,
+              Platform.OS === "web" && ({ cursor: "default" } as any),
             ]}
-            onPress={() => {
-              try {
-                Haptics.selectionAsync();
-              } catch {}
-              setShowCurrencyModal(true);
-            }}
-            accessibilityRole="button"
           >
             <View
               style={[
@@ -301,11 +322,11 @@ export default function SettingsScreen() {
             <View style={styles.rowContent}>
               <Text style={[styles.rowTitle, { color: colors.foreground }]}>Currency</Text>
               <Text style={[styles.rowSubtitle, { color: colors.muted }]}>
-                USD - US Dollar / PHP
+                Philippine Peso (PHP) · ₱
               </Text>
             </View>
-            <Ionicons name="chevron-forward" size={18} color={colors.muted} />
-          </Pressable>
+            <Ionicons name="checkmark-circle" size={19} color={colors.primary} />
+          </View>
 
           {/* 5. Data & Backup */}
           <Pressable
@@ -535,72 +556,6 @@ export default function SettingsScreen() {
             >
               <Text style={styles.primaryModalBtnText}>Save Budget</Text>
             </Pressable>
-          </View>
-        </View>
-      </Modal>
-
-      {/* Currency Modal */}
-      <Modal
-        visible={showCurrencyModal}
-        animationType="fade"
-        transparent
-        onRequestClose={() => setShowCurrencyModal(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <Pressable style={styles.modalBackdrop} onPress={() => setShowCurrencyModal(false)} />
-          <View
-            style={[
-              styles.modalSheet,
-              { backgroundColor: colors.surface, borderColor: colors.border },
-            ]}
-          >
-            <View style={styles.modalHeader}>
-              <Text style={[styles.modalTitle, { color: colors.foreground }]}>Select Currency</Text>
-              <Pressable
-                onPress={() => setShowCurrencyModal(false)}
-                style={({ pressed }) => [styles.closeBtn, pressed && { opacity: 0.7 }]}
-              >
-                <Ionicons name="close" size={22} color={colors.muted} />
-              </Pressable>
-            </View>
-
-            <View style={styles.currencyList}>
-              <View
-                style={[
-                  styles.currencyItem,
-                  {
-                    backgroundColor: dark ? "rgba(22, 56, 43, 0.2)" : "#EAFBF1",
-                    borderColor: "#16382B",
-                  },
-                ]}
-              >
-                <View>
-                  <Text style={[styles.currencyName, { color: colors.foreground }]}>
-                    Philippine Peso (PHP)
-                  </Text>
-                  <Text style={[styles.currencySymbol, { color: colors.muted }]}>₱ — Primary</Text>
-                </View>
-                <Ionicons name="checkmark-circle" size={20} color="#16382B" />
-              </View>
-
-              <View
-                style={[
-                  styles.currencyItem,
-                  {
-                    backgroundColor: dark ? "rgba(255,255,255,0.03)" : colors.surfaceSubtle,
-                    borderColor: colors.border,
-                    opacity: 0.7,
-                  },
-                ]}
-              >
-                <View>
-                  <Text style={[styles.currencyName, { color: colors.foreground }]}>
-                    US Dollar (USD)
-                  </Text>
-                  <Text style={[styles.currencySymbol, { color: colors.muted }]}>$ — Supported</Text>
-                </View>
-              </View>
-            </View>
           </View>
         </View>
       </Modal>
@@ -929,26 +884,6 @@ const styles = StyleSheet.create({
   secondaryModalBtnText: {
     fontSize: 14,
     fontWeight: "600",
-  },
-  currencyList: {
-    gap: 10,
-    marginBottom: 10,
-  },
-  currencyItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    padding: 14,
-    borderRadius: 14,
-    borderWidth: 1,
-  },
-  currencyName: {
-    fontSize: 14.5,
-    fontWeight: "700",
-  },
-  currencySymbol: {
-    fontSize: 12,
-    marginTop: 2,
   },
   backupCard: {
     alignItems: "center",

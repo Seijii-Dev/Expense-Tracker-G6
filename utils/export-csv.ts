@@ -3,13 +3,14 @@ import * as FileSystem from "expo-file-system/legacy";
 import * as Sharing from "expo-sharing";
 import { Expense } from "@/types/expense";
 import { requestStoragePermission } from "@/utils/storage-permission";
+import { getPhilippinesDate } from "@/utils/date";
 
 function escapeCsvField(value: string | number | undefined | null): string {
   return `"${String(value ?? "").replace(/"/g, '""')}"`;
 }
 
 export function generateExpenseCsv(expenses: Expense[]): string {
-  const headers = ["Date", "Description", "Category", "Payment", "Amount"];
+  const headers = ["Date", "Description", "Category", "Payment", "Amount (PHP)"];
   const rows = expenses.map((expense) =>
     [
       expense.date,
@@ -48,7 +49,7 @@ export async function exportExpensesToCsv(
   await requestStoragePermission();
 
   const csv = generateExpenseCsv(expenses);
-  const filename = `ledgerly-export-${new Date().toISOString().slice(0, 10)}.csv`;
+  const filename = `ledgerly-export-${getPhilippinesDate()}.csv`;
 
   if (Platform.OS === "web") {
     try {
