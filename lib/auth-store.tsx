@@ -3,12 +3,33 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { Platform } from "react-native";
 import { api, RemoteAccount } from "@/lib/api-client";
-import { Account, AuthContextValue } from "@/types/auth";
+import { Account, AuthContextValue, ProfileBannerMedia } from "@/types/auth";
 import { STORAGE_KEYS } from "@/constants/storage";
 
 export type { Account, AuthContextValue };
 
 const AuthContext = createContext<AuthContextValue | null>(null);
+
+function parseProfileBanner(value: string | null): ProfileBannerMedia | null {
+  if (!value) return null;
+  try {
+    const parsed = JSON.parse(value) as Partial<ProfileBannerMedia>;
+    if (
+      typeof parsed.uri !== "string" ||
+      (parsed.type !== "image" && parsed.type !== "video") ||
+      (parsed.type === "video" && (!Number.isFinite(parsed.durationMs) || (parsed.durationMs ?? Infinity) > 10_000))
+    ) {
+      return null;
+    }
+    return {
+      uri: parsed.uri,
+      type: parsed.type,
+      ...(parsed.type === "video" ? { durationMs: parsed.durationMs } : {}),
+    };
+  } catch {
+    return null;
+  }
+}
 
 async function safeSecureSet(key: string, value: string): Promise<void> {
   if (Platform.OS === "web") {
@@ -77,12 +98,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (!email) return;
 
     let mounted = true;
-    AsyncStorage.getItem(STORAGE_KEYS.profilePicture(email))
-      .then((uri) => {
+    Promise.all([
+      AsyncStorage.getItem(STORAGE_KEYS.profilePicture(email)).catch(() => null),
+      AsyncStorage.getItem(STORAGE_KEYS.profileBanner(email)).catch(() => null),
+    ])
+      .then(([uri, savedBanner]) => {
         if (!mounted) return;
+        const profileBanner = parseProfileBanner(savedBanner);
         setAccount((current) =>
-          current?.email === email && current.profilePictureUri !== uri
-            ? { ...current, profilePictureUri: uri }
+          current?.email === email &&
+          (current.profilePictureUri !== uri || current.profileBanner?.uri !== profileBanner?.uri)
+            ? {
+                ...current,
+                profilePictureUri: uri ?? current.profilePictureUri ?? null,
+                profileBanner: profileBanner ?? current.profileBanner ?? null,
+              }
             : current
         );
       })
@@ -138,10 +168,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (!mounted) return;
 
         if (result.ok) {
-          const profilePictureUri = await AsyncStorage.getItem(
-            STORAGE_KEYS.profilePicture(result.account.email)
-          ).catch(() => null);
-          const refreshedAccount: Account = { ...result.account, profilePictureUri };
+          const [profilePictureUri, savedBanner] = await Promise.all([
+            AsyncStorage.getItem(STORAGE_KEYS.profilePicture(result.account.email)).catch(() => null),
+            AsyncStorage.getItem(STORAGE_KEYS.profileBanner(result.account.email)).catch(() => null),
+          ]);
+          const cachedBanner =
+            accountRef.current?.email === result.account.email ? accountRef.current.profileBanner : null;
+          const refreshedAccount: Account = {
+            ...result.account,
+            profilePictureUri,
+            profileBanner: parseProfileBanner(savedBanner) ?? cachedBanner ?? null,
+          };
           setToken(savedToken);
           setAccount(refreshedAccount);
           await AsyncStorage.setItem(STORAGE_KEYS.cachedAccount, JSON.stringify(refreshedAccount));
@@ -320,6 +357,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       ...updated,
       profilePictureUri:
         current?.email === updated.email ? current.profilePictureUri : updated.profilePictureUri,
+      profileBanner:
+        current?.email === updated.email ? current.profileBanner : updated.profileBanner,
     };
     if (
       current &&
@@ -327,7 +366,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       current.email === nextAccount.email &&
       current.name === nextAccount.name &&
       current.budget === nextAccount.budget &&
-      current.profilePictureUri === nextAccount.profilePictureUri
+      current.profilePictureUri === nextAccount.profilePictureUri &&
+      current.profileBanner?.uri === nextAccount.profileBanner?.uri &&
+      current.profileBanner?.type === nextAccount.profileBanner?.type
     ) return;
 
     accountRef.current = nextAccount;
@@ -357,9 +398,31 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     AsyncStorage.setItem(STORAGE_KEYS.cachedAccount, JSON.stringify(updated)).catch(() => undefined);
   }, []);
 
+  const updateProfileBanner = useCallback(async (banner: ProfileBannerMedia | null) => {
+    const current = accountRef.current;
+    if (!current) throw new Error("Sign in to update your profile banner.");
+
+    const email = current.email;
+    const key = STORAGE_KEYS.profileBanner(email);
+    if (banner) await AsyncStorage.setItem(key, JSON.stringify(banner));
+    else await AsyncStorage.removeItem(key);
+
+    const latest = accountRef.current;
+    if (!latest || latest.email !== email) {
+      if (current.profileBanner) await AsyncStorage.setItem(key, JSON.stringify(current.profileBanner));
+      else await AsyncStorage.removeItem(key);
+      throw new Error("Your account changed before the banner could be saved.");
+    }
+
+    const updated = { ...latest, profileBanner: banner };
+    accountRef.current = updated;
+    setAccount(updated);
+    AsyncStorage.setItem(STORAGE_KEYS.cachedAccount, JSON.stringify(updated)).catch(() => undefined);
+  }, []);
+
   const value = useMemo(
-    () => ({ account, token, loading, register, login, logout, refreshAccount, updateProfilePicture }),
-    [account, token, loading, register, login, logout, refreshAccount, updateProfilePicture]
+    () => ({ account, token, loading, register, login, logout, refreshAccount, updateProfilePicture, updateProfileBanner }),
+    [account, token, loading, register, login, logout, refreshAccount, updateProfilePicture, updateProfileBanner]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

@@ -9,6 +9,7 @@ export const STORAGE_KEYS = {
   darkMode: (email: string) => `expense-tracker:${sanitizeKey(email)}:dark-mode`,
   budgetNudges: (email: string) => `expense-tracker:${sanitizeKey(email)}:budget-nudges`,
   profilePicture: (email: string) => `expense-tracker:${sanitizeKey(email)}:profile-picture`,
+  profileBanner: (email: string) => `expense-tracker:${sanitizeKey(email)}:profile-banner`,
   localAccounts: "expense-tracker-local-accounts",
   userPassword: (email: string) => `expense-tracker-password-${sanitizeKey(email)}`,
   storagePermissionPrompted: "expense-tracker-storage-permission-prompted",

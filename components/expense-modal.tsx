@@ -22,6 +22,8 @@ import { GlassSurface } from "@/components/ui/glass-surface";
 import { CategoryIcon } from "@/components/ui/category-icon";
 import { PaymentIcon } from "@/components/ui/payment-icon";
 import { CustomCategoryModal } from "@/components/settings/custom-category-modal";
+import { DatePickerModal } from "@/components/common/date-picker-modal";
+import { formatDate } from "@/utils/formatters";
 
 interface ExpenseModalProps {
   visible: boolean;
@@ -43,6 +45,7 @@ export function ExpenseModal({ visible, initialExpense, onClose, onSubmit }: Exp
   const [category, setCategory] = useState<Category>("Food");
   const [payment, setPayment] = useState<Payment>("Cash");
   const [date, setDate] = useState(getPhilippinesDate());
+  const [showDatePicker, setShowDatePicker] = useState(false);
   const [showAddCustomModal, setShowAddCustomModal] = useState(false);
   const [validationError, setValidationError] = useState<string | null>(null);
 
@@ -210,8 +213,31 @@ export function ExpenseModal({ visible, initialExpense, onClose, onSubmit }: Exp
               ]}
             />
 
-            {/* Date Preset Selector */}
+            {/* Expense date */}
             <Text style={[styles.label, { color: colors.subtle }]}>DATE</Text>
+            <Pressable
+              onPress={() => setShowDatePicker(true)}
+              accessibilityRole="button"
+              accessibilityLabel={`Choose expense date. Currently ${formatDate(date)}. Future dates are unavailable.`}
+              style={({ pressed }) => [
+                styles.datePickerField,
+                {
+                  backgroundColor: dark ? "rgba(255,255,255,0.04)" : colors.surfaceSubtle,
+                  borderColor: colors.border,
+                  opacity: pressed ? 0.82 : 1,
+                },
+              ]}
+            >
+              <View style={[styles.datePickerIcon, { backgroundColor: colors.primarySoft }]}>
+                <Ionicons name="calendar-outline" size={17} color={colors.primary} />
+              </View>
+              <View style={styles.datePickerCopy}>
+                <Text style={[styles.datePickerValue, { color: colors.foreground }]}>{formatDate(date)}</Text>
+                <Text style={[styles.datePickerHint, { color: colors.muted }]}>Today or an earlier date</Text>
+              </View>
+              <Ionicons name="chevron-down" size={16} color={colors.muted} />
+            </Pressable>
+
             <View style={styles.presetRow}>
               <Pressable
                 onPress={() => setDate(today)}
@@ -446,6 +472,17 @@ export function ExpenseModal({ visible, initialExpense, onClose, onSubmit }: Exp
         }}
         existingCategories={allCategories}
       />
+      <DatePickerModal
+        visible={showDatePicker}
+        selectedDate={date}
+        maxDate={today}
+        title="Choose expense date"
+        onClose={() => setShowDatePicker(false)}
+        onSelect={(nextDate) => {
+          setDate(nextDate);
+          setShowDatePicker(false);
+        }}
+      />
     </Modal>
   );
 }
@@ -530,7 +567,28 @@ const styles = StyleSheet.create({
   presetRow: {
     flexDirection: "row",
     gap: 8,
+    marginTop: 8,
   },
+  datePickerField: {
+    minHeight: 58,
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 12,
+    borderRadius: 14,
+    borderWidth: 1,
+    gap: 10,
+    ...(Platform.OS === "web" ? ({ cursor: "pointer" } as any) : {}),
+  },
+  datePickerIcon: {
+    width: 34,
+    height: 34,
+    borderRadius: 11,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  datePickerCopy: { flex: 1 },
+  datePickerValue: { fontSize: 13, fontWeight: "800" },
+  datePickerHint: { fontSize: 10, marginTop: 3, fontWeight: "500" },
   presetChip: {
     flexDirection: "row",
     alignItems: "center",

@@ -1,12 +1,13 @@
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import { Pressable, StyleSheet, Text, View, useWindowDimensions } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { Expense } from "@/types/expense";
 import { useTheme } from "@/lib/theme-store";
 import { GlassSurface } from "@/components/ui/glass-surface";
-import { formatMoney } from "@/utils/formatters";
+import { formatDate, formatMoney } from "@/utils/formatters";
 import { addCalendarDays, getExpenseDateKey, getPhilippinesDate, getWeekdayShort } from "@/utils/date";
+import { DatePickerModal } from "@/components/common/date-picker-modal";
 
 interface DailyRhythmProps {
   expenses: Expense[];
@@ -16,12 +17,13 @@ export const DailyRhythm = React.memo(function DailyRhythm({ expenses }: DailyRh
   const { colors, dark } = useTheme();
   const { width: windowWidth } = useWindowDimensions();
   const isNarrow = windowWidth < 360;
-  const [selectedDayKey, setSelectedDayKey] = useState<string | null>(null);
+  const todayKey = getPhilippinesDate();
+  const [selectedDayKey, setSelectedDayKey] = useState(todayKey);
+  const [showDatePicker, setShowDatePicker] = useState(false);
 
-
-  const { days, max, weekTotal } = React.useMemo(() => {
+  const { days, max, weekTotal } = useMemo(() => {
     const dayList = Array.from({ length: 7 }, (_, index) => {
-      const key = addCalendarDays(getPhilippinesDate(), index - 6);
+      const key = addCalendarDays(selectedDayKey, index - 6);
       const [year, month, day] = key.split("-").map(Number);
       const date = new Date(Date.UTC(year, month - 1, day, 12));
       return {
@@ -52,11 +54,26 @@ export const DailyRhythm = React.memo(function DailyRhythm({ expenses }: DailyRh
 
     const m = Math.max(...dayList.map((day) => day.total), 1);
     return { days: dayList, max: m, weekTotal: wTotal };
-  }, [expenses]);
+  }, [expenses, selectedDayKey]);
 
-  const activeDay = selectedDayKey
-    ? days.find((d) => d.key === selectedDayKey)
-    : days[days.length - 1];
+  const activeDay = days[days.length - 1];
+  const selectedExpenses = useMemo(
+    () =>
+      expenses
+        .filter((expense) => getExpenseDateKey(expense.date) === selectedDayKey)
+        .sort((a, b) => b.date.localeCompare(a.date)),
+    [expenses, selectedDayKey]
+  );
+
+  const changeDay = (direction: -1 | 1) => {
+    try {
+      Haptics.selectionAsync();
+    } catch {
+      // Non-fatal
+    }
+    const nextDay = addCalendarDays(selectedDayKey, direction);
+    if (direction < 0 || nextDay <= todayKey) setSelectedDayKey(nextDay);
+  };
 
   return (
     <GlassSurface style={styles.panel} contentStyle={styles.panelInner}>
@@ -70,7 +87,7 @@ export const DailyRhythm = React.memo(function DailyRhythm({ expenses }: DailyRh
           <Text style={[styles.panelTitle, { color: colors.foreground }]}>7-Day Velocity</Text>
         </View>
 
-        <View
+        <Pressable
           style={[
             styles.datePill,
             {
@@ -78,19 +95,64 @@ export const DailyRhythm = React.memo(function DailyRhythm({ expenses }: DailyRh
               borderColor: colors.border,
             },
           ]}
+          onPress={() => setShowDatePicker(true)}
+          accessibilityRole="button"
+          accessibilityLabel={`Choose Daily Rhythm date. Currently ${formatDate(selectedDayKey)}`}
         >
-          <Ionicons name="calendar-outline" size={12} color={colors.muted} />
-          <Text style={[styles.smallMuted, { color: colors.muted }]}>
-            {days[0].key.slice(5).replace("-", "/")} – {days[6].key.slice(5).replace("-", "/")}
+          <Ionicons name="calendar-outline" size={14} color={colors.primary} />
+          <Text style={[styles.smallMuted, { color: colors.foreground }]} numberOfLines={1}>
+            {formatDate(selectedDayKey)}
           </Text>
-        </View>
+          <Ionicons name="chevron-down" size={12} color={colors.muted} />
+        </Pressable>
+      </View>
+
+      <View style={styles.dateNavigation}>
+        <Pressable
+          onPress={() => changeDay(-1)}
+          accessibilityRole="button"
+          accessibilityLabel="Show previous day"
+          hitSlop={8}
+          style={[styles.dateNavButton, { borderColor: colors.border, backgroundColor: colors.surfaceSubtle }]}
+        >
+          <Ionicons name="chevron-back" size={17} color={colors.muted} />
+        </Pressable>
+        <Text style={[styles.rangeText, { color: colors.muted }]} numberOfLines={1}>
+          {formatDate(days[0].key)} – {formatDate(days[6].key)}
+        </Text>
+        <Pressable
+          onPress={() => changeDay(1)}
+          disabled={selectedDayKey >= todayKey}
+          accessibilityRole="button"
+          accessibilityLabel="Show next day"
+          accessibilityState={{ disabled: selectedDayKey >= todayKey }}
+          hitSlop={8}
+          style={[
+            styles.dateNavButton,
+            { borderColor: colors.border, backgroundColor: colors.surfaceSubtle },
+            selectedDayKey >= todayKey && styles.disabledNavButton,
+          ]}
+        >
+          <Ionicons name="chevron-forward" size={17} color={colors.muted} />
+        </Pressable>
+        {selectedDayKey !== todayKey && (
+          <Pressable
+            onPress={() => setSelectedDayKey(todayKey)}
+            accessibilityRole="button"
+            accessibilityLabel="Return to today"
+            style={[styles.todayButton, { backgroundColor: dark ? "rgba(16,185,129,0.18)" : colors.primarySoft }]}
+          >
+            <Ionicons name="today-outline" size={13} color={colors.primary} />
+            <Text style={[styles.todayText, { color: colors.primary }]}>Today</Text>
+          </Pressable>
+        )}
       </View>
 
       {/* Week Total & Selected Day Readout */}
       <View style={styles.amountRow}>
         <View>
-          <Text style={[styles.amountLabel, { color: colors.muted }]}>THIS WEEK</Text>
-          <Text style={[styles.weekTotal, { color: colors.foreground }]}>{formatMoney(weekTotal)}</Text>
+            <Text style={[styles.amountLabel, { color: colors.muted }]}>7-DAY TOTAL</Text>
+            <Text style={[styles.weekTotal, { color: colors.foreground }]}>{formatMoney(weekTotal)}</Text>
         </View>
         {activeDay && (
           <View
@@ -102,8 +164,8 @@ export const DailyRhythm = React.memo(function DailyRhythm({ expenses }: DailyRh
               },
             ]}
           >
-            <Text style={[styles.selectedDayName, { color: colors.primary }]}>
-              {activeDay.dayName} ({activeDay.label})
+            <Text style={[styles.selectedDayName, { color: colors.primary }]} numberOfLines={1}>
+              {selectedDayKey === todayKey ? "TODAY" : formatDate(selectedDayKey)}
             </Text>
             <Text style={[styles.selectedDayAmount, { color: colors.primary }]}>
               {formatMoney(activeDay.total)}
@@ -115,7 +177,7 @@ export const DailyRhythm = React.memo(function DailyRhythm({ expenses }: DailyRh
       {/* Bars Chart */}
       <View style={[styles.bars, { borderBottomColor: colors.border }, isNarrow && { gap: 4 }]}>
         {days.map((day, index) => {
-          const isToday = index === days.length - 1;
+          const isToday = day.key === todayKey;
           const isSelected = selectedDayKey === day.key;
           const pct = day.total ? Math.max(10, (day.total / max) * 100) : 0;
 
@@ -154,8 +216,8 @@ export const DailyRhythm = React.memo(function DailyRhythm({ expenses }: DailyRh
               <Text
                 style={[
                   styles.barLabel,
-                  { color: isToday ? colors.primary : colors.muted },
-                  isToday && styles.barLabelToday,
+                  { color: isSelected || isToday ? colors.primary : colors.muted },
+                  (isSelected || isToday) && styles.barLabelToday,
                 ]}
               >
                 {day.dayName}
@@ -174,6 +236,46 @@ export const DailyRhythm = React.memo(function DailyRhythm({ expenses }: DailyRh
             : "No transactions recorded in the past 7 days"}
         </Text>
       </View>
+
+      <View style={[styles.activityDivider, { borderTopColor: colors.border }]}>
+        <Text style={[styles.activityHeading, { color: colors.muted }]}>
+          {selectedDayKey === todayKey ? "TODAY'S ACTIVITY" : `${formatDate(selectedDayKey).toUpperCase()} ACTIVITY`}
+        </Text>
+        <Text style={[styles.activityCount, { color: colors.subtle }]}>
+          {selectedExpenses.length} {selectedExpenses.length === 1 ? "expense" : "expenses"}
+        </Text>
+      </View>
+      {selectedExpenses.length ? (
+        <View style={styles.expenseList}>
+          {selectedExpenses.map((expense) => (
+            <View key={expense.id} style={[styles.expenseRow, { borderBottomColor: colors.border }]}>
+              <View style={styles.expenseText}>
+                <Text style={[styles.expenseDescription, { color: colors.foreground }]} numberOfLines={1}>
+                  {expense.description || expense.category}
+                </Text>
+                <Text style={[styles.expenseMeta, { color: colors.muted }]} numberOfLines={1}>
+                  {expense.category} · {expense.payment}
+                </Text>
+              </View>
+              <Text style={[styles.expenseAmount, { color: colors.foreground }]}>{formatMoney(expense.amount)}</Text>
+            </View>
+          ))}
+        </View>
+      ) : (
+        <Text style={[styles.emptyActivity, { color: colors.muted }]}>No spending recorded for this date.</Text>
+      )}
+
+      <DatePickerModal
+        visible={showDatePicker}
+        selectedDate={selectedDayKey}
+        maxDate={todayKey}
+        title="Choose a Daily Rhythm date"
+        onClose={() => setShowDatePicker(false)}
+        onSelect={(date) => {
+          setSelectedDayKey(date);
+          setShowDatePicker(false);
+        }}
+      />
     </GlassSurface>
   );
 });
@@ -224,6 +326,33 @@ const styles = StyleSheet.create({
     fontSize: 10,
     fontWeight: "600",
   },
+  dateNavigation: {
+    minHeight: 36,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 8,
+    marginTop: 10,
+  },
+  dateNavButton: {
+    width: 34,
+    height: 34,
+    borderRadius: 11,
+    borderWidth: 1,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  disabledNavButton: { opacity: 0.35 },
+  rangeText: { flex: 1, textAlign: "center", fontSize: 10, fontWeight: "600" },
+  todayButton: {
+    minHeight: 34,
+    paddingHorizontal: 10,
+    borderRadius: 11,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+  },
+  todayText: { fontSize: 10, fontWeight: "800" },
   amountRow: {
     flexDirection: "row",
     alignItems: "flex-end",
@@ -310,4 +439,28 @@ const styles = StyleSheet.create({
     fontSize: 10.5,
     fontWeight: "600",
   },
+  activityDivider: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    borderTopWidth: StyleSheet.hairlineWidth,
+    marginTop: 14,
+    paddingTop: 12,
+  },
+  activityHeading: { fontSize: 9, fontWeight: "800", letterSpacing: 0.9, flex: 1 },
+  activityCount: { fontSize: 10, fontWeight: "600", marginLeft: 10 },
+  expenseList: { marginTop: 4 },
+  expenseRow: {
+    minHeight: 48,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 12,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+  },
+  expenseText: { flex: 1, minWidth: 0 },
+  expenseDescription: { fontSize: 12, fontWeight: "700" },
+  expenseMeta: { fontSize: 10, fontWeight: "500", marginTop: 3 },
+  expenseAmount: { fontSize: 12, fontWeight: "800" },
+  emptyActivity: { fontSize: 11, marginTop: 8 },
 });

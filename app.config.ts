@@ -31,7 +31,19 @@ const config: ExpoConfig = {
     output: "static",
     favicon: "./assets/images/icon.png",
   },
-  plugins: ["expo-router", "expo-font", "expo-secure-store"],
+  plugins: [
+    "expo-router",
+    "expo-font",
+    "expo-secure-store",
+    [
+      "expo-image-picker",
+      {
+        photosPermission: "Allow Ledgerly to choose a profile photo or banner from your library.",
+        cameraPermission: false,
+        microphonePermission: false,
+      },
+    ],
+  ],
   experiments: {
     typedRoutes: true,
   },

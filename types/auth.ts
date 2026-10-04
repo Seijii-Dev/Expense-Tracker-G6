@@ -4,6 +4,13 @@ export type Account = {
   email: string;
   budget: number;
   profilePictureUri?: string | null;
+  profileBanner?: ProfileBannerMedia | null;
+};
+
+export type ProfileBannerMedia = {
+  uri: string;
+  type: "image" | "video";
+  durationMs?: number;
 };
 
 export type RemoteAccount = Account;
@@ -17,4 +24,5 @@ export type AuthContextValue = {
   logout: () => Promise<void>;
   refreshAccount: (account: RemoteAccount) => void;
   updateProfilePicture: (uri: string | null) => Promise<void>;
+  updateProfileBanner: (banner: ProfileBannerMedia | null) => Promise<void>;
 };
