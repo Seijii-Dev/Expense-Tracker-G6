@@ -46,7 +46,7 @@ export function MetricCard({
       : colors.success);
 
   return (
-    <GlassSurface radius={24} style={style} contentStyle={styles.card}>
+    <GlassSurface radius={20} style={style} contentStyle={styles.card}>
       <View style={styles.topRow}>
         <View style={styles.labelRow}>
           <View style={[styles.toneDot, { backgroundColor: toneColor }]} />
@@ -57,7 +57,6 @@ export function MetricCard({
             styles.iconWrap,
             {
               backgroundColor: dark ? `${toneColor}22` : `${toneColor}15`,
-              borderColor: dark ? `${toneColor}40` : `${toneColor}28`,
             },
           ]}
         >
@@ -73,13 +72,12 @@ export function MetricCard({
         {value}
       </Text>
 
-
       {progress !== undefined ? (
         <View style={styles.progressContainer}>
           <View
             style={[
               styles.progressTrack,
-              { backgroundColor: dark ? "rgba(255,255,255,0.06)" : colors.surfaceSubtle },
+              { backgroundColor: dark ? "rgba(255,255,255,0.08)" : colors.surfaceSubtle },
             ]}
           >
             <View
@@ -97,7 +95,7 @@ export function MetricCard({
 
       {foot ? (
         <View style={styles.footRow}>
-          <Text style={[styles.foot, { color: colors.subtle }]}>{foot}</Text>
+          <Text style={[styles.foot, { color: colors.muted }]}>{foot}</Text>
         </View>
       ) : null}
     </GlassSurface>
@@ -106,8 +104,15 @@ export function MetricCard({
 
 const styles = StyleSheet.create({
   card: {
-    minHeight: 120,
-    padding: 18,
+    minHeight: 114,
+    padding: 16,
+    borderRadius: 20,
+    borderWidth: 1,
+    shadowColor: "#1A1D20",
+    shadowOpacity: 0.04,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 2,
   },
   topRow: {
     flexDirection: "row",
@@ -117,7 +122,7 @@ const styles = StyleSheet.create({
   labelRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 7,
+    gap: 6,
   },
   toneDot: {
     width: 6,
@@ -125,30 +130,29 @@ const styles = StyleSheet.create({
     borderRadius: 3,
   },
   label: {
-    fontSize: 11,
+    fontSize: 10,
     fontWeight: "700",
-    letterSpacing: 0.3,
+    letterSpacing: 0.6,
     textTransform: "uppercase",
   },
   iconWrap: {
-    width: 36,
-    height: 36,
+    width: 32,
+    height: 32,
     alignItems: "center",
     justifyContent: "center",
-    borderRadius: 12,
-    borderWidth: 1,
+    borderRadius: 10,
   },
   value: {
-    fontFamily: "Fraunces_700Bold",
-    fontSize: 28,
-    letterSpacing: -0.9,
-    marginTop: 10,
+    fontSize: 22,
+    fontWeight: "800",
+    letterSpacing: -0.5,
+    marginTop: 8,
   },
   progressContainer: {
-    marginTop: 12,
+    marginTop: 10,
   },
   progressTrack: {
-    height: 6,
+    height: 5,
     borderRadius: 999,
     overflow: "hidden",
   },
@@ -160,8 +164,7 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   foot: {
-    fontSize: 10.5,
+    fontSize: 11,
     fontWeight: "600",
   },
 });
-

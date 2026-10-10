@@ -1,5 +1,11 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { StyleSheet, Text, View } from "react-native";
+import Animated, {
+  interpolate,
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring,
+} from "react-native-reanimated";
 import Svg, { Circle } from "react-native-svg";
 import { Expense } from "@/types/expense";
 import { getCategoryStyle } from "@/constants/categories";
@@ -15,6 +21,25 @@ interface DonutChartProps {
 export const DonutChart = React.memo(function DonutChart({ total, expenses }: DonutChartProps) {
   const { colors, dark } = useTheme();
   const { customCategories } = useExpenses();
+  const progress = useSharedValue(0);
+
+  useEffect(() => {
+    progress.value = 0;
+    progress.value = withSpring(1, {
+      damping: 18,
+      stiffness: 220,
+      mass: 0.8,
+    });
+  }, [total, progress]);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    opacity: progress.value,
+    transform: [
+      {
+        scale: interpolate(progress.value, [0, 1], [0.92, 1]),
+      },
+    ],
+  }));
 
   const totals = React.useMemo(() => {
     const map = new Map<string, number>();
@@ -30,20 +55,20 @@ export const DonutChart = React.memo(function DonutChart({ total, expenses }: Do
   }, [expenses]);
 
   const size = 148;
-  const strokeWidth = 20;
+  const strokeWidth = 18;
   const radius = (size - strokeWidth) / 2;
   const circumference = 2 * Math.PI * radius;
   let offset = 0;
 
   return (
-    <View style={styles.donutWrap}>
+    <Animated.View style={[styles.donutWrap, animatedStyle]}>
       <Svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} style={styles.svg}>
         {/* Background Track Circle */}
         <Circle
           cx={size / 2}
           cy={size / 2}
           r={radius}
-          stroke={dark ? "rgba(255, 255, 255, 0.07)" : colors.surfaceSubtle}
+          stroke={dark ? "rgba(255, 255, 255, 0.08)" : colors.surfaceSubtle}
           strokeWidth={strokeWidth}
           fill="none"
         />
@@ -74,18 +99,18 @@ export const DonutChart = React.memo(function DonutChart({ total, expenses }: Do
         style={[
           styles.donutHole,
           {
-            backgroundColor: dark ? "#0F1A18" : "#FFFFFF",
-            borderColor: colors.border,
+            backgroundColor: dark ? "#171B1F" : "#FFFFFF",
+            borderColor: dark ? "rgba(255, 255, 255, 0.08)" : "#F1F3F5",
           },
         ]}
       >
-        <Text style={[styles.kickerLabel, { color: colors.primary }]}>THIS MONTH</Text>
+        <Text style={[styles.kickerLabel, { color: colors.muted }]}>THIS MONTH</Text>
         <Text style={[styles.donutTotal, { color: colors.foreground }]} numberOfLines={1}>
           {formatMoney(total)}
         </Text>
-        <Text style={[styles.donutLabel, { color: colors.muted }]}>total tracked</Text>
+        <Text style={[styles.donutLabel, { color: colors.muted }]}>tracked</Text>
       </View>
-    </View>
+    </Animated.View>
   );
 });
 
@@ -108,8 +133,8 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     borderRadius: 48,
     borderWidth: 1,
-    shadowColor: "#000",
-    shadowOpacity: 0.05,
+    shadowColor: "#1A1D20",
+    shadowOpacity: 0.04,
     shadowRadius: 8,
     shadowOffset: { width: 0, height: 2 },
     elevation: 2,
@@ -122,15 +147,14 @@ const styles = StyleSheet.create({
     marginBottom: 2,
   },
   donutTotal: {
-    fontFamily: "Fraunces_700Bold",
-    fontSize: 14.5,
-    letterSpacing: -0.3,
+    fontSize: 15,
+    fontWeight: "800",
+    letterSpacing: -0.4,
     textAlign: "center",
   },
   donutLabel: {
-    fontSize: 8.5,
+    fontSize: 9,
     fontWeight: "500",
     marginTop: 2,
   },
 });
-

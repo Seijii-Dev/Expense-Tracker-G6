@@ -26,32 +26,31 @@ export function PaymentMethods({ paymentTotals, periodTotal }: PaymentMethodsPro
         {
           backgroundColor: colors.surface,
           borderColor: colors.border,
-          shadowColor: dark ? "#000000" : "#0A1F1C",
+          shadowColor: dark ? "#000000" : "#1A1D20",
           shadowOffset: { width: 0, height: 4 },
           shadowOpacity: dark ? 0.35 : 0.04,
-          shadowRadius: 10,
+          shadowRadius: 12,
           elevation: 2,
         },
       ]}
     >
       <View style={styles.panelHeader}>
         <View>
-          <View style={styles.kickerRow}>
-            <View style={[styles.kickerDot, { backgroundColor: colors.accent }]} />
-            <Text style={[styles.kicker, { color: colors.accent }]}>PAYMENT CHANNELS</Text>
-          </View>
+          <Text style={[styles.kicker, { color: colors.muted }]}>PAYMENT CHANNELS</Text>
           <Text style={[styles.panelTitle, { color: colors.foreground }]}>How you paid</Text>
         </View>
         <View
           style={[
-            styles.iconWrap,
+            styles.countBadge,
             {
-              backgroundColor: dark ? "rgba(255,255,255,0.06)" : colors.surfaceSubtle,
-              borderColor: colors.border,
+              backgroundColor: dark ? "rgba(232, 74, 63, 0.15)" : "#FFF0ED",
+              borderColor: dark ? "rgba(232, 74, 63, 0.3)" : "#FED7D2",
             },
           ]}
         >
-          <Ionicons name="wallet-outline" size={18} color={colors.accent} />
+          <Text style={styles.countBadgeText}>
+            {paymentTotals.length} {paymentTotals.length === 1 ? "Method" : "Methods"}
+          </Text>
         </View>
       </View>
 
@@ -73,7 +72,16 @@ export function PaymentMethods({ paymentTotals, periodTotal }: PaymentMethodsPro
               ]}
             >
               <View style={styles.paymentCardHeader}>
-                <PaymentIcon payment={payment} size={22} />
+                <View
+                  style={[
+                    styles.iconBox,
+                    {
+                      backgroundColor: dark ? `${brandColor}20` : `${brandColor}15`,
+                    },
+                  ]}
+                >
+                  <PaymentIcon payment={payment} size={20} />
+                </View>
                 <View style={styles.paymentTitleWrap}>
                   <Text
                     style={[styles.paymentMethod, { color: colors.foreground }]}
@@ -101,8 +109,8 @@ export function PaymentMethods({ paymentTotals, periodTotal }: PaymentMethodsPro
                   styles.miniTrack,
                   {
                     backgroundColor: dark
-                      ? "rgba(255,255,255,0.08)"
-                      : "rgba(0,0,0,0.04)",
+                      ? "rgba(255,255,255,0.06)"
+                      : "rgba(0,0,0,0.05)",
                   },
                 ]}
               >
@@ -124,58 +132,49 @@ export function PaymentMethods({ paymentTotals, periodTotal }: PaymentMethodsPro
   );
 }
 
-
 const styles = StyleSheet.create({
   panel: {
-    padding: 20,
+    padding: 18,
     marginBottom: 16,
-    borderRadius: 22,
+    borderRadius: 20,
     borderWidth: 1,
   },
   panelHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 16,
-  },
-  kickerRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-    marginBottom: 4,
-  },
-  kickerDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
+    alignItems: "flex-start",
+    marginBottom: 14,
   },
   kicker: {
     fontSize: 10,
-    fontWeight: "800",
+    fontWeight: "700",
     letterSpacing: 1.2,
+    textTransform: "uppercase",
+    marginBottom: 2,
   },
   panelTitle: {
-    fontFamily: "Fraunces_700Bold",
-    fontSize: 22,
-    letterSpacing: -0.4,
+    fontSize: 18,
+    fontWeight: "700",
+    letterSpacing: -0.3,
   },
-  iconWrap: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+  countBadge: {
+    paddingHorizontal: 9,
+    paddingVertical: 4.5,
+    borderRadius: 999,
     borderWidth: 1,
-    alignItems: "center",
-    justifyContent: "center",
+  },
+  countBadgeText: {
+    color: "#E84A3F",
+    fontSize: 10.5,
+    fontWeight: "700",
   },
   paymentGrid: {
     flexDirection: "row",
     flexWrap: "wrap",
-    gap: 12,
+    gap: 10,
   },
   paymentCard: {
-    flex: 1,
-    minWidth: "46%",
-    padding: 14,
+    padding: 12,
     borderRadius: 16,
     borderWidth: 1,
   },
@@ -183,31 +182,41 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 10,
-    marginBottom: 10,
+    marginBottom: 8,
+  },
+  iconBox: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    alignItems: "center",
+    justifyContent: "center",
   },
   paymentTitleWrap: {
     flex: 1,
   },
   paymentMethod: {
     fontSize: 13,
-    fontWeight: "700",
+    fontWeight: "600",
+    letterSpacing: -0.1,
   },
   paymentPct: {
-    fontSize: 11,
+    fontSize: 10.5,
+    fontWeight: "500",
     marginTop: 1,
   },
   paymentAmount: {
-    fontFamily: "Fraunces_700Bold",
-    fontSize: 17,
-    marginBottom: 10,
+    fontSize: 16,
+    fontWeight: "800",
+    letterSpacing: -0.3,
+    marginBottom: 8,
   },
   miniTrack: {
     height: 5,
-    borderRadius: 3,
+    borderRadius: 2.5,
     overflow: "hidden",
   },
   miniFill: {
     height: "100%",
-    borderRadius: 3,
+    borderRadius: 2.5,
   },
 });

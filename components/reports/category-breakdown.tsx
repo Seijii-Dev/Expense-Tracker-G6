@@ -1,5 +1,10 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { StyleSheet, Text, View } from "react-native";
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring,
+} from "react-native-reanimated";
 import { Ionicons } from "@expo/vector-icons";
 import { EmptyState } from "@/components/ui/empty-state";
 import { CategoryIcon } from "@/components/ui/category-icon";
@@ -17,6 +22,37 @@ interface CategoryBreakdownProps {
   customCategories?: CustomCategory[];
 }
 
+const CategoryProgressFill = React.memo(function CategoryProgressFill({
+  fillPct,
+  color,
+}: {
+  fillPct: number;
+  color: string;
+}) {
+  const widthAnim = useSharedValue(0);
+
+  useEffect(() => {
+    widthAnim.value = withSpring(fillPct, {
+      damping: 22,
+      stiffness: 200,
+    });
+  }, [fillPct]);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    width: `${widthAnim.value}%`,
+  }));
+
+  return (
+    <Animated.View
+      style={[
+        styles.miniFill,
+        { backgroundColor: color },
+        animatedStyle,
+      ]}
+    />
+  );
+});
+
 export function CategoryBreakdown({
   categoryTotals,
   periodTotal,
@@ -33,124 +69,154 @@ export function CategoryBreakdown({
         {
           backgroundColor: colors.surface,
           borderColor: colors.border,
-          shadowColor: dark ? "#000000" : "#0A1F1C",
+          shadowColor: dark ? "#000000" : "#1A1D20",
           shadowOffset: { width: 0, height: 4 },
           shadowOpacity: dark ? 0.35 : 0.04,
-          shadowRadius: 10,
+          shadowRadius: 12,
           elevation: 2,
         },
       ]}
     >
       <View style={styles.panelHeader}>
         <View>
-          <View style={styles.kickerRow}>
-            <View style={[styles.kickerDot, { backgroundColor: colors.primary }]} />
-            <Text style={[styles.kicker, { color: colors.primary }]}>BREAKDOWN</Text>
-          </View>
-          <Text style={[styles.panelTitle, { color: colors.foreground }]}>By category</Text>
+          <Text style={[styles.kicker, { color: colors.muted }]}>BREAKDOWN</Text>
+          <Text style={[styles.panelTitle, { color: colors.foreground }]}>Category Distribution</Text>
         </View>
         <View
           style={[
-            styles.iconWrap,
+            styles.countBadge,
             {
-              backgroundColor: dark ? "rgba(255,255,255,0.06)" : colors.surfaceSubtle,
-              borderColor: colors.border,
+              backgroundColor: dark ? "rgba(232, 74, 63, 0.15)" : "#FFF0ED",
+              borderColor: dark ? "rgba(232, 74, 63, 0.3)" : "#FED7D2",
             },
           ]}
         >
-          <Ionicons name="pie-chart-outline" size={18} color={colors.primary} />
+          <Text style={styles.countBadgeText}>
+            {activeCount} {activeCount === 1 ? "Category" : "Categories"}
+          </Text>
         </View>
       </View>
 
       {activeCount === 0 ? (
         <EmptyState
           icon="pie-chart-outline"
+          lottieSource={require("@/assets/lottie/empty-charts.json")}
           title="No spending in this period"
           description="Log expenses to see your category breakdown and spending share."
         />
       ) : (
-        <View style={styles.bars}>
-          {categoryTotals.map(({ category, total }, index) => {
-            const meta = getCategoryStyle(category, customCategories);
-            const percentStr = formatPercent(total, periodTotal);
-            const rank = index + 1;
-
-            return (
-              <View key={category} style={styles.barRow}>
-                <View style={styles.barLabels}>
-                  <View style={styles.labelLeft}>
-                    <View
-                      style={[
-                        styles.rankBadge,
-                        {
-                          backgroundColor:
-                            rank === 1
-                              ? dark
-                                ? "rgba(255,101,84,0.18)"
-                                : "#FFF0ED"
-                              : dark
-                              ? "rgba(255,255,255,0.06)"
-                              : colors.surfaceSubtle,
-                          borderColor: rank === 1 ? colors.primary : colors.border,
-                        },
-                      ]}
-                    >
-                      <Text
-                        style={[
-                          styles.rankText,
-                          { color: rank === 1 ? colors.primary : colors.muted },
-                        ]}
-                      >
-                        #{rank}
-                      </Text>
-                    </View>
-                    <CategoryIcon category={category} size={18} customCategories={customCategories} />
-                    <Text
-                      style={[styles.categoryLabel, { color: colors.foreground }]}
-                      numberOfLines={1}
-                    >
-                      {category}
-                    </Text>
-                  </View>
-                  <View style={styles.labelRight}>
-                    <View
-                      style={[
-                        styles.pctPill,
-                        {
-                          backgroundColor: dark ? `${meta.color}20` : meta.soft,
-                        },
-                      ]}
-                    >
-                      <Text style={[styles.pctText, { color: meta.color }]}>{percentStr}</Text>
-                    </View>
-                    <Text style={[styles.categoryAmount, { color: colors.foreground }]}>
-                      {formatMoney(total)}
-                    </Text>
-                  </View>
-                </View>
+        <View>
+          {/* Multi-segmented Progress Bar representation matching Stitch */}
+          <View
+            style={[
+              styles.segmentedBar,
+              { backgroundColor: dark ? "rgba(255,255,255,0.06)" : colors.surfaceSubtle },
+            ]}
+          >
+            {categoryTotals.filter(({ total }) => total > 0).map(({ category, total }) => {
+              const meta = getCategoryStyle(category, customCategories);
+              return (
                 <View
+                  key={category}
                   style={[
-                    styles.track,
+                    styles.segmentSlice,
                     {
-                      backgroundColor: dark
-                        ? "rgba(255,255,255,0.08)"
-                        : "rgba(0,0,0,0.04)",
+                      flex: Math.max(0.01, total),
+                      backgroundColor: meta.color,
                     },
                   ]}
+                />
+              );
+            })}
+          </View>
+
+          {/* Category Items List */}
+          <View style={styles.list}>
+            {categoryTotals.map(({ category, total }, index) => {
+              const meta = getCategoryStyle(category, customCategories);
+              const percentStr = formatPercent(total, periodTotal);
+              const rank = index + 1;
+              const fillPct =
+                maxCategorySpend > 0
+                  ? Math.min(100, Math.max(4, (total / maxCategorySpend) * 100))
+                  : 0;
+
+              return (
+                <View
+                  key={category}
+                  style={[
+                    styles.categoryRow,
+                    index > 0 && [
+                      styles.rowSeparator,
+                      { borderTopColor: dark ? "rgba(255,255,255,0.05)" : colors.border },
+                    ],
+                  ]}
                 >
-                  <View
-                    style={[
-                      styles.fill,
-                      {
-                        width: total > 0 ? `${Math.min(100, Math.max(3, (total / maxCategorySpend) * 100))}%` : "0%",
-                        backgroundColor: meta.color,
-                      },
-                    ]}
-                  />
+                  <View style={styles.leftGroup}>
+                    {/* Category Icon Container */}
+                    <View
+                      style={[
+                        styles.iconContainer,
+                        {
+                          backgroundColor: dark ? `${meta.color}25` : meta.soft,
+                        },
+                      ]}
+                    >
+                      <CategoryIcon
+                        category={category}
+                        size={18}
+                        customCategories={customCategories}
+                      />
+                    </View>
+
+                    <View style={styles.textGroup}>
+                      <View style={styles.titleRow}>
+                        <Text
+                          style={[styles.categoryTitle, { color: colors.foreground }]}
+                          numberOfLines={1}
+                        >
+                          {category}
+                        </Text>
+                        <View
+                          style={[
+                            styles.pctBadge,
+                            {
+                              backgroundColor: dark ? `${meta.color}20` : meta.soft,
+                            },
+                          ]}
+                        >
+                          <Text style={[styles.pctText, { color: meta.color }]}>{percentStr}</Text>
+                        </View>
+                      </View>
+
+                      {/* Mini Track */}
+                      <View
+                        style={[
+                          styles.miniTrack,
+                          {
+                            backgroundColor: dark
+                              ? "rgba(255,255,255,0.06)"
+                              : "rgba(0,0,0,0.04)",
+                          },
+                        ]}
+                      >
+                        <CategoryProgressFill fillPct={fillPct} color={meta.color} />
+                      </View>
+                    </View>
+                  </View>
+
+                  <View style={styles.rightGroup}>
+                    <Text style={[styles.amountText, { color: colors.foreground }]}>
+                      {formatMoney(total)}
+                    </Text>
+                    <Text style={[styles.transCount, { color: colors.muted }]}>
+                      {percentStr} share
+                    </Text>
+                  </View>
                 </View>
-              </View>
-            );
-          })}
+              );
+            })}
+          </View>
         </View>
       )}
     </View>
@@ -159,105 +225,124 @@ export function CategoryBreakdown({
 
 const styles = StyleSheet.create({
   panel: {
-    padding: 20,
+    padding: 18,
     marginBottom: 16,
-    borderRadius: 22,
+    borderRadius: 20,
     borderWidth: 1,
   },
   panelHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 16,
+    alignItems: "flex-start",
+    marginBottom: 14,
   },
-  kickerRow: {
+  kicker: {
+    fontSize: 10,
+    fontWeight: "700",
+    letterSpacing: 1.2,
+    textTransform: "uppercase",
+    marginBottom: 2,
+  },
+  panelTitle: {
+    fontSize: 18,
+    fontWeight: "700",
+    letterSpacing: -0.3,
+  },
+  countBadge: {
+    paddingHorizontal: 9,
+    paddingVertical: 4.5,
+    borderRadius: 999,
+    borderWidth: 1,
+  },
+  countBadgeText: {
+    color: "#E84A3F",
+    fontSize: 10.5,
+    fontWeight: "700",
+  },
+  segmentedBar: {
+    width: "100%",
+    height: 9,
+    borderRadius: 999,
+    overflow: "hidden",
+    flexDirection: "row",
+    gap: 2,
+    marginBottom: 14,
+  },
+  segmentSlice: {
+    height: "100%",
+    borderRadius: 999,
+  },
+  list: {
+    gap: 0,
+  },
+  categoryRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingVertical: 10,
+  },
+  rowSeparator: {
+    borderTopWidth: 1,
+  },
+  leftGroup: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    flex: 1,
+    paddingRight: 10,
+  },
+  iconContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  textGroup: {
+    flex: 1,
+  },
+  titleRow: {
     flexDirection: "row",
     alignItems: "center",
     gap: 6,
     marginBottom: 4,
   },
-  kickerDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-  },
-  kicker: {
-    fontSize: 10,
-    fontWeight: "800",
-    letterSpacing: 1.2,
-  },
-  panelTitle: {
-    fontFamily: "Fraunces_700Bold",
-    fontSize: 22,
-    letterSpacing: -0.4,
-  },
-  iconWrap: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    borderWidth: 1,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  bars: {
-    gap: 16,
-    marginTop: 6,
-  },
-  barRow: {},
-  barLabels: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    marginBottom: 8,
-  },
-  labelLeft: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    flex: 1,
-    paddingRight: 6,
-  },
-  rankBadge: {
-    width: 24,
-    height: 20,
-    borderRadius: 6,
-    borderWidth: 1,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  rankText: {
-    fontSize: 10,
-    fontWeight: "800",
-  },
-  categoryLabel: {
-    fontSize: 13,
+  categoryTitle: {
+    fontSize: 14,
     fontWeight: "600",
+    letterSpacing: -0.1,
+    flexShrink: 1,
   },
-  labelRight: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-  },
-  pctPill: {
+  pctBadge: {
     paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 6,
+    paddingVertical: 1.5,
+    borderRadius: 999,
   },
   pctText: {
-    fontSize: 10,
-    fontWeight: "800",
+    fontSize: 9.5,
+    fontWeight: "700",
   },
-  categoryAmount: {
-    fontFamily: "Fraunces_700Bold",
-    fontSize: 14,
-  },
-  track: {
-    height: 8,
+  miniTrack: {
+    width: 90,
+    height: 4,
+    borderRadius: 2,
     overflow: "hidden",
-    borderRadius: 4,
   },
-  fill: {
+  miniFill: {
     height: "100%",
-    borderRadius: 4,
+    borderRadius: 2,
+  },
+  rightGroup: {
+    alignItems: "flex-end",
+  },
+  amountText: {
+    fontSize: 14,
+    fontWeight: "700",
+    letterSpacing: -0.2,
+  },
+  transCount: {
+    fontSize: 10.5,
+    fontWeight: "500",
+    marginTop: 1,
   },
 });

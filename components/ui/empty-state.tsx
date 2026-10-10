@@ -2,9 +2,11 @@ import React from "react";
 import { StyleSheet, Text, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "@/lib/theme-store";
+import { AppLottieView } from "@/components/ui/app-lottie-view";
 
 interface EmptyStateProps {
   icon?: keyof typeof Ionicons.glyphMap;
+  lottieSource?: any;
   title: string;
   description: string;
   action?: React.ReactNode;
@@ -12,6 +14,7 @@ interface EmptyStateProps {
 
 export function EmptyState({
   icon = "search-outline",
+  lottieSource,
   title,
   description,
   action,
@@ -20,27 +23,33 @@ export function EmptyState({
 
   return (
     <View style={styles.container}>
-      <View
-        style={[
-          styles.outerCircle,
-          {
-            backgroundColor: dark ? "rgba(255, 117, 101, 0.08)" : colors.primarySoft,
-            borderColor: dark ? "rgba(255, 117, 101, 0.2)" : "rgba(255, 101, 84, 0.18)",
-          },
-        ]}
-      >
+      {lottieSource ? (
+        <View style={styles.lottieWrap}>
+          <AppLottieView source={lottieSource} style={styles.lottie} autoPlay loop />
+        </View>
+      ) : (
         <View
           style={[
-            styles.iconCircle,
+            styles.outerCircle,
             {
-              backgroundColor: dark ? "#111E1B" : "#FFFFFF",
-              borderColor: colors.border,
+              backgroundColor: dark ? "rgba(255, 117, 101, 0.08)" : colors.primarySoft,
+              borderColor: dark ? "rgba(255, 117, 101, 0.2)" : "rgba(255, 101, 84, 0.18)",
             },
           ]}
         >
-          <Ionicons name={icon} size={26} color={colors.primary} />
+          <View
+            style={[
+              styles.iconCircle,
+              {
+                backgroundColor: dark ? "#111E1B" : "#FFFFFF",
+                borderColor: colors.border,
+              },
+            ]}
+          >
+            <Ionicons name={icon} size={26} color={colors.primary} />
+          </View>
         </View>
-      </View>
+      )}
 
       <Text style={[styles.title, { color: colors.foreground }]}>{title}</Text>
       <Text style={[styles.description, { color: colors.muted }]}>{description}</Text>
@@ -56,6 +65,17 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     paddingVertical: 36,
     paddingHorizontal: 20,
+  },
+  lottieWrap: {
+    width: 96,
+    height: 96,
+    marginBottom: 8,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  lottie: {
+    width: 96,
+    height: 96,
   },
   outerCircle: {
     width: 72,

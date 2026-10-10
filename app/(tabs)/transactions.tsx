@@ -11,7 +11,6 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { ScreenContainer } from "@/components/screen-container";
-import { ScreenHeader } from "@/components/common/screen-header";
 import { ExpenseRow } from "@/components/ui/expense-row";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ExpenseModal } from "@/components/expense-modal";
@@ -23,12 +22,16 @@ import { useExpenses } from "@/lib/expense-store";
 import { useTheme } from "@/lib/theme-store";
 import { formatDate, formatMoney } from "@/utils/formatters";
 import { useFilteredExpenses } from "@/hooks/useFilteredExpenses";
+import { MotionEntrance, PressableScale } from "@/components/motion";
 import { TransactionsSkeleton } from "@/components/ui/transactions-skeleton";
 import { DatePickerModal } from "@/components/common/date-picker-modal";
-import { addCalendarDays, getExpenseDateKey, getPhilippinesDate } from "@/utils/date";
+import { addCalendarDays, getExpenseDateKey, getPhilippinesDate, getYesterdayDate } from "@/utils/date";
+import { exportExpensesToCsv } from "@/utils/export-csv";
+import { ConfirmDialog } from "@/components/common/confirm-dialog";
 
 export default function TransactionsScreen() {
-  const { sortedExpenses, removeExpense, updateExpense, addExpense, refreshExpenses, syncing, hydrated } = useExpenses();
+  const { sortedExpenses, removeExpense, updateExpense, addExpense, refreshExpenses, syncing, hydrated } =
+    useExpenses();
   const { colors, dark } = useTheme();
 
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
@@ -36,7 +39,14 @@ export default function TransactionsScreen() {
   const [showSortFilter, setShowSortFilter] = useState(false);
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [showDatePicker, setShowDatePicker] = useState(false);
+  const [exportNotice, setExportNotice] = useState<{
+    title: string;
+    message: string;
+    variant: "success" | "danger" | "warning";
+  } | null>(null);
+
   const todayDate = getPhilippinesDate();
+  const yesterdayDate = getYesterdayDate();
 
   const {
     query,
@@ -81,90 +91,130 @@ export default function TransactionsScreen() {
     setShowAddModal(false);
   }, []);
 
-  const summaryLabel = selectedDate
-    ? `${formatDate(selectedDate).toUpperCase()} SUMMARY`
-    : "ALL DATES SUMMARY";
+  const handleExport = async () => {
+    try {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    } catch {}
+    const res = await exportExpensesToCsv(sortedExpenses, false);
+    setExportNotice({
+      title: res.title,
+      message: res.message,
+      variant: res.success ? "success" : "danger",
+    });
+  };
+
+  // Group filtered expenses by date key
+  const groupedExpenses = useMemo(() => {
+    const groups: { dateKey: string; label: string; items: Expense[]; subtotal: number }[] = [];
+    const map = new Map<string, { dateKey: string; label: string; items: Expense[]; subtotal: number }>();
+
+    for (const exp of filtered) {
+      const k = getExpenseDateKey(exp.date);
+      let group = map.get(k);
+      if (!group) {
+        let label = formatDate(k).toUpperCase();
+        if (k === todayDate) label = "TODAY";
+        else if (k === yesterdayDate) label = "YESTERDAY";
+
+        group = { dateKey: k, label, items: [], subtotal: 0 };
+        map.set(k, group);
+        groups.push(group);
+      }
+      group.items.push(exp);
+      group.subtotal += exp.amount || 0;
+    }
+
+    return groups;
+  }, [filtered, todayDate, yesterdayDate]);
+
+  const categoryCounts = useMemo(() => {
+    const counts: Record<string, number> = { All: sortedExpenses.length };
+    for (const exp of sortedExpenses) {
+      counts[exp.category] = (counts[exp.category] || 0) + 1;
+    }
+    return counts;
+  }, [sortedExpenses]);
+
   const hasTransactionsForSelectedDate = selectedDate
     ? sortedExpenses.some((expense) => getExpenseDateKey(expense.date) === selectedDate)
     : false;
 
-  const renderItem = useCallback(
-    ({ item, index }: { item: Expense; index: number }) => {
-      const isFirst = index === 0;
-      const isLast = index === filtered.length - 1;
-      return (
-        <View
-          style={[
-            styles.listItem,
-            {
-              backgroundColor: colors.surface,
-              borderColor: colors.border,
-              borderTopWidth: isFirst ? 1 : 0,
-              borderBottomWidth: 1,
-              borderLeftWidth: 1,
-              borderRightWidth: 1,
-              borderTopLeftRadius: isFirst ? 16 : 0,
-              borderTopRightRadius: isFirst ? 16 : 0,
-              borderBottomLeftRadius: isLast ? 16 : 0,
-              borderBottomRightRadius: isLast ? 16 : 0,
-            },
-          ]}
-        >
-          <ExpenseRow
-            expense={item}
-            onEdit={() => setEditingExpense(item)}
-            onDelete={() => removeExpense(item.id)}
-          />
-        </View>
-      );
-    },
-    [colors.border, colors.surface, filtered.length, removeExpense]
-  );
-
-  const keyExtractor = useCallback((item: Expense) => item.id, []);
-
   const ListHeader = useMemo(
     () => (
       <View>
-        <View style={styles.headerRow}>
+        {/* Confident Screen Header & Month Switcher */}
+        <View style={styles.screenHeaderRow}>
           <View style={styles.headerLeft}>
-            <ScreenHeader
-              kicker="YOUR MONEY TRAIL"
-              title="Transactions"
-              subtitle="Track and manage your expenses"
-            />
+            <Text style={[styles.kicker, { color: colors.muted }]}>LEDGER & HISTORY</Text>
+            <Text style={[styles.title, { color: colors.foreground }]}>Records</Text>
           </View>
-          <Pressable
-            style={({ pressed }) => [
-              styles.addBtn,
-              { backgroundColor: colors.primary },
-              pressed && styles.pressed,
-            ]}
-            onPress={() => {
-              try {
-                Haptics.selectionAsync();
-              } catch {
-                // Non-fatal
-              }
-              setShowAddModal(true);
-            }}
-            accessibilityRole="button"
-            accessibilityLabel="Add new expense"
-          >
-            <Ionicons name="add" size={17} color="#FFFFFF" />
-            <Text style={styles.addBtnText}>Add</Text>
-          </Pressable>
+
+          <View style={styles.headerActions}>
+            {/* Interactive Month Selector Pill */}
+            <PressableScale
+              onPress={() => setShowDatePicker(true)}
+              style={[
+                styles.monthPickerPill,
+                {
+                  backgroundColor: dark ? "rgba(255,255,255,0.06)" : "#FFFFFF",
+                  borderColor: colors.border,
+                },
+              ]}
+              hapticFeedback="selection"
+              accessibilityRole="button"
+            >
+              <Ionicons name="calendar-outline" size={14} color={colors.primary} />
+              <Text style={[styles.monthPickerText, { color: colors.foreground }]}>
+                {selectedDate ? formatDate(selectedDate) : "All Dates"}
+              </Text>
+              <Ionicons name="chevron-down" size={13} color={colors.muted} />
+            </PressableScale>
+
+            {/* Export Document Action */}
+            <PressableScale
+              onPress={handleExport}
+              style={[
+                styles.iconActionBtn,
+                {
+                  backgroundColor: dark ? "rgba(255,255,255,0.06)" : "#FFFFFF",
+                  borderColor: colors.border,
+                },
+              ]}
+              hapticFeedback="light"
+              accessibilityRole="button"
+              accessibilityLabel="Export Records to CSV"
+            >
+              <Ionicons name="share-outline" size={18} color={colors.foreground} />
+            </PressableScale>
+
+            {/* Add Expense Action */}
+            <PressableScale
+              style={[
+                styles.addBtn,
+                { backgroundColor: colors.primary },
+              ]}
+              onPress={() => {
+                setShowAddModal(true);
+              }}
+              hapticFeedback="medium"
+              accessibilityRole="button"
+              accessibilityLabel="Add new expense"
+            >
+              <Ionicons name="add" size={18} color="#FFFFFF" />
+            </PressableScale>
+          </View>
         </View>
 
-        {/* Search Bar with filter toggle */}
+        {/* Search Bar */}
         <SearchBar
           value={query}
           onChangeText={setQuery}
-          placeholder="Search transactions..."
+          placeholder="Search transactions, notes, or stores..."
           onPressFilter={() => setShowSortFilter((prev) => !prev)}
           hasActiveFilters={hasActiveFilters}
         />
 
+        {/* Date Filter & Navigator Block */}
         <View style={styles.dateFilterBlock}>
           <View style={styles.dateNavigator}>
             <Pressable
@@ -173,10 +223,16 @@ export default function TransactionsScreen() {
               accessibilityRole="button"
               accessibilityLabel="Show previous day"
             >
-              <Ionicons name="chevron-back" size={18} color={colors.muted} />
+              <Ionicons name="chevron-back" size={17} color={colors.muted} />
             </Pressable>
             <Pressable
-              style={[styles.datePickerButton, { backgroundColor: colors.surface, borderColor: colors.border }]}
+              style={[
+                styles.datePickerButton,
+                {
+                  backgroundColor: dark ? "rgba(255,255,255,0.04)" : "#FFFFFF",
+                  borderColor: colors.border,
+                },
+              ]}
               onPress={() => setShowDatePicker(true)}
               accessibilityRole="button"
               accessibilityLabel={
@@ -185,11 +241,11 @@ export default function TransactionsScreen() {
                   : "Choose a date, currently showing all dates"
               }
             >
-              <Ionicons name="calendar-outline" size={16} color={colors.primary} />
+              <Ionicons name="calendar-outline" size={15} color={colors.primary} />
               <Text style={[styles.datePickerText, { color: colors.foreground }]} numberOfLines={1}>
                 {selectedDate ? formatDate(selectedDate) : "All dates"}
               </Text>
-              <Ionicons name="chevron-down" size={15} color={colors.muted} />
+              <Ionicons name="chevron-down" size={14} color={colors.muted} />
             </Pressable>
             <Pressable
               style={[styles.dateArrow, (!selectedDate || selectedDate >= todayDate) && styles.disabledDateArrow]}
@@ -199,9 +255,10 @@ export default function TransactionsScreen() {
               accessibilityLabel="Show next day"
               accessibilityState={{ disabled: !selectedDate || selectedDate >= todayDate }}
             >
-              <Ionicons name="chevron-forward" size={18} color={colors.muted} />
+              <Ionicons name="chevron-forward" size={17} color={colors.muted} />
             </Pressable>
           </View>
+
           <View style={styles.dateActions}>
             {selectedDate !== todayDate && (
               <Pressable
@@ -224,58 +281,108 @@ export default function TransactionsScreen() {
           </View>
         </View>
 
-        {/* Category Filter Chips */}
-        <View style={{ marginTop: 10 }}>
-          <CategoryChips selected={category} onSelect={setCategory} />
+        {/* Horizontal Category Filter Chips */}
+        <View style={{ marginTop: 6, marginBottom: 10 }}>
+          <CategoryChips selected={category} onSelect={setCategory} countMap={categoryCounts} />
         </View>
 
-        {/* Sort/Filter options toggle */}
+        {/* Sort selector dropdown */}
         {showSortFilter && (
-          <View style={{ marginTop: 8 }}>
+          <View style={{ marginBottom: 10 }}>
             <SortSelector selected={sortBy} onSelect={setSortBy} />
           </View>
         )}
 
-        {/* Summary Card matching Mockup Screen 2 */}
-        <View
-          style={[
-            styles.summaryCard,
-            {
-              backgroundColor: colors.surface,
-              borderColor: colors.border,
-              shadowColor: dark ? "#000000" : "#0A1F1C",
-              shadowOffset: { width: 0, height: 4 },
-              shadowOpacity: dark ? 0.35 : 0.04,
-              shadowRadius: 10,
-              elevation: 2,
-            },
-          ]}
-        >
-          <View style={styles.summaryCol}>
-            <Text style={[styles.summaryKicker, { color: colors.muted }]}>
-              {summaryLabel}
-            </Text>
-            <Text style={[styles.summarySubLabel, { color: colors.subtle }]}>Transactions</Text>
-            <Text style={[styles.summaryValue, { color: colors.foreground }]}>
-              {filtered.length}
-            </Text>
-          </View>
-          <View style={[styles.divider, { backgroundColor: colors.border }]} />
-          <View style={styles.summaryCol}>
-            <Text style={[styles.summaryKicker, { color: colors.muted }]}>TOTAL EXPENSE</Text>
-            <Text style={[styles.summarySubLabel, { color: colors.subtle }]}>
-              {category === "All" ? "All Categories" : category}
-            </Text>
-            <Text style={[styles.summaryValue, { color: colors.foreground }]}>
-              {formatMoney(total)}
-            </Text>
-          </View>
-        </View>
+        {/* Monthly Overview Ribbon / Summary Mini-Card */}
+        <MotionEntrance delay={60}>
+          <View
+            style={[
+              styles.monthlySummaryRibbon,
+              {
+                backgroundColor: colors.card,
+                borderColor: colors.border,
+              },
+            ]}
+          >
+            <View style={styles.ribbonLeft}>
+              <View style={[styles.ribbonIconBox, { backgroundColor: colors.primarySoft }]}>
+                <Ionicons name="analytics-outline" size={18} color={colors.primary} />
+              </View>
+              <View>
+                <Text style={[styles.ribbonLabel, { color: colors.muted }]}>
+                  {selectedDate ? `${formatDate(selectedDate).toUpperCase()} TOTAL` : "FILTERED TOTAL"}
+                </Text>
+                <View style={styles.ribbonAmountRow}>
+                  <Text style={[styles.ribbonAmount, { color: colors.foreground }]}>
+                    {formatMoney(total)}
+                  </Text>
+                  <Text style={[styles.ribbonTxCount, { color: colors.muted }]}>
+                    • {filtered.length} txns
+                  </Text>
+                </View>
+              </View>
+            </View>
 
-        {filtered.length > 0 && <View style={styles.listHeaderGap} />}
+            <View style={[styles.ribbonBadge, { backgroundColor: dark ? "rgba(16,185,129,0.18)" : "#ECFDF5" }]}>
+              <Ionicons name="wallet-outline" size={13} color={colors.success} />
+              <Text style={[styles.ribbonBadgeText, { color: colors.success }]}>
+                {category === "All" ? "All" : category}
+              </Text>
+            </View>
+          </View>
+        </MotionEntrance>
+
+        <View style={{ height: 12 }} />
       </View>
     ),
-    [category, colors, dark, filtered.length, hasActiveFilters, navigateDate, query, selectedDate, setCategory, setQuery, setSortBy, showSortFilter, sortBy, summaryLabel, todayDate, total]
+    [category, categoryCounts, colors, dark, filtered.length, handleExport, hasActiveFilters, navigateDate, query, selectedDate, setCategory, setQuery, setSortBy, showSortFilter, sortBy, todayDate, total]
+  );
+
+  const renderGroup = useCallback(
+    ({ item: group }: { item: { dateKey: string; label: string; items: Expense[]; subtotal: number } }) => {
+      return (
+        <View style={styles.dateGroupContainer}>
+          {/* Date Header Ribbon */}
+          <View style={styles.dateHeaderRibbon}>
+            <View style={styles.dateHeaderLeft}>
+              <Text style={[styles.dateGroupLabel, { color: colors.foreground }]}>
+                {group.label}
+              </Text>
+              <Text style={[styles.dateGroupCount, { color: colors.muted }]}>
+                {group.items.length} {group.items.length === 1 ? "record" : "records"}
+              </Text>
+            </View>
+            <Text style={[styles.dateGroupSubtotal, { color: colors.primary }]}>
+              −{formatMoney(group.subtotal)}
+            </Text>
+          </View>
+
+          {/* Grouped Transaction Card Surface */}
+          <MotionEntrance enableLayoutTransition delay={0}>
+            <View
+              style={[
+                styles.transactionGroupCard,
+                {
+                  backgroundColor: colors.card,
+                  borderColor: colors.border,
+                },
+              ]}
+            >
+              {group.items.map((item, index) => (
+                <View key={item.id} style={{ paddingHorizontal: 14 }}>
+                  <ExpenseRow
+                    expense={item}
+                    onEdit={() => setEditingExpense(item)}
+                    onDelete={() => removeExpense(item.id)}
+                  />
+                </View>
+              ))}
+            </View>
+          </MotionEntrance>
+        </View>
+      );
+    },
+    [colors.border, colors.card, colors.foreground, colors.muted, colors.primary, removeExpense]
   );
 
   const ListEmpty = useMemo(
@@ -284,30 +391,27 @@ export default function TransactionsScreen() {
         style={[
           styles.emptyContainer,
           {
-            backgroundColor: colors.surface,
+            backgroundColor: colors.card,
             borderColor: colors.border,
-            shadowColor: dark ? "#000000" : "#0A1F1C",
-            shadowOffset: { width: 0, height: 4 },
-            shadowOpacity: dark ? 0.25 : 0.04,
-            shadowRadius: 10,
           },
         ]}
       >
         <EmptyState
           icon="receipt-outline"
+          lottieSource={require("@/assets/lottie/empty-ledger.json")}
           title={
             selectedDate && !hasTransactionsForSelectedDate
               ? "No records for this date"
               : hasActiveFilters
-                ? "No matching records"
-                : "No records found"
+              ? "No matching records"
+              : "No records found"
           }
           description={
             hasActiveFilters
               ? selectedDate
                 ? hasTransactionsForSelectedDate
-                  ? `No transactions on ${formatDate(selectedDate)} match your search or category filter.`
-                  : `No transactions were recorded on ${formatDate(selectedDate)}. Try another date or clear filters.`
+                  ? `No transactions on ${formatDate(selectedDate)} match your search or filter.`
+                  : `No transactions were recorded on ${formatDate(selectedDate)}.`
                 : "No transactions match your search or category filter. Try clearing filters."
               : "You haven't logged any transactions yet."
           }
@@ -329,7 +433,7 @@ export default function TransactionsScreen() {
         )}
       </View>
     ),
-    [colors.border, colors.primary, colors.primarySoft, colors.surface, dark, hasActiveFilters, hasTransactionsForSelectedDate, resetFilters, selectedDate]
+    [colors.border, colors.card, colors.primary, colors.primarySoft, hasActiveFilters, hasTransactionsForSelectedDate, resetFilters, selectedDate]
   );
 
   if (!hydrated) {
@@ -343,15 +447,15 @@ export default function TransactionsScreen() {
   return (
     <ScreenContainer>
       <FlatList
-        data={filtered}
-        renderItem={renderItem}
-        keyExtractor={keyExtractor}
+        data={groupedExpenses}
+        renderItem={renderGroup}
+        keyExtractor={(item) => item.dateKey}
         ListHeaderComponent={ListHeader}
         ListEmptyComponent={ListEmpty}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scroll}
-        initialNumToRender={12}
-        maxToRenderPerBatch={10}
+        initialNumToRender={10}
+        maxToRenderPerBatch={8}
         windowSize={7}
         removeClippedSubviews
         refreshControl={
@@ -371,6 +475,8 @@ export default function TransactionsScreen() {
         onClose={handleCloseModal}
         onSubmit={handleModalSubmit}
       />
+
+      {/* Date Picker Modal */}
       <DatePickerModal
         visible={showDatePicker}
         selectedDate={selectedDate}
@@ -381,115 +487,245 @@ export default function TransactionsScreen() {
           setShowDatePicker(false);
         }}
       />
+
+      {/* Export Feedback Modal */}
+      {exportNotice && (
+        <ConfirmDialog
+          visible={Boolean(exportNotice)}
+          title={exportNotice.title}
+          message={exportNotice.message}
+          confirmText="Done"
+          onConfirm={() => setExportNotice(null)}
+        />
+      )}
     </ScreenContainer>
   );
 }
 
 const styles = StyleSheet.create({
   scroll: {
-    paddingTop: 12,
+    paddingTop: 8,
     paddingBottom: 96,
   },
-  headerRow: {
+  screenHeaderRow: {
     flexDirection: "row",
-    alignItems: "flex-start",
+    alignItems: "center",
     justifyContent: "space-between",
-    gap: 12,
-    marginBottom: 8,
+    marginBottom: 14,
   },
   headerLeft: {
     flex: 1,
   },
-  addBtn: {
+  kicker: {
+    fontSize: 9.5,
+    fontWeight: "800",
+    letterSpacing: 1.2,
+    marginBottom: 2,
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: "800",
+    letterSpacing: -0.5,
+  },
+  headerActions: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 4,
-    height: 38,
-    paddingHorizontal: 14,
-    borderRadius: 12,
-    marginTop: 6,
-    shadowColor: "#FF6554",
-    shadowOpacity: 0.28,
+    gap: 8,
+  },
+  monthPickerPill: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+    height: 36,
+    paddingHorizontal: 11,
+    borderRadius: 18,
+    borderWidth: 1,
+    shadowColor: "#1A1D20",
+    shadowOpacity: 0.03,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 1,
+    ...(Platform.OS === "web" ? ({ cursor: "pointer" } as any) : {}),
+  },
+  monthPickerText: {
+    fontSize: 12,
+    fontWeight: "700",
+  },
+  iconActionBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    borderWidth: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: "#1A1D20",
+    shadowOpacity: 0.03,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 1,
+    ...(Platform.OS === "web" ? ({ cursor: "pointer" } as any) : {}),
+  },
+  addBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: "#E84A3F",
+    shadowOpacity: 0.3,
     shadowRadius: 8,
     shadowOffset: { width: 0, height: 3 },
     elevation: 3,
     ...(Platform.OS === "web" ? ({ cursor: "pointer" } as any) : {}),
   },
-  addBtnText: {
-    color: "#FFFFFF",
-    fontSize: 12,
-    fontWeight: "800",
-    letterSpacing: -0.2,
+  dateFilterBlock: {
+    marginTop: 10,
+    marginBottom: 4,
   },
-  filterBadge: {
-    paddingHorizontal: 6,
-    paddingVertical: 1.5,
-    borderRadius: 6,
-  },
-  filterBadgeText: {
-    fontSize: 9,
-    fontWeight: "700",
-    letterSpacing: 0.3,
-  },
-  pressed: {
-    opacity: 0.8,
-    transform: [{ scale: 0.98 }],
-  },
-  summaryCard: {
+  dateNavigator: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-around",
-    paddingVertical: 18,
-    paddingHorizontal: 16,
-    borderRadius: 20,
-    borderWidth: 1,
-    marginTop: 14,
-    marginBottom: 16,
+    justifyContent: "space-between",
+    gap: 8,
   },
-  summaryCol: {
-    flex: 1,
+  dateArrow: {
+    width: 36,
+    height: 36,
     alignItems: "center",
+    justifyContent: "center",
+    borderRadius: 10,
   },
-  summaryKicker: {
+  disabledDateArrow: {
+    opacity: 0.35,
+  },
+  datePickerButton: {
+    flex: 1,
+    minWidth: 120,
+    height: 40,
+    paddingHorizontal: 12,
+    borderRadius: 14,
+    borderWidth: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+  },
+  datePickerText: {
+    fontSize: 12.5,
+    fontWeight: "700",
+    flexShrink: 1,
+  },
+  dateActions: {
+    flexDirection: "row",
+    justifyContent: "flex-end",
+    gap: 16,
+    marginTop: 2,
+    minHeight: 22,
+  },
+  dateAction: {
+    minHeight: 24,
+    justifyContent: "center",
+    paddingHorizontal: 4,
+  },
+  dateActionText: {
+    fontSize: 11,
+    fontWeight: "700",
+  },
+  monthlySummaryRibbon: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 16,
+    borderWidth: 1,
+    shadowColor: "#1A1D20",
+    shadowOpacity: 0.03,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 1,
+  },
+  ribbonLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+  },
+  ribbonIconBox: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  ribbonLabel: {
     fontSize: 9.5,
     fontWeight: "800",
     letterSpacing: 0.8,
-    marginBottom: 2,
   },
-  summarySubLabel: {
-    fontSize: 11,
+  ribbonAmountRow: {
+    flexDirection: "row",
+    alignItems: "baseline",
+    gap: 6,
+    marginTop: 2,
+  },
+  ribbonAmount: {
+    fontSize: 16,
+    fontWeight: "800",
+    letterSpacing: -0.3,
+  },
+  ribbonTxCount: {
+    fontSize: 11.5,
     fontWeight: "500",
-    marginBottom: 4,
   },
-  labelRow: {
+  ribbonBadge: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 6,
-    marginBottom: 6,
+    gap: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 999,
   },
-  statusDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
+  ribbonBadgeText: {
+    fontSize: 11,
+    fontWeight: "700",
   },
-  summaryLabel: {
-    fontSize: 10,
+  dateGroupContainer: {
+    marginBottom: 16,
+  },
+  dateHeaderRibbon: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 4,
+    marginBottom: 8,
+  },
+  dateHeaderLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  dateGroupLabel: {
+    fontSize: 11,
     fontWeight: "800",
     letterSpacing: 0.8,
   },
-  summaryValue: {
-    fontFamily: "Fraunces_700Bold",
-    fontSize: 22,
+  dateGroupCount: {
+    fontSize: 11,
+    fontWeight: "500",
   },
-  divider: {
-    width: 1,
-    height: 36,
+  dateGroupSubtotal: {
+    fontSize: 12,
+    fontWeight: "700",
   },
-  listHeaderGap: {
-    height: 16,
-  },
-  listItem: {
-    paddingHorizontal: 16,
+  transactionGroupCard: {
+    borderRadius: 18,
+    borderWidth: 1,
+    overflow: "hidden",
+    shadowColor: "#1A1D20",
+    shadowOpacity: 0.03,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 3 },
+    elevation: 1,
   },
   emptyContainer: {
     marginTop: 16,
@@ -511,56 +747,8 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     letterSpacing: 0.3,
   },
-  dateFilterBlock: {
-    marginTop: 14,
-  },
-  dateNavigator: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    gap: 10,
-  },
-  dateArrow: {
-    width: 40,
-    height: 40,
-    alignItems: "center",
-    justifyContent: "center",
-    borderRadius: 12,
-  },
-  disabledDateArrow: {
-    opacity: 0.35,
-  },
-  datePickerButton: {
-    flex: 1,
-    minWidth: 120,
-    height: 42,
-    paddingHorizontal: 12,
-    borderRadius: 13,
-    borderWidth: 1,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 8,
-  },
-  datePickerText: {
-    fontSize: 13,
-    fontWeight: "700",
-    flexShrink: 1,
-  },
-  dateActions: {
-    flexDirection: "row",
-    justifyContent: "flex-end",
-    gap: 18,
-    marginTop: 4,
-    minHeight: 24,
-  },
-  dateAction: {
-    minHeight: 28,
-    justifyContent: "center",
-    paddingHorizontal: 4,
-  },
-  dateActionText: {
-    fontSize: 11,
-    fontWeight: "700",
+  pressed: {
+    opacity: 0.8,
+    transform: [{ scale: 0.98 }],
   },
 });

@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ledgerly — Mobile Device Preview</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --primary: #E84A3F;
+      --bg: #0F172A;
+      --surface: #1E293B;
+      --border: rgba(255, 255, 255, 0.1);
+      --text: #F8FAFC;
+      --muted: #94A3B8;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+      background: radial-gradient(circle at 50% 20%, #1E293B 0%, #0F172A 100%);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      overflow-x: hidden;
+      padding: 16px;
+    }
+
+    header {
+      width: 100%;
+      max-width: 900px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 20px;
+      background: rgba(30, 41, 59, 0.7);
+      backdrop-filter: blur(16px);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      margin-bottom: 20px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .brand-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      background: linear-gradient(135deg, #FF5A4E, #E84A3F);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 16px;
+      color: white;
+      box-shadow: 0 2px 8px rgba(232, 74, 63, 0.4);
+    }
+
+    .brand-title {
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: -0.2px;
+    }
+
+    .brand-subtitle {
+      font-size: 11px;
+      color: var(--muted);
+      font-weight: 500;
+    }
+
+    .controls {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .btn-group {
+      display: flex;
+      background: rgba(15, 23, 42, 0.6);
+      padding: 3px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+    }
+
+    .btn {
+      background: transparent;
+      border: none;
+      color: var(--muted);
+      padding: 6px 12px;
+      font-size: 12px;
+      font-weight: 600;
+      border-radius: 7px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      font-family: inherit;
+    }
+
+    .btn:hover {
+      color: var(--text);
+    }
+
+    .btn.active {
+      background: var(--primary);
+      color: #FFFFFF;
+      box-shadow: 0 2px 6px rgba(232, 74, 63, 0.35);
+    }
+
+    .action-btn {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 7px 12px;
+      font-size: 12px;
+      font-weight: 600;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      font-family: inherit;
+    }
+
+    .action-btn:hover {
+      background: rgba(232, 74, 63, 0.15);
+      border-color: var(--primary);
+      color: #FF7B70;
+    }
+
+    /* Device Mockup Container */
+    .device-wrapper {
+      position: relative;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .device-frame {
+      position: relative;
+      background: #000000;
+      border-radius: 54px;
+      padding: 12px;
+      box-shadow: 
+        0 0 0 2px #334155,
+        0 0 0 8px #1E293B,
+        0 25px 60px -15px rgba(0, 0, 0, 0.7),
+        0 10px 24px -8px rgba(232, 74, 63, 0.15);
+      transition: width 0.3s ease, height 0.3s ease;
+      overflow: hidden;
+    }
+
+    /* Dynamic Island */
+    .dynamic-island {
+      position: absolute;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 110px;
+      height: 26px;
+      background: #000000;
+      border-radius: 20px;
+      z-index: 20;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 10px;
+      pointer-events: none;
+    }
+
+    .camera-lens {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #0c1421;
+      border: 1.5px solid #1a2536;
+    }
+
+    .speaker {
+      width: 38px;
+      height: 4px;
+      border-radius: 2px;
+      background: #1a2536;
+    }
+
+    /* Device Screen */
+    .device-screen {
+      width: 100%;
+      height: 100%;
+      border-radius: 44px;
+      overflow: hidden;
+      background: #F8F9FD;
+      position: relative;
+    }
+
+    iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+      display: block;
+      background: #F8F9FD;
+    }
+
+    /* Home Indicator bar */
+    .home-bar {
+      position: absolute;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 135px;
+      height: 4px;
+      border-radius: 2px;
+      background: rgba(15, 23, 42, 0.35);
+      z-index: 20;
+      pointer-events: none;
+    }
+
+    .footer-note {
+      margin-top: 18px;
+      font-size: 12px;
+      color: var(--muted);
+      text-align: center;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .status-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #10B981;
+      box-shadow: 0 0 8px #10B981;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="brand">
+      <div class="brand-icon">L</div>
+      <div>
+        <div class="brand-title">Ledgerly Mobile Simulator</div>
+        <div class="brand-subtitle">Stitch Warm Architectural Fintech</div>
+      </div>
+    </div>
+
+    <div class="controls">
+      <div class="btn-group">
+        <button class="btn active" onclick="setDevice(390, 844, this)">iPhone (390×844)</button>
+        <button class="btn" onclick="setDevice(412, 892, this)">Pixel (412×892)</button>
+        <button class="btn" onclick="setDevice(360, 800, this)">Galaxy (360×800)</button>
+      </div>
+
+      <div class="btn-group">
+        <button class="btn" onclick="setScale(0.85, this)">85%</button>
+        <button class="btn active" onclick="setScale(1, this)">100%</button>
+      </div>
+
+      <button class="action-btn" onclick="reloadFrame()" title="Reload preview">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="23 4 23 10 17 10"></polyline>
+          <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+        </svg>
+        Reload
+      </button>
+
+      <button class="action-btn" onclick="openExternal()" title="Open standalone tab">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+          <polyline points="15 3 21 3 21 9"></polyline>
+          <line x1="10" y1="14" x2="21" y2="3"></line>
+        </svg>
+        External
+      </button>
+    </div>
+  </header>
+
+  <div class="device-wrapper" id="deviceWrapper">
+    <div class="device-frame" id="deviceFrame" style="width: 414px; height: 868px;">
+      <div class="dynamic-island">
+        <div class="speaker"></div>
+        <div class="camera-lens"></div>
+      </div>
+
+      <div class="device-screen">
+        <iframe id="previewFrame" src="http://localhost:8081" title="Ledgerly Mobile Preview"></iframe>
+      </div>
+
+      <div class="home-bar"></div>
+    </div>
+  </div>
+
+  <div class="footer-note">
+    <span class="status-dot"></span>
+    <span>Connected to Metro Server at <strong>http://localhost:8081</strong></span>
+  </div>
+
+  <script>
+    function setDevice(w, h, btn) {
+      document.querySelectorAll('.btn-group:first-child .btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      const frame = document.getElementById('deviceFrame');
+      frame.style.width = (w + 24) + 'px';
+      frame.style.height = (h + 24) + 'px';
+    }
+
+    function setScale(scale, btn) {
+      document.querySelectorAll('.btn-group:nth-child(2) .btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      const wrapper = document.getElementById('deviceWrapper');
+      wrapper.style.transform = `scale(${scale})`;
+      wrapper.style.transformOrigin = 'top center';
+    }
+
+    function reloadFrame() {
+      const frame = document.getElementById('previewFrame');
+      frame.src = frame.src;
+    }
+
+    function openExternal() {
+      window.open('http://localhost:8081', '_blank');
+    }
+  </script>
+</body>
+</html>

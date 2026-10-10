@@ -1,5 +1,20 @@
-import React, { useEffect, useRef } from "react";
-import { Animated, DimensionValue, StyleProp, StyleSheet, View, ViewStyle } from "react-native";
+import React, { useEffect, useState } from "react";
+import {
+  AccessibilityInfo,
+  DimensionValue,
+  StyleProp,
+  StyleSheet,
+  View,
+  ViewStyle,
+} from "react-native";
+import Animated, {
+  interpolate,
+  useAnimatedStyle,
+  useSharedValue,
+  withRepeat,
+  withSequence,
+  withTiming,
+} from "react-native-reanimated";
 import { useTheme } from "@/lib/theme-store";
 
 export interface SkeletonProps {
@@ -18,32 +33,48 @@ export function Skeleton({
   children,
 }: SkeletonProps) {
   const { dark } = useTheme();
-  const animatedValue = useRef(new Animated.Value(0)).current;
+  const [reduceMotion, setReduceMotion] = useState(false);
+  const pulse = useSharedValue(0);
 
   useEffect(() => {
-    const animation = Animated.loop(
-      Animated.sequence([
-        Animated.timing(animatedValue, {
-          toValue: 1,
-          duration: 900,
-          useNativeDriver: true,
-        }),
-        Animated.timing(animatedValue, {
-          toValue: 0,
-          duration: 900,
-          useNativeDriver: true,
-        }),
-      ])
+    let isMounted = true;
+    AccessibilityInfo.isReduceMotionEnabled().then((enabled) => {
+      if (isMounted) setReduceMotion(enabled);
+    });
+
+    const subscription = AccessibilityInfo.addEventListener(
+      "reduceMotionChanged",
+      (enabled) => setReduceMotion(enabled)
     );
-    animation.start();
 
-    return () => animation.stop();
-  }, [animatedValue]);
+    return () => {
+      isMounted = false;
+      subscription?.remove?.();
+    };
+  }, []);
 
-  const opacity = animatedValue.interpolate({
-    inputRange: [0, 1],
-    outputRange: [dark ? 0.35 : 0.45, dark ? 0.85 : 0.9],
-  });
+  useEffect(() => {
+    if (reduceMotion) {
+      pulse.value = 0.5;
+      return;
+    }
+    pulse.value = withRepeat(
+      withSequence(
+        withTiming(1, { duration: 900 }),
+        withTiming(0, { duration: 900 })
+      ),
+      -1,
+      true
+    );
+  }, [pulse, reduceMotion]);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    opacity: interpolate(
+      pulse.value,
+      [0, 1],
+      [dark ? 0.35 : 0.45, dark ? 0.85 : 0.9]
+    ),
+  }));
 
   const baseColor = dark ? "rgba(255, 255, 255, 0.08)" : "#E2E8E5";
 
@@ -56,8 +87,8 @@ export function Skeleton({
           height,
           borderRadius,
           backgroundColor: baseColor,
-          opacity,
         },
+        animatedStyle,
         style,
       ]}
     >

@@ -1,7 +1,5 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect } from "react";
 import {
-  Animated,
-  Easing,
   Image,
   Linking,
   Modal,
@@ -12,6 +10,12 @@ import {
   Text,
   View,
 } from "react-native";
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring,
+  withTiming,
+} from "react-native-reanimated";
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { useTheme } from "@/lib/theme-store";
@@ -28,30 +32,26 @@ export function AboutDialog({ visible, onClose }: AboutDialogProps) {
   const { colors, dark } = useTheme();
 
   // Entrance animations
-  const fadeAnim = useRef(new Animated.Value(0)).current;
-  const scaleAnim = useRef(new Animated.Value(0.92)).current;
+  const fade = useSharedValue(0);
+  const scale = useSharedValue(0.92);
 
   useEffect(() => {
     if (visible) {
-      Animated.parallel([
-        Animated.timing(fadeAnim, {
-          toValue: 1,
-          duration: 220,
-          easing: Easing.out(Easing.quad),
-          useNativeDriver: true,
-        }),
-        Animated.spring(scaleAnim, {
-          toValue: 1,
-          friction: 8,
-          tension: 65,
-          useNativeDriver: true,
-        }),
-      ]).start();
+      fade.value = withTiming(1, { duration: 220 });
+      scale.value = withSpring(1, {
+        damping: 18,
+        stiffness: 240,
+      });
     } else {
-      fadeAnim.setValue(0);
-      scaleAnim.setValue(0.92);
+      fade.value = 0;
+      scale.value = 0.92;
     }
-  }, [visible]);
+  }, [visible, fade, scale]);
+
+  const dialogAnimatedStyle = useAnimatedStyle(() => ({
+    opacity: fade.value,
+    transform: [{ scale: scale.value }],
+  }));
 
   const handleVisitWebsite = async () => {
     try {
@@ -79,15 +79,7 @@ export function AboutDialog({ visible, onClose }: AboutDialogProps) {
       onRequestClose={onClose}
     >
       <View style={[styles.backdrop, { backgroundColor: colors.dialogBackdrop }]}>
-        <Animated.View
-          style={[
-            styles.cardWrap,
-            {
-              opacity: fadeAnim,
-              transform: [{ scale: scaleAnim }],
-            },
-          ]}
-        >
+        <Animated.View style={[styles.cardWrap, dialogAnimatedStyle]}>
           <GlassSurface
             variant="sheet"
             radius={28}

@@ -29,6 +29,8 @@
     "expo-sharing": "~14.0.8",
     "expo-status-bar": "~3.0.8",
     "expo-video": "~3.0.16",
+    "lottie-react-native": "~7.3.8",
+    "lottie-web": "^5.13.0",
     "nativewind": "^4.1.23",
     "react": "19.1.0",
     "react-dom": "19.1.0",
@@ -43,6 +45,7 @@
     "tailwindcss": "^3.4.17"
   },
   "devDependencies": {
+    "@types/babel__traverse": "^7.28.0",
     "@types/react": "~19.1.10",
     "typescript": "~5.9.2"
   }

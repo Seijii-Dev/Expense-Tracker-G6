@@ -15,7 +15,7 @@ interface SearchBarProps {
 export function SearchBar({
   value,
   onChangeText,
-  placeholder = "Search transactions...",
+  placeholder = "Search transactions, notes, or stores...",
   onPressFilter,
   hasActiveFilters,
 }: SearchBarProps) {
@@ -27,16 +27,16 @@ export function SearchBar({
       style={[
         styles.search,
         {
-          backgroundColor: dark ? "rgba(255,255,255,0.05)" : colors.surface,
-          borderColor: isFocused ? "#10B981" : colors.border,
+          backgroundColor: dark ? "rgba(255,255,255,0.04)" : "#FFFFFF",
+          borderColor: isFocused ? colors.primary : colors.border,
         },
         isFocused && styles.searchFocused,
       ]}
     >
       <Ionicons
-        name="search"
-        size={18}
-        color={isFocused ? "#10B981" : colors.subtle}
+        name="search-outline"
+        size={20}
+        color={isFocused ? colors.primary : colors.muted}
       />
       <TextInput
         value={value}
@@ -53,9 +53,7 @@ export function SearchBar({
           onPress={() => {
             try {
               Haptics.selectionAsync();
-            } catch {
-              // Non-fatal
-            }
+            } catch {}
             onChangeText("");
           }}
           accessibilityRole="button"
@@ -72,22 +70,26 @@ export function SearchBar({
           onPress={() => {
             try {
               Haptics.selectionAsync();
-            } catch {
-              // Non-fatal
-            }
+            } catch {}
             onPressFilter();
           }}
           accessibilityRole="button"
           accessibilityLabel="Filter transactions"
           style={[
             styles.filterBtn,
-            hasActiveFilters && { backgroundColor: dark ? "rgba(16, 185, 129, 0.2)" : "#E6F9F2" },
+            {
+              backgroundColor: hasActiveFilters
+                ? colors.primarySoft
+                : dark
+                ? "rgba(255,255,255,0.06)"
+                : colors.surfaceSubtle,
+            },
           ]}
         >
           <Ionicons
-            name="funnel-outline"
-            size={16}
-            color={hasActiveFilters ? "#10B981" : colors.muted}
+            name="options-outline"
+            size={17}
+            color={hasActiveFilters ? colors.primary : colors.muted}
           />
         </Pressable>
       )}
@@ -100,31 +102,35 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 10,
-    height: 48,
-    paddingHorizontal: 14,
-    borderRadius: 14,
+    height: 52,
+    paddingHorizontal: 16,
+    borderRadius: 16,
     borderWidth: 1.5,
-  },
-  searchFocused: {
-    shadowColor: "#FF6554",
-    shadowOpacity: 0.16,
+    shadowColor: "#1A1D20",
+    shadowOpacity: 0.03,
     shadowRadius: 8,
     shadowOffset: { width: 0, height: 2 },
-    elevation: 2,
+    elevation: 1,
+  },
+  searchFocused: {
+    shadowColor: "#E84A3F",
+    shadowOpacity: 0.16,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 3 },
+    elevation: 3,
   },
   searchInput: {
     flex: 1,
-    fontSize: 13,
+    fontSize: 13.5,
     fontWeight: "500",
   },
   filterBtn: {
-    width: 32,
-    height: 32,
-    borderRadius: 8,
+    width: 34,
+    height: 34,
+    borderRadius: 10,
     alignItems: "center",
     justifyContent: "center",
     marginLeft: 4,
     ...(Platform.OS === "web" ? ({ cursor: "pointer" } as any) : {}),
   },
 });
-

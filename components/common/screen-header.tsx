@@ -15,22 +15,12 @@ export function ScreenHeader({ kicker, title, subtitle, rightAction }: ScreenHea
   return (
     <View style={styles.header}>
       <View style={styles.titleArea}>
-        <View
-          style={[
-            styles.kickerPill,
-            {
-              backgroundColor: dark ? "rgba(255, 117, 101, 0.14)" : colors.primarySoft,
-              borderColor: dark ? "rgba(255, 117, 101, 0.28)" : "rgba(255, 101, 84, 0.22)",
-            },
-          ]}
-        >
-          <View style={[styles.kickerDot, { backgroundColor: colors.primary }]} />
-          <Text style={[styles.kicker, { color: colors.primary }]}>{kicker}</Text>
-        </View>
+        <Text style={[styles.kicker, { color: colors.muted }]}>
+          {kicker.toUpperCase()}
+        </Text>
 
         <Text style={[styles.title, { color: colors.foreground }]}>
           {title}
-          <Text style={{ color: colors.primary }}>.</Text>
         </Text>
 
         {subtitle ? (
@@ -48,50 +38,35 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "flex-start",
-    paddingTop: 8,
-    marginBottom: 20,
+    paddingTop: 4,
+    marginBottom: 16,
   },
   titleArea: {
     flex: 1,
     paddingRight: 12,
   },
-  kickerPill: {
-    alignSelf: "flex-start",
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 999,
-    borderWidth: 1,
-  },
-  kickerDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-  },
   kicker: {
-    fontSize: 9.5,
+    fontSize: 10,
     fontWeight: "800",
     letterSpacing: 1.2,
+    marginBottom: 4,
   },
   title: {
-    fontFamily: "Fraunces_700Bold",
-    fontSize: 32,
-    letterSpacing: -1.2,
-    marginTop: 10,
-    lineHeight: 38,
+    fontSize: 26,
+    fontWeight: "800",
+    letterSpacing: -0.6,
+    lineHeight: 32,
   },
   subtitle: {
     fontSize: 12.5,
     lineHeight: 18,
-    marginTop: 6,
+    marginTop: 4,
     maxWidth: 420,
+    fontWeight: "500",
   },
   rightAction: {
     alignItems: "center",
     justifyContent: "center",
-    paddingTop: 6,
+    paddingTop: 2,
   },
 });
-

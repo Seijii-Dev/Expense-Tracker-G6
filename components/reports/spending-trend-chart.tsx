@@ -1,5 +1,10 @@
 import React, { useEffect, useRef, useState } from "react";
-import { Animated, StyleSheet, Text, View, useWindowDimensions } from "react-native";
+import { Platform, StyleSheet, Text, View, useWindowDimensions } from "react-native";
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
+} from "react-native-reanimated";
 import Svg, { Circle, Defs, LinearGradient, Path, Stop, Line } from "react-native-svg";
 import { useTheme } from "@/lib/theme-store";
 import { formatMoney } from "@/utils/formatters";
@@ -13,17 +18,25 @@ export function SpendingTrendChart({ timeline }: SpendingTrendChartProps) {
   const { colors, dark } = useTheme();
   const { width: windowWidth } = useWindowDimensions();
   const [selectedPointKey, setSelectedPointKey] = useState<string | null>(null);
-  const chartOpacity = useRef(new Animated.Value(1)).current;
+  const [measuredWidth, setMeasuredWidth] = useState(0);
+  const chartOpacity = useSharedValue(1);
   const isFirstTimeline = useRef(true);
 
-  const chartWidth = Math.min(windowWidth - (windowWidth < 360 ? 48 : 56), 420);
-  const chartHeight = 164;
-  const paddingLeft = 40;
+  // Compute exact chart width to match container width
+  const fallbackWidth = Math.min(windowWidth - (windowWidth < 360 ? 24 : windowWidth < 480 ? 32 : 48), 440);
+  const chartWidth = measuredWidth > 0 ? measuredWidth : fallbackWidth;
+  const chartHeight = 170;
+  const paddingLeft = 24;
   const paddingRight = 20;
-  const paddingTop = 22;
-  const paddingBottom = 22;
-  const innerWidth = chartWidth - paddingLeft - paddingRight;
+  const paddingTop = 26;
+  const paddingBottom = 24;
+  const innerWidth = Math.max(10, chartWidth - paddingLeft - paddingRight);
   const innerHeight = chartHeight - paddingTop - paddingBottom;
+
+  if (!timeline?.points || timeline.points.length === 0) {
+    return null;
+  }
+
   const maxVal = Math.max(...timeline.points.map((point) => point.amount), 1) * 1.15;
 
   useEffect(() => {
@@ -33,15 +46,13 @@ export function SpendingTrendChart({ timeline }: SpendingTrendChartProps) {
       return;
     }
 
-    chartOpacity.setValue(0.72);
-    const animation = Animated.timing(chartOpacity, {
-      toValue: 1,
-      duration: 180,
-      useNativeDriver: true,
-    });
-    animation.start();
-    return () => animation.stop();
+    chartOpacity.value = 0.72;
+    chartOpacity.value = withTiming(1, { duration: 180 });
   }, [chartOpacity, timeline.interval, timeline.startDate, timeline.endDate]);
+
+  const animatedContainerStyle = useAnimatedStyle(() => ({
+    opacity: chartOpacity.value,
+  }));
 
   const points = timeline.points.map((point, index) => {
     const x = paddingLeft + (index / Math.max(timeline.points.length - 1, 1)) * innerWidth;
@@ -58,119 +69,169 @@ export function SpendingTrendChart({ timeline }: SpendingTrendChartProps) {
   }
 
   const baselineY = paddingTop + innerHeight;
-  const areaD = `${pathD} L ${points[points.length - 1].x} ${baselineY} L ${points[0].x} ${baselineY} Z`;
+  const lastPoint = points[points.length - 1] || points[0];
+  const areaD = `${pathD} L ${lastPoint.x} ${baselineY} L ${points[0].x} ${baselineY} Z`;
   const activePoint =
-    points.find((point) => point.key === selectedPointKey) ?? points[points.length - 1];
-  const tooltipLeft = Math.max(44, Math.min(activePoint.x - 38, chartWidth - 86));
+    points.find((point) => point.key === selectedPointKey) ?? lastPoint;
+  const tooltipLeft = Math.max(16, Math.min(activePoint.x - 48, chartWidth - 110));
 
   return (
     <Animated.View
+      onLayout={(e) => {
+        const w = e.nativeEvent.layout.width;
+        if (w > 0 && Math.abs(w - measuredWidth) > 1) {
+          setMeasuredWidth(w);
+        }
+      }}
       style={[
         styles.container,
         {
           backgroundColor: colors.surface,
           borderColor: colors.border,
-          shadowColor: dark ? "#000000" : "#0A1F1C",
+          shadowColor: dark ? "#000000" : "#1A1D20",
           shadowOpacity: dark ? 0.35 : 0.04,
-          opacity: chartOpacity,
         },
+        animatedContainerStyle,
       ]}
     >
       <View style={styles.headerRow}>
         <View style={styles.titleBlock}>
-          <Text style={[styles.title, { color: colors.foreground }]}>Spending Trajectory</Text>
+          <Text style={[styles.kicker, { color: colors.muted }]}>SPENDING TREND</Text>
+          <View style={styles.amountRow}>
+            <Text style={[styles.amountText, { color: colors.foreground }]}>
+              {formatMoney(timeline.total)}
+            </Text>
+          </View>
           <Text style={[styles.subtitle, { color: colors.muted }]}>
             {timeline.intervalLabel} · {timeline.rangeLabel}
           </Text>
         </View>
-        <View style={styles.trendPill}>
+        <View
+          style={[
+            styles.trendPill,
+            {
+              backgroundColor: dark ? "rgba(232, 74, 63, 0.15)" : "#FFF0ED",
+              borderColor: dark ? "rgba(232, 74, 63, 0.3)" : "#FED7D2",
+            },
+          ]}
+        >
           <Text style={styles.trendPillText}>{timeline.intervalLabel}</Text>
         </View>
       </View>
 
-      <Svg
-        width={chartWidth}
-        height={chartHeight}
-        accessibilityRole="image"
-        accessibilityLabel={`${timeline.intervalLabel} spending from ${timeline.rangeLabel}. Total ${formatMoney(
-          timeline.total
-        )}. Tap a data point to inspect its amount.`}
-      >
-        <Defs>
-          <LinearGradient id="areaGradient" x1="0" y1="0" x2="0" y2="1">
-            <Stop offset="0%" stopColor="#10B981" stopOpacity="0.32" />
-            <Stop offset="70%" stopColor="#10B981" stopOpacity="0.08" />
-            <Stop offset="100%" stopColor="#10B981" stopOpacity="0" />
-          </LinearGradient>
-        </Defs>
+      <View style={styles.chartWrapper}>
+        {/* Floating Tooltip Pill */}
+        <View
+          style={[
+            styles.floatingBadge,
+            {
+              left: tooltipLeft,
+              top: Math.max(6, activePoint.y - 32),
+              backgroundColor: dark ? "#1E293B" : "#0F172A",
+            },
+          ]}
+          accessibilityLiveRegion="polite"
+        >
+          <Text style={styles.floatingBadgeLabel}>{activePoint.label}: </Text>
+          <Text style={styles.floatingBadgeText}>{formatMoney(activePoint.amount)}</Text>
+        </View>
 
-        {[0.25, 0.5, 0.75, 1].map((percent, index) => {
-          const y = paddingTop + innerHeight * (1 - percent);
-          return (
-            <Line
-              key={index}
-              x1={paddingLeft}
-              y1={y}
-              x2={chartWidth - paddingRight}
-              y2={y}
-              stroke={dark ? "rgba(255,255,255,0.07)" : "rgba(0,0,0,0.05)"}
-              strokeDasharray="4 4"
-              strokeWidth="1"
-            />
-          );
-        })}
+        <Svg
+          width={chartWidth}
+          height={chartHeight}
+          accessibilityRole="image"
+          accessibilityLabel={`${timeline.intervalLabel} spending from ${timeline.rangeLabel}. Total ${formatMoney(
+            timeline.total
+          )}. Tap a data point to inspect its amount.`}
+        >
+          <Defs>
+            <LinearGradient id="chartGradient" x1="0" y1="0" x2="0" y2="1">
+              <Stop offset="0%" stopColor="#E84A3F" stopOpacity="0.22" />
+              <Stop offset="85%" stopColor="#E84A3F" stopOpacity="0.02" />
+              <Stop offset="100%" stopColor="#E84A3F" stopOpacity="0" />
+            </LinearGradient>
+          </Defs>
 
-        <Path d={areaD} fill="url(#areaGradient)" />
-        <Path
-          d={pathD}
-          fill="none"
-          stroke="#10B981"
-          strokeWidth="2.5"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
+          {/* Horizontal grid lines */}
+          {[0.25, 0.5, 0.75, 1].map((percent, index) => {
+            const y = paddingTop + innerHeight * (1 - percent);
+            return (
+              <Line
+                key={index}
+                x1={paddingLeft}
+                y1={y}
+                x2={chartWidth - paddingRight}
+                y2={y}
+                stroke={dark ? "rgba(255,255,255,0.06)" : "#ECEEF2"}
+                strokeDasharray="3 3"
+                strokeWidth="1"
+              />
+            );
+          })}
 
-        {points.map((point) => (
-          <Circle
-            key={point.key}
-            cx={point.x}
-            cy={point.y}
-            r={point.key === activePoint.key ? 5 : 3}
-            fill={point.key === activePoint.key ? "#10B981" : colors.surface}
-            stroke="#10B981"
-            strokeWidth="2"
-            onPress={() => setSelectedPointKey(point.key)}
-            accessibilityLabel={`${point.label}: ${formatMoney(point.amount)}`}
+          {/* Gradient area */}
+          <Path d={areaD} fill="url(#chartGradient)" />
+
+          {/* Trajectory smooth curve line */}
+          <Path
+            d={pathD}
+            fill="none"
+            stroke="#E84A3F"
+            strokeWidth="3"
+            strokeLinecap="round"
+            strokeLinejoin="round"
           />
-        ))}
-      </Svg>
 
-      <View
-        style={[
-          styles.floatingBadge,
-          {
-            left: tooltipLeft,
-            top: Math.max(48, activePoint.y + 24),
-            backgroundColor: "#16382B",
-            borderColor: "#10B981",
-          },
-        ]}
-        accessibilityLiveRegion="polite"
-      >
-        <Text style={styles.floatingBadgeLabel}>{activePoint.label}</Text>
-        <Text style={styles.floatingBadgeText}>{formatMoney(activePoint.amount)}</Text>
+          {/* Data point beacons */}
+          {points.map((point) => {
+            const isSelected = point.key === activePoint.key;
+            return (
+              <React.Fragment key={point.key}>
+                {isSelected && (
+                  <Circle
+                    cx={point.x}
+                    cy={point.y}
+                    r={8}
+                    fill="#E84A3F"
+                    fillOpacity={0.2}
+                  />
+                )}
+                <Circle
+                  cx={point.x}
+                  cy={point.y}
+                  r={isSelected ? 4.5 : 3.5}
+                  fill="#FFFFFF"
+                  stroke="#E84A3F"
+                  strokeWidth={isSelected ? 3 : 2}
+                  onPress={() => setSelectedPointKey(point.key)}
+                  accessibilityLabel={`${point.label}: ${formatMoney(point.amount)}`}
+                />
+              </React.Fragment>
+            );
+          })}
+        </Svg>
       </View>
 
+      {/* Horizontal Axis */}
       <View style={[styles.xAxisRow, { paddingLeft, paddingRight }]}>
-        {timeline.points.map((point) => (
-          <Text
-            key={point.key}
-            style={[styles.axisText, { color: colors.subtle }]}
-            numberOfLines={1}
-          >
-            {point.label}
-          </Text>
-        ))}
+        {timeline.points.map((point) => {
+          const isSelected = point.key === activePoint.key;
+          return (
+            <Text
+              key={point.key}
+              style={[
+                styles.axisText,
+                {
+                  color: isSelected ? "#E84A3F" : colors.muted,
+                  fontWeight: isSelected ? "700" : "500",
+                },
+              ]}
+              numberOfLines={1}
+            >
+              {point.label}
+            </Text>
+          );
+        })}
       </View>
     </Animated.View>
   );
@@ -178,82 +239,99 @@ export function SpendingTrendChart({ timeline }: SpendingTrendChartProps) {
 
 const styles = StyleSheet.create({
   container: {
-    borderRadius: 22,
+    borderRadius: 20,
     borderWidth: 1,
-    paddingVertical: 16,
-    paddingHorizontal: 12,
+    paddingTop: 16,
+    paddingBottom: 14,
     marginBottom: 16,
     shadowOffset: { width: 0, height: 4 },
-    shadowRadius: 10,
+    shadowRadius: 12,
     elevation: 2,
     position: "relative",
+    overflow: "hidden",
   },
   headerRow: {
     flexDirection: "row",
     alignItems: "flex-start",
     justifyContent: "space-between",
-    paddingHorizontal: 8,
-    marginBottom: 6,
+    paddingHorizontal: 16,
+    marginBottom: 8,
     gap: 8,
   },
   titleBlock: {
     flex: 1,
   },
-  title: {
-    fontFamily: "Fraunces_700Bold",
-    fontSize: 16,
-    letterSpacing: -0.2,
-  },
-  subtitle: {
-    fontSize: 10.5,
-    fontWeight: "500",
-    marginTop: 3,
-  },
-  trendPill: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 10,
-    backgroundColor: "rgba(16, 185, 129, 0.12)",
-  },
-  trendPillText: {
-    color: "#10B981",
+  kicker: {
     fontSize: 10,
     fontWeight: "700",
+    letterSpacing: 1.2,
+    textTransform: "uppercase",
+    marginBottom: 2,
+  },
+  amountRow: {
+    flexDirection: "row",
+    alignItems: "baseline",
+    gap: 4,
+  },
+  amountText: {
+    fontSize: 26,
+    fontWeight: "800",
+    letterSpacing: -0.6,
+  },
+  subtitle: {
+    fontSize: 11,
+    fontWeight: "500",
+    marginTop: 2,
+  },
+  trendPill: {
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 999,
+    borderWidth: 1,
+  },
+  trendPillText: {
+    color: "#E84A3F",
+    fontSize: 10.5,
+    fontWeight: "700",
+    letterSpacing: 0.3,
+  },
+  chartWrapper: {
+    position: "relative",
+    width: "100%",
   },
   floatingBadge: {
     position: "absolute",
-    minWidth: 68,
+    zIndex: 10,
+    flexDirection: "row",
     alignItems: "center",
-    paddingHorizontal: 7,
-    paddingVertical: 4,
+    paddingHorizontal: 9,
+    paddingVertical: 4.5,
     borderRadius: 8,
-    borderWidth: 1,
     shadowColor: "#000",
-    shadowOpacity: 0.15,
-    shadowRadius: 4,
+    shadowOpacity: 0.2,
+    shadowRadius: 6,
     shadowOffset: { width: 0, height: 2 },
-    elevation: 3,
+    elevation: 4,
   },
   floatingBadgeLabel: {
-    color: "#A7F3D0",
-    fontSize: 8.5,
-    fontWeight: "600",
+    color: "rgba(255,255,255,0.75)",
+    fontSize: 10,
+    fontWeight: "500",
   },
   floatingBadgeText: {
     color: "#FFFFFF",
-    fontSize: 10.5,
+    fontSize: 11,
     fontWeight: "700",
   },
   xAxisRow: {
     flexDirection: "row",
     justifyContent: "space-between",
-    gap: 3,
-    marginTop: 4,
+    gap: 2,
+    marginTop: 2,
   },
   axisText: {
     flex: 1,
     textAlign: "center",
-    fontSize: 9,
-    fontWeight: "600",
+    fontSize: 9.5,
   },
 });

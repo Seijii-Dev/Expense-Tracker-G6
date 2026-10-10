@@ -1,5 +1,14 @@
-import React, { useEffect, useState } from "react";
-import { AppState, Image, Platform, StyleProp, StyleSheet, View, ViewStyle } from "react-native";
+import React, { useEffect, useRef, useState } from "react";
+import {
+  Animated,
+  AppState,
+  Image,
+  Platform,
+  StyleProp,
+  StyleSheet,
+  View,
+  ViewStyle,
+} from "react-native";
 import { usePathname } from "expo-router";
 import { VideoView, useVideoPlayer } from "expo-video";
 import type { ProfileBannerMedia } from "@/types/auth";
@@ -13,11 +22,15 @@ type ProfileBannerLayerProps = {
 
 export function ProfileBannerLayer({ banner, visible, style }: ProfileBannerLayerProps) {
   const [sourceUri, setSourceUri] = useState<string | null>(null);
+  const [hasError, setHasError] = useState(false);
+  const opacityAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     let active = true;
     let dispose: (() => void) | undefined;
     setSourceUri(null);
+    setHasError(false);
+    opacityAnim.setValue(0);
 
     if (banner?.uri) {
       resolveProfileBannerSource(banner.uri).then((resolved) => {
@@ -26,7 +39,13 @@ export function ProfileBannerLayer({ banner, visible, style }: ProfileBannerLaye
           return;
         }
         dispose = resolved?.dispose;
-        setSourceUri(resolved?.uri ?? null);
+        if (resolved?.uri) {
+          setSourceUri(resolved.uri);
+        } else {
+          setHasError(true);
+        }
+      }).catch(() => {
+        if (active) setHasError(true);
       });
     }
 
@@ -34,40 +53,71 @@ export function ProfileBannerLayer({ banner, visible, style }: ProfileBannerLaye
       active = false;
       dispose?.();
     };
-  }, [banner?.uri]);
+  }, [banner?.uri, opacityAnim]);
 
-  if (!banner || !sourceUri) {
-    return <View pointerEvents="none" style={[styles.fallback, style]} />;
+  const handleMediaLoaded = () => {
+    Animated.timing(opacityAnim, {
+      toValue: 1,
+      duration: 320,
+      useNativeDriver: true,
+    }).start();
+  };
+
+  if (!banner || !sourceUri || hasError) {
+    return null;
   }
 
   if (banner.type === "image") {
     return (
-      <View pointerEvents="none" style={[styles.media, style]}>
+      <Animated.View pointerEvents="none" style={[styles.media, style, { opacity: opacityAnim }]}>
         <Image
           source={{ uri: sourceUri }}
           resizeMode="cover"
-          style={styles.media}
+          style={styles.image}
+          onLoad={handleMediaLoaded}
+          onError={() => setHasError(true)}
           accessibilityIgnoresInvertColors
         />
-      </View>
+      </Animated.View>
     );
   }
 
   return (
-    <View pointerEvents="none" style={[styles.media, style]}>
-      <ProfileBannerVideo key={sourceUri} uri={sourceUri} visible={visible} />
-    </View>
+    <Animated.View pointerEvents="none" style={[styles.media, style, { opacity: opacityAnim }]}>
+      <ProfileBannerVideo
+        key={sourceUri}
+        uri={sourceUri}
+        visible={visible}
+        onReady={handleMediaLoaded}
+        onError={() => setHasError(true)}
+      />
+    </Animated.View>
   );
 }
 
-function ProfileBannerVideo({ uri, visible }: { uri: string; visible: boolean }) {
+function ProfileBannerVideo({
+  uri,
+  visible,
+  onReady,
+  onError,
+}: {
+  uri: string;
+  visible: boolean;
+  onReady: () => void;
+  onError: () => void;
+}) {
   const pathname = usePathname();
   const focused = pathname.includes("account") || visible;
   const [appIsActive, setAppIsActive] = useState(AppState.currentState === "active");
+
   const player = useVideoPlayer(uri, (videoPlayer) => {
-    videoPlayer.loop = true;
-    videoPlayer.muted = true;
-    videoPlayer.volume = 0;
+    try {
+      videoPlayer.loop = true;
+      videoPlayer.muted = true;
+      videoPlayer.volume = 0;
+    } catch {
+      onError();
+    }
   });
 
   useEffect(() => {
@@ -79,11 +129,18 @@ function ProfileBannerVideo({ uri, visible }: { uri: string; visible: boolean })
 
   useEffect(() => {
     if (visible && focused && appIsActive) {
-      player.play();
+      try {
+        player.play();
+        onReady();
+      } catch {
+        onError();
+      }
     } else {
-      player.pause();
+      try {
+        player.pause();
+      } catch {}
     }
-  }, [appIsActive, focused, player, visible]);
+  }, [appIsActive, focused, onError, onReady, player, visible]);
 
   return (
     <VideoView
@@ -99,14 +156,13 @@ function ProfileBannerVideo({ uri, visible }: { uri: string; visible: boolean })
 }
 
 const styles = StyleSheet.create({
-  fallback: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: "#16382B",
-  },
   media: {
     ...StyleSheet.absoluteFillObject,
     width: "100%",
     height: "100%",
   },
+  image: {
+    width: "100%",
+    height: "100%",
+  },
 });
-

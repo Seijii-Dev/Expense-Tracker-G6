@@ -9,6 +9,7 @@ import { useExpenses } from "@/lib/expense-store";
 import { useTheme } from "@/lib/theme-store";
 import { formatDate, formatMoney } from "@/utils/formatters";
 import { ConfirmDialog } from "@/components/common/confirm-dialog";
+import { PressableScale } from "@/components/motion";
 
 interface ExpenseRowProps {
   expense: Expense;
@@ -35,14 +36,14 @@ export const ExpenseRow = React.memo(function ExpenseRow({
   }, []);
 
   return (
-    <View style={[styles.row, { borderBottomColor: colors.border }]}>
-      {/* Category Avatar */}
+    <View style={[styles.row, { borderBottomColor: dark ? "rgba(255,255,255,0.06)" : "#F1F3F5" }]}>
+      {/* Category Avatar (44px, 12px radius, contextual pastel tint) */}
       <View
         style={[
           styles.iconWrap,
           {
             backgroundColor: dark ? `${meta.color}25` : meta.soft,
-            borderColor: dark ? `${meta.color}40` : `${meta.color}30`,
+            borderColor: dark ? `${meta.color}35` : "transparent",
           },
         ]}
       >
@@ -60,82 +61,81 @@ export const ExpenseRow = React.memo(function ExpenseRow({
           {expense.description}
         </Text>
         <View style={styles.metaRow}>
+          <Text style={[styles.metaCategory, { color: colors.muted }]}>
+            {expense.category}
+          </Text>
+          <Text style={[styles.metaDot, { color: colors.subtle }]}>•</Text>
           <View
             style={[
-              styles.categoryPill,
-              {
-                backgroundColor: dark ? `${meta.color}1E` : meta.soft,
-              },
+              styles.paymentBadge,
+              { backgroundColor: dark ? "rgba(255,255,255,0.06)" : colors.surfaceSubtle },
             ]}
           >
-            <Text style={[styles.categoryBadge, { color: meta.color }]}>{expense.category}</Text>
+            <Text style={[styles.paymentText, { color: colors.muted }]}>{expense.payment}</Text>
           </View>
           <Text style={[styles.metaDot, { color: colors.subtle }]}>•</Text>
-          <Text style={[styles.metaText, { color: colors.muted }]}>{expense.payment}</Text>
-          <Text style={[styles.metaDot, { color: colors.subtle }]}>•</Text>
-          <Text style={[styles.metaText, { color: colors.subtle }]}>{formatDate(expense.date)}</Text>
+          <Text style={[styles.metaDate, { color: colors.subtle }]}>{formatDate(expense.date)}</Text>
         </View>
       </Pressable>
 
       {/* Amount & Actions */}
       <View style={styles.rightSide}>
-        <Text style={[styles.amount, { color: colors.foreground }]} numberOfLines={1} adjustsFontSizeToFit>
+        <Text style={[styles.amount, { color: colors.primary }]} numberOfLines={1} adjustsFontSizeToFit>
           −{formatMoney(expense.amount)}
         </Text>
         {showActions && (
           <View style={styles.actions}>
             {onEdit && (
-              <Pressable
+              <PressableScale
                 hitSlop={8}
-                onPress={() => {
-                  try {
-                    Haptics.selectionAsync();
-                  } catch {
-                    // Non-fatal
-                  }
-                  onEdit();
-                }}
+                onPress={onEdit}
+                hapticFeedback="selection"
                 accessibilityRole="button"
                 accessibilityLabel={`Edit ${expense.description}`}
-                style={({ pressed }) => [
+                style={[
                   styles.actionButton,
-                  { backgroundColor: colors.surfaceSubtle },
-                  pressed && styles.actionPressed,
+                  { backgroundColor: dark ? "rgba(255,255,255,0.06)" : colors.surfaceSubtle },
                 ]}
               >
-                <Ionicons name="create-outline" size={15} color={colors.muted} />
-              </Pressable>
+                <Ionicons name="create-outline" size={14} color={colors.muted} />
+              </PressableScale>
             )}
             {onDelete && (
-              <Pressable
+              <PressableScale
                 hitSlop={8}
                 onPress={handleDeletePress}
+                hapticFeedback="light"
                 accessibilityRole="button"
                 accessibilityLabel={`Delete ${expense.description}`}
-                style={({ pressed }) => [
+                style={[
                   styles.actionButton,
-                  { backgroundColor: dark ? "rgba(248, 113, 113, 0.12)" : "#FEE2E2" },
-                  pressed && styles.actionPressed,
+                  { backgroundColor: dark ? "rgba(232, 74, 63, 0.16)" : colors.primarySoft },
                 ]}
               >
-                <Ionicons name="trash-outline" size={15} color={colors.error} />
-              </Pressable>
+                <Ionicons name="trash-outline" size={14} color={colors.primary} />
+              </PressableScale>
             )}
           </View>
         )}
       </View>
 
-      {/* Branded Delete Confirmation Dialog (rendered conditionally for optimal performance) */}
+      {/* Branded Delete Confirmation Dialog */}
       {showDeleteConfirm && (
         <ConfirmDialog
           visible={showDeleteConfirm}
-          title="Delete Expense"
-          message={`Remove "${expense.description}" (${formatMoney(expense.amount)}) from your ledger? This action cannot be reversed.`}
+          title="Delete Transaction?"
+          message={`Are you sure you want to delete the record "${expense.description} - ${formatMoney(expense.amount)}"? This action cannot be undone and will update your reports.`}
           variant="danger"
-          icon="trash-outline"
-          confirmText="Delete"
+          icon="trash"
+          confirmText="Delete Record"
           cancelText="Cancel"
           destructive
+          snippet={{
+            title: expense.description,
+            subtitle: `${expense.category} • ${formatDate(expense.date)}`,
+            amount: `−${formatMoney(expense.amount)}`,
+            badge: expense.payment,
+          }}
           onConfirm={() => {
             setShowDeleteConfirm(false);
             onDelete?.();
@@ -151,17 +151,16 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: "row",
     alignItems: "center",
-    paddingVertical: 14,
+    paddingVertical: 12,
     borderBottomWidth: 1,
     gap: 12,
   },
   iconWrap: {
-    width: 42,
-    height: 42,
+    width: 44,
+    height: 44,
     alignItems: "center",
     justifyContent: "center",
-    borderRadius: 14,
-    borderWidth: 1,
+    borderRadius: 12,
   },
   body: {
     flex: 1,
@@ -169,41 +168,45 @@ const styles = StyleSheet.create({
     ...(Platform.OS === "web" ? ({ cursor: "pointer" } as any) : {}),
   },
   title: {
-    fontSize: 13.5,
-    fontWeight: "700",
+    fontSize: 14,
+    fontWeight: "600",
     letterSpacing: -0.2,
   },
   metaRow: {
     flexDirection: "row",
     alignItems: "center",
     gap: 5,
-    marginTop: 4,
+    marginTop: 3,
   },
-  categoryPill: {
-    paddingHorizontal: 7,
-    paddingVertical: 2,
-    borderRadius: 6,
+  metaCategory: {
+    fontSize: 11.5,
+    fontWeight: "500",
   },
-  categoryBadge: {
-    fontSize: 9.5,
-    fontWeight: "700",
+  paymentBadge: {
+    paddingHorizontal: 5,
+    paddingVertical: 1,
+    borderRadius: 4,
+  },
+  paymentText: {
+    fontSize: 10,
+    fontWeight: "600",
   },
   metaDot: {
-    fontSize: 9,
+    fontSize: 8,
   },
-  metaText: {
-    fontSize: 10.5,
+  metaDate: {
+    fontSize: 11,
     fontWeight: "500",
   },
   rightSide: {
     alignItems: "flex-end",
-    gap: 6,
+    gap: 4,
     flexShrink: 0,
   },
   amount: {
-    fontFamily: "Fraunces_700Bold",
     fontSize: 15,
-    letterSpacing: -0.3,
+    fontWeight: "700",
+    letterSpacing: -0.2,
   },
   actions: {
     flexDirection: "row",
@@ -211,9 +214,9 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   actionButton: {
-    width: 32,
-    height: 32,
-    borderRadius: 10,
+    width: 28,
+    height: 28,
+    borderRadius: 8,
     alignItems: "center",
     justifyContent: "center",
     ...(Platform.OS === "web" ? ({ cursor: "pointer" } as any) : {}),
@@ -223,4 +226,3 @@ const styles = StyleSheet.create({
     transform: [{ scale: 0.92 }],
   },
 });
-

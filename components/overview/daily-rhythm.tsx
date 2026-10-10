@@ -1,5 +1,10 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { Pressable, StyleSheet, Text, View, useWindowDimensions } from "react-native";
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring,
+} from "react-native-reanimated";
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { Expense } from "@/types/expense";
@@ -12,6 +17,76 @@ import { DatePickerModal } from "@/components/common/date-picker-modal";
 interface DailyRhythmProps {
   expenses: Expense[];
 }
+
+const RhythmBarItem = React.memo(function RhythmBarItem({
+  day,
+  isToday,
+  isSelected,
+  pct,
+  isNarrow,
+  colors,
+  dark,
+  onPress,
+}: {
+  day: { key: string; dayName: string; total: number };
+  isToday: boolean;
+  isSelected: boolean;
+  pct: number;
+  isNarrow: boolean;
+  colors: any;
+  dark: boolean;
+  onPress: () => void;
+}) {
+  const heightAnim = useSharedValue(0);
+
+  useEffect(() => {
+    heightAnim.value = withSpring(pct, {
+      damping: 20,
+      stiffness: 220,
+      mass: 0.8,
+    });
+  }, [pct]);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    height: `${heightAnim.value}%`,
+  }));
+
+  return (
+    <Pressable
+      style={({ pressed }) => [styles.barColumn, pressed && { opacity: 0.85 }]}
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={`${day.dayName}: ${formatMoney(day.total)}`}
+    >
+      <View style={styles.barTrack}>
+        <Animated.View
+          style={[
+            styles.bar,
+            animatedStyle,
+            {
+              width: isNarrow ? 16 : 22,
+              backgroundColor: isToday || isSelected
+                ? colors.primary
+                : dark
+                ? "rgba(255, 255, 255, 0.12)"
+                : "#E9ECEF",
+            },
+            (isToday || isSelected) && styles.barActiveShadow,
+          ]}
+        />
+      </View>
+      <Text
+        style={[
+          styles.barLabel,
+          { color: isSelected || isToday ? colors.primary : colors.muted },
+          (isSelected || isToday) && styles.barLabelToday,
+        ]}
+      >
+        {day.dayName}
+      </Text>
+    </Pressable>
+  );
+});
 
 export const DailyRhythm = React.memo(function DailyRhythm({ expenses }: DailyRhythmProps) {
   const { colors, dark } = useTheme();
@@ -68,9 +143,7 @@ export const DailyRhythm = React.memo(function DailyRhythm({ expenses }: DailyRh
   const changeDay = (direction: -1 | 1) => {
     try {
       Haptics.selectionAsync();
-    } catch {
-      // Non-fatal
-    }
+    } catch {}
     const nextDay = addCalendarDays(selectedDayKey, direction);
     if (direction < 0 || nextDay <= todayKey) setSelectedDayKey(nextDay);
   };
@@ -80,10 +153,7 @@ export const DailyRhythm = React.memo(function DailyRhythm({ expenses }: DailyRh
       {/* Header */}
       <View style={styles.panelHeader}>
         <View>
-          <View style={styles.kickerRow}>
-            <View style={[styles.kickerDot, { backgroundColor: colors.success }]} />
-            <Text style={[styles.kicker, { color: colors.success }]}>DAILY RHYTHM</Text>
-          </View>
+          <Text style={[styles.kicker, { color: colors.muted }]}>DAILY RHYTHM</Text>
           <Text style={[styles.panelTitle, { color: colors.foreground }]}>7-Day Velocity</Text>
         </View>
 
@@ -117,7 +187,7 @@ export const DailyRhythm = React.memo(function DailyRhythm({ expenses }: DailyRh
         >
           <Ionicons name="chevron-back" size={17} color={colors.muted} />
         </Pressable>
-        <Text style={[styles.rangeText, { color: colors.muted }]} numberOfLines={1}>
+        <Text style={[styles.rangeText, { color: colors.muted }]}>
           {formatDate(days[0].key)} – {formatDate(days[6].key)}
         </Text>
         <Pressable
@@ -140,7 +210,7 @@ export const DailyRhythm = React.memo(function DailyRhythm({ expenses }: DailyRh
             onPress={() => setSelectedDayKey(todayKey)}
             accessibilityRole="button"
             accessibilityLabel="Return to today"
-            style={[styles.todayButton, { backgroundColor: dark ? "rgba(16,185,129,0.18)" : colors.primarySoft }]}
+            style={[styles.todayButton, { backgroundColor: dark ? "rgba(232,74,63,0.18)" : colors.primarySoft }]}
           >
             <Ionicons name="today-outline" size={13} color={colors.primary} />
             <Text style={[styles.todayText, { color: colors.primary }]}>Today</Text>
@@ -151,16 +221,16 @@ export const DailyRhythm = React.memo(function DailyRhythm({ expenses }: DailyRh
       {/* Week Total & Selected Day Readout */}
       <View style={styles.amountRow}>
         <View>
-            <Text style={[styles.amountLabel, { color: colors.muted }]}>7-DAY TOTAL</Text>
-            <Text style={[styles.weekTotal, { color: colors.foreground }]}>{formatMoney(weekTotal)}</Text>
+          <Text style={[styles.amountLabel, { color: colors.muted }]}>7-DAY TOTAL</Text>
+          <Text style={[styles.weekTotal, { color: colors.foreground }]}>{formatMoney(weekTotal)}</Text>
         </View>
         {activeDay && (
           <View
             style={[
               styles.selectedDayBadge,
               {
-                backgroundColor: dark ? "rgba(255, 117, 101, 0.14)" : colors.primarySoft,
-                borderColor: dark ? "rgba(255, 117, 101, 0.3)" : "rgba(255, 101, 84, 0.25)",
+                backgroundColor: dark ? "rgba(232, 74, 63, 0.16)" : colors.primarySoft,
+                borderColor: dark ? "rgba(232, 74, 63, 0.3)" : "rgba(232, 74, 63, 0.22)",
               },
             ]}
           >
@@ -176,61 +246,36 @@ export const DailyRhythm = React.memo(function DailyRhythm({ expenses }: DailyRh
 
       {/* Bars Chart */}
       <View style={[styles.bars, { borderBottomColor: colors.border }, isNarrow && { gap: 4 }]}>
-        {days.map((day, index) => {
+        {days.map((day) => {
           const isToday = day.key === todayKey;
           const isSelected = selectedDayKey === day.key;
           const pct = day.total ? Math.max(10, (day.total / max) * 100) : 0;
 
           return (
-            <Pressable
+            <RhythmBarItem
               key={day.key}
-              style={styles.barColumn}
+              day={day}
+              isToday={isToday}
+              isSelected={isSelected}
+              pct={pct}
+              isNarrow={isNarrow}
+              colors={colors}
+              dark={dark}
               onPress={() => {
                 try {
                   Haptics.selectionAsync();
-                } catch {
-                  // Non-fatal
-                }
+                } catch {}
                 setSelectedDayKey(day.key);
               }}
-            >
-              <View style={styles.barTrack}>
-                <View
-                  style={[
-                    styles.bar,
-                    {
-                      height: `${pct}%`,
-                      width: isNarrow ? 16 : 22,
-                      backgroundColor: isToday
-                        ? colors.primary
-                        : isSelected
-                        ? colors.success
-                        : dark
-                        ? "rgba(52, 211, 153, 0.35)"
-                        : "rgba(16, 185, 129, 0.45)",
-                    },
-                    (isToday || isSelected) && styles.barActiveShadow,
-                  ]}
-                />
-              </View>
-              <Text
-                style={[
-                  styles.barLabel,
-                  { color: isSelected || isToday ? colors.primary : colors.muted },
-                  (isSelected || isToday) && styles.barLabelToday,
-                ]}
-              >
-                {day.dayName}
-              </Text>
-            </Pressable>
+            />
           );
         })}
       </View>
 
       {/* Bottom Insights */}
       <View style={styles.weekChange}>
-        <Ionicons name="sparkles" size={13} color={colors.success} />
-        <Text style={[styles.weekChangeText, { color: colors.success }]}>
+        <Ionicons name="sparkles" size={13} color={colors.primary} />
+        <Text style={[styles.weekChangeText, { color: colors.muted }]}>
           {weekTotal
             ? `${days.filter((day) => day.total > 0).length} of 7 active days logged`
             : "No transactions recorded in the past 7 days"}
@@ -257,7 +302,7 @@ export const DailyRhythm = React.memo(function DailyRhythm({ expenses }: DailyRh
                   {expense.category} · {expense.payment}
                 </Text>
               </View>
-              <Text style={[styles.expenseAmount, { color: colors.foreground }]}>{formatMoney(expense.amount)}</Text>
+              <Text style={[styles.expenseAmount, { color: colors.primary }]}>{formatMoney(expense.amount)}</Text>
             </View>
           ))}
         </View>
@@ -286,32 +331,25 @@ const styles = StyleSheet.create({
   },
   panelInner: {
     padding: 18,
+    borderRadius: 22,
+    borderWidth: 1,
   },
   panelHeader: {
     flexDirection: "row",
     alignItems: "flex-start",
     justifyContent: "space-between",
   },
-  kickerRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-  },
-  kickerDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-  },
   kicker: {
     fontSize: 9.5,
     fontWeight: "800",
     letterSpacing: 1.2,
+    marginBottom: 2,
   },
   panelTitle: {
-    fontFamily: "Fraunces_700Bold",
-    fontSize: 20,
-    letterSpacing: -0.4,
-    marginTop: 4,
+    fontSize: 19,
+    fontWeight: "700",
+    letterSpacing: -0.3,
+    marginTop: 2,
   },
   datePill: {
     flexDirection: "row",
@@ -335,9 +373,9 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
   dateNavButton: {
-    width: 34,
-    height: 34,
-    borderRadius: 11,
+    width: 32,
+    height: 32,
+    borderRadius: 10,
     borderWidth: 1,
     alignItems: "center",
     justifyContent: "center",
@@ -345,12 +383,12 @@ const styles = StyleSheet.create({
   disabledNavButton: { opacity: 0.35 },
   rangeText: { flex: 1, textAlign: "center", fontSize: 10, fontWeight: "600" },
   todayButton: {
-    minHeight: 34,
+    minHeight: 32,
     paddingHorizontal: 10,
-    borderRadius: 11,
+    borderRadius: 10,
     flexDirection: "row",
     alignItems: "center",
-    gap: 5,
+    gap: 4,
   },
   todayText: { fontSize: 10, fontWeight: "800" },
   amountRow: {
@@ -366,15 +404,15 @@ const styles = StyleSheet.create({
     letterSpacing: 0.8,
   },
   weekTotal: {
-    fontFamily: "Fraunces_700Bold",
-    fontSize: 26,
-    letterSpacing: -0.8,
+    fontSize: 24,
+    fontWeight: "800",
+    letterSpacing: -0.6,
     marginTop: 2,
   },
   selectedDayBadge: {
     paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 10,
+    paddingVertical: 4,
+    borderRadius: 8,
     borderWidth: 1,
     alignItems: "flex-end",
   },
@@ -384,11 +422,11 @@ const styles = StyleSheet.create({
     textTransform: "uppercase",
   },
   selectedDayAmount: {
-    fontFamily: "Fraunces_700Bold",
     fontSize: 13,
+    fontWeight: "800",
   },
   bars: {
-    height: 136,
+    height: 120,
     flexDirection: "row",
     alignItems: "flex-end",
     justifyContent: "space-between",
@@ -410,19 +448,19 @@ const styles = StyleSheet.create({
     paddingBottom: 6,
   },
   bar: {
-    width: 22,
+    width: 20,
     borderRadius: 8,
     minHeight: 6,
   },
   barActiveShadow: {
-    shadowColor: "#FF6554",
+    shadowColor: "#E84A3F",
     shadowOpacity: 0.35,
     shadowRadius: 6,
     shadowOffset: { width: 0, height: 2 },
     elevation: 3,
   },
   barLabel: {
-    fontSize: 9.5,
+    fontSize: 10,
     fontWeight: "600",
     marginBottom: 6,
   },
@@ -436,7 +474,7 @@ const styles = StyleSheet.create({
     marginTop: 12,
   },
   weekChangeText: {
-    fontSize: 10.5,
+    fontSize: 11,
     fontWeight: "600",
   },
   activityDivider: {
@@ -447,11 +485,11 @@ const styles = StyleSheet.create({
     marginTop: 14,
     paddingTop: 12,
   },
-  activityHeading: { fontSize: 9, fontWeight: "800", letterSpacing: 0.9, flex: 1 },
+  activityHeading: { fontSize: 9.5, fontWeight: "800", letterSpacing: 0.9, flex: 1 },
   activityCount: { fontSize: 10, fontWeight: "600", marginLeft: 10 },
   expenseList: { marginTop: 4 },
   expenseRow: {
-    minHeight: 48,
+    minHeight: 44,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
@@ -459,8 +497,8 @@ const styles = StyleSheet.create({
     borderBottomWidth: StyleSheet.hairlineWidth,
   },
   expenseText: { flex: 1, minWidth: 0 },
-  expenseDescription: { fontSize: 12, fontWeight: "700" },
-  expenseMeta: { fontSize: 10, fontWeight: "500", marginTop: 3 },
-  expenseAmount: { fontSize: 12, fontWeight: "800" },
+  expenseDescription: { fontSize: 12.5, fontWeight: "600" },
+  expenseMeta: { fontSize: 10, fontWeight: "500", marginTop: 2 },
+  expenseAmount: { fontSize: 12.5, fontWeight: "700" },
   emptyActivity: { fontSize: 11, marginTop: 8 },
 });

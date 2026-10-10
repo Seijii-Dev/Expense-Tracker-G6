@@ -58,7 +58,6 @@ export const CategoryLegend = React.memo(function CategoryLegend({ expenses }: C
                   styles.iconWrap,
                   {
                     backgroundColor: dark ? `${meta.color}25` : meta.soft,
-                    borderColor: dark ? `${meta.color}40` : `${meta.color}30`,
                   },
                 ]}
               >
@@ -107,6 +106,7 @@ const styles = StyleSheet.create({
   },
   legendEmptyText: {
     fontSize: 11,
+    fontWeight: "500",
   },
   legendRow: {
     flexDirection: "row",
@@ -121,15 +121,14 @@ const styles = StyleSheet.create({
     paddingRight: 6,
   },
   iconWrap: {
-    width: 24,
-    height: 24,
-    borderRadius: 7,
+    width: 26,
+    height: 26,
+    borderRadius: 8,
     alignItems: "center",
     justifyContent: "center",
-    borderWidth: 0.5,
   },
   legendText: {
-    fontSize: 11.5,
+    fontSize: 12,
     fontWeight: "600",
     flexShrink: 1,
   },
@@ -139,19 +138,18 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   pctBadge: {
-    paddingHorizontal: 5,
+    paddingHorizontal: 6,
     paddingVertical: 2,
-    borderRadius: 5,
+    borderRadius: 6,
   },
   pctText: {
-    fontSize: 9.5,
+    fontSize: 10,
     fontWeight: "700",
   },
   legendAmount: {
-    fontFamily: "Fraunces_700Bold",
-    fontSize: 11.5,
+    fontSize: 12,
+    fontWeight: "700",
     minWidth: 54,
     textAlign: "right",
   },
 });
-

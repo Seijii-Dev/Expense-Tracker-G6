@@ -3,8 +3,8 @@ import { type PropsWithChildren } from "react";
 
 /**
  * Root HTML template for Expo Router Web.
- * Injects required font-face definitions and preloads so vector icon glyphs
- * render with 100% fidelity without missing glyph boxes or system font fallbacks.
+ * Injects Plus Jakarta Sans (Ledgerly primary typography) and Ionicons font preloads
+ * so fonts and vector glyphs render with 100% visual fidelity without FOUC.
  */
 export default function RootHtml({ children }: PropsWithChildren) {
   return (
@@ -17,13 +17,21 @@ export default function RootHtml({ children }: PropsWithChildren) {
           content="width=device-width, initial-scale=1, shrink-to-fit=no, viewport-fit=cover"
         />
         <meta name="description" content="Ledgerly — Smart Spending & Savings Tracker" />
-        <meta name="theme-color" content="#18362D" />
+        <meta name="theme-color" content="#E84A3F" />
         <title>Ledgerly — Smart Spending & Savings Tracker</title>
 
         {/* Reset styles */}
         <ScrollViewStyleReset />
 
-        {/* Preload vector icon font to prevent FOUC / missing glyphs on Web */}
+        {/* Plus Jakarta Sans (Stitch Ledgerly Primary Typography) */}
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300..800;1,300..800&display=swap"
+          rel="stylesheet"
+        />
+
+        {/* Preload vector icon font */}
         <link
           rel="preload"
           href="https://cdn.jsdelivr.net/npm/@expo/vector-icons@15.1.1/build/vendor/react-native-vector-icons/Fonts/Ionicons.ttf"
@@ -42,12 +50,18 @@ export default function RootHtml({ children }: PropsWithChildren) {
                 padding: 0;
                 -webkit-font-smoothing: antialiased;
                 -moz-osx-font-smoothing: grayscale;
-                background-color: #F8FAF9;
+                background-color: #F8F9FD;
+                font-family: 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
               }
               #root {
                 display: flex;
                 height: 100%;
                 flex: 1;
+              }
+
+              /* Default font-family for all text and form inputs */
+              *, input, button, textarea, select {
+                font-family: 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
               }
 
               /* Global @font-face declarations for Ionicons (both lowercase and uppercase keys) */

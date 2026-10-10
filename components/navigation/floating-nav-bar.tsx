@@ -1,6 +1,5 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
-  Animated,
   Keyboard,
   Platform,
   Pressable,
@@ -9,6 +8,11 @@ import {
   View,
   useWindowDimensions,
 } from "react-native";
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring,
+} from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
@@ -35,7 +39,6 @@ export interface FloatingTabBarProps {
   };
 }
 
-
 const TAB_NAME_MAP: Record<string, { tab: NavTabName; label: string }> = {
   index: { tab: "overview", label: "Overview" },
   transactions: { tab: "records", label: "Records" },
@@ -53,40 +56,43 @@ interface TabButtonProps {
 }
 
 function TabButton({ name, isFocused, onPress, onLongPress, isCompact }: TabButtonProps) {
-  const { colors, dark } = useTheme();
+  const { colors } = useTheme();
   const info = TAB_NAME_MAP[name] || { tab: "overview" as NavTabName, label: name };
-  const scaleAnim = useRef(new Animated.Value(1)).current;
-  const activeAnim = useRef(new Animated.Value(isFocused ? 1 : 0)).current;
+  const scale = useSharedValue(1);
+  const active = useSharedValue(isFocused ? 1 : 0);
 
   useEffect(() => {
-    Animated.spring(activeAnim, {
-      toValue: isFocused ? 1 : 0,
+    active.value = withSpring(isFocused ? 1 : 0, {
       damping: 18,
       stiffness: 240,
       mass: 0.8,
-      useNativeDriver: true,
-    }).start();
-  }, [isFocused, activeAnim]);
+    });
+  }, [active, isFocused]);
+
+  const scaleStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+  }));
+
+  const indicatorStyle = useAnimatedStyle(() => ({
+    opacity: active.value,
+    transform: [{ scale: 0.4 + active.value * 0.6 }],
+  }));
 
   const handlePressIn = () => {
-    Animated.spring(scaleAnim, {
-      toValue: 0.92,
+    scale.value = withSpring(0.92, {
       damping: 20,
-      stiffness: 300,
-      useNativeDriver: true,
-    }).start();
+      stiffness: 320,
+    });
   };
 
   const handlePressOut = () => {
-    Animated.spring(scaleAnim, {
-      toValue: 1,
+    scale.value = withSpring(1, {
       damping: 16,
       stiffness: 240,
-      useNativeDriver: true,
-    }).start();
+    });
   };
 
-  const iconSize = isCompact ? 19 : 21;
+  const iconSize = isCompact ? 20 : 22;
 
   return (
     <Pressable
@@ -102,35 +108,7 @@ function TabButton({ name, isFocused, onPress, onLongPress, isCompact }: TabButt
         Platform.OS === "web" ? ({ cursor: "pointer", userSelect: "none" } as any) : {},
       ]}
     >
-      <Animated.View
-        style={[
-          styles.tabContent,
-          {
-            transform: [{ scale: scaleAnim }],
-          },
-        ]}
-      >
-        {/* Animated Active Pill Indicator */}
-        <Animated.View
-          pointerEvents="none"
-          style={[
-            styles.activePill,
-            {
-              backgroundColor: dark ? "rgba(255, 117, 101, 0.18)" : colors.primarySoft,
-              borderColor: dark ? "rgba(255, 117, 101, 0.38)" : "rgba(255, 101, 84, 0.28)",
-              opacity: activeAnim,
-              transform: [
-                {
-                  scale: activeAnim.interpolate({
-                    inputRange: [0, 1],
-                    outputRange: [0.82, 1],
-                  }),
-                },
-              ],
-            },
-          ]}
-        />
-
+      <Animated.View style={[styles.tabContent, scaleStyle]}>
         {/* Icon */}
         <View style={styles.iconContainer}>
           <NavIcon
@@ -147,7 +125,7 @@ function TabButton({ name, isFocused, onPress, onLongPress, isCompact }: TabButt
             styles.label,
             {
               color: isFocused ? colors.primary : colors.muted,
-              fontSize: isCompact ? 9.5 : 11,
+              fontSize: isCompact ? 10 : 11,
               fontWeight: isFocused ? "700" : "500",
             },
           ]}
@@ -155,6 +133,16 @@ function TabButton({ name, isFocused, onPress, onLongPress, isCompact }: TabButt
         >
           {info.label}
         </Text>
+
+        {/* Active Coral Dot Indicator directly beneath label */}
+        <Animated.View
+          pointerEvents="none"
+          style={[
+            styles.activeIndicatorDot,
+            { backgroundColor: colors.primary },
+            indicatorStyle,
+          ]}
+        />
       </Animated.View>
     </Pressable>
   );
@@ -166,7 +154,11 @@ export function FloatingTabBar({ state, descriptors, navigation }: FloatingTabBa
   const { width: windowWidth } = useWindowDimensions();
   const { openAddExpenseModal } = useExpenses();
   const [keyboardVisible, setKeyboardVisible] = useState(false);
-  const fabScaleAnim = useRef(new Animated.Value(1)).current;
+  const fabScale = useSharedValue(1);
+
+  const fabAnimatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: fabScale.value }],
+  }));
 
   // Auto-hide floating nav bar when virtual keyboard opens on mobile
   useEffect(() => {
@@ -192,14 +184,14 @@ export function FloatingTabBar({ state, descriptors, navigation }: FloatingTabBa
   // Responsive dock sizing
   const isSmallScreen = windowWidth < 360;
   const isTabletOrDesktop = windowWidth >= 600;
-  const dockMaxWidth = 460;
+  const dockMaxWidth = 420;
 
   // Horizontal dock positioning
   const dockWidth = isTabletOrDesktop
     ? dockMaxWidth
     : Math.min(dockMaxWidth, windowWidth - (isSmallScreen ? 16 : 24));
 
-  const bottomInset = Math.max(insets.bottom + 8, Platform.OS === "ios" ? 18 : 12);
+  const bottomInset = Math.max(insets.bottom + 10, Platform.OS === "ios" ? 20 : 14);
 
   const handleFabPress = () => {
     try {
@@ -211,21 +203,17 @@ export function FloatingTabBar({ state, descriptors, navigation }: FloatingTabBa
   };
 
   const handleFabPressIn = () => {
-    Animated.spring(fabScaleAnim, {
-      toValue: 0.9,
+    fabScale.value = withSpring(0.9, {
       damping: 18,
-      stiffness: 300,
-      useNativeDriver: true,
-    }).start();
+      stiffness: 320,
+    });
   };
 
   const handleFabPressOut = () => {
-    Animated.spring(fabScaleAnim, {
-      toValue: 1,
+    fabScale.value = withSpring(1, {
       damping: 15,
       stiffness: 240,
-      useNativeDriver: true,
-    }).start();
+    });
   };
 
   const renderTab = (routeName: string) => {
@@ -293,10 +281,10 @@ export function FloatingTabBar({ state, descriptors, navigation }: FloatingTabBa
           styles.dockSurface,
           {
             width: dockWidth,
-            borderColor: dark ? "rgba(255, 255, 255, 0.12)" : "rgba(255, 255, 255, 0.65)",
-            shadowColor: dark ? "#000000" : "#102621",
-            shadowOpacity: dark ? 0.6 : 0.14,
-            shadowRadius: 26,
+            borderColor: dark ? "rgba(255, 255, 255, 0.12)" : "rgba(241, 243, 245, 0.95)",
+            shadowColor: dark ? "#000000" : "#1A1D20",
+            shadowOpacity: dark ? 0.5 : 0.08,
+            shadowRadius: 28,
             shadowOffset: { width: 0, height: 10 },
             elevation: 12,
           },
@@ -323,9 +311,10 @@ export function FloatingTabBar({ state, descriptors, navigation }: FloatingTabBa
             style={[
               styles.fabButton,
               {
-                backgroundColor: "#FF6554",
-                transform: [{ scale: fabScaleAnim }],
+                backgroundColor: colors.primary,
+                shadowColor: colors.primary,
               },
+              fabAnimatedStyle,
             ]}
           >
             <Ionicons name="add" size={28} color="#FFFFFF" />
@@ -350,7 +339,7 @@ const styles = StyleSheet.create({
     zIndex: 999,
   },
   dockSurface: {
-    height: 68,
+    height: 66,
     borderRadius: 36,
   },
   dockContent: {
@@ -358,7 +347,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     height: "100%",
-    paddingHorizontal: 6,
+    paddingHorizontal: 8,
   },
   tabBtn: {
     flex: 1,
@@ -374,14 +363,11 @@ const styles = StyleSheet.create({
     position: "relative",
     paddingVertical: 2,
   },
-  activePill: {
-    position: "absolute",
-    top: -2,
-    bottom: -2,
-    left: "8%",
-    right: "8%",
-    borderRadius: 20,
-    borderWidth: 1,
+  activeIndicatorDot: {
+    width: 4,
+    height: 4,
+    borderRadius: 2,
+    marginTop: 2,
   },
   iconContainer: {
     height: 24,
@@ -389,13 +375,13 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   label: {
-    letterSpacing: -0.2,
-    marginTop: 3,
+    letterSpacing: -0.1,
+    marginTop: 2,
     lineHeight: 13,
     textAlign: "center",
   },
   fabContainer: {
-    width: 58,
+    width: 54,
     alignItems: "center",
     justifyContent: "center",
     height: "100%",
@@ -406,10 +392,9 @@ const styles = StyleSheet.create({
     borderRadius: 23,
     alignItems: "center",
     justifyContent: "center",
-    shadowColor: "#FF6554",
-    shadowOpacity: 0.45,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.38,
+    shadowRadius: 14,
+    shadowOffset: { width: 0, height: 6 },
     elevation: 8,
   },
 });

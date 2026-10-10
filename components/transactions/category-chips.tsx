@@ -1,18 +1,18 @@
 import React, { useMemo } from "react";
 import { Platform, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import * as Haptics from "expo-haptics";
-import { Ionicons } from "@expo/vector-icons";
 import { Category } from "@/types/expense";
 import { useExpenses } from "@/lib/expense-store";
 import { useTheme } from "@/lib/theme-store";
-import { getCategoryIconName, getCategoryStyle } from "@/constants/categories";
+import { getCategoryStyle } from "@/constants/categories";
 
 interface CategoryChipsProps {
   selected: "All" | Category;
   onSelect: (category: "All" | Category) => void;
+  countMap?: Record<string, number>;
 }
 
-export function CategoryChips({ selected, onSelect }: CategoryChipsProps) {
+export function CategoryChips({ selected, onSelect, countMap }: CategoryChipsProps) {
   const { colors, dark } = useTheme();
   const { allCategories, customCategories } = useExpenses();
 
@@ -33,9 +33,7 @@ export function CategoryChips({ selected, onSelect }: CategoryChipsProps) {
         const catStyle = isAll
           ? { color: colors.primary, soft: colors.primarySoft }
           : getCategoryStyle(item, customCategories);
-        const iconName = isAll
-          ? "layers-outline"
-          : getCategoryIconName(item, customCategories);
+        const count = countMap ? countMap[item] : undefined;
 
         return (
           <Pressable
@@ -43,9 +41,7 @@ export function CategoryChips({ selected, onSelect }: CategoryChipsProps) {
             onPress={() => {
               try {
                 Haptics.selectionAsync();
-              } catch {
-                // Non-fatal
-              }
+              } catch {}
               onSelect(item);
             }}
             accessibilityRole="button"
@@ -54,45 +50,65 @@ export function CategoryChips({ selected, onSelect }: CategoryChipsProps) {
               styles.chip,
               {
                 backgroundColor: isActive
-                  ? "#16382B"
+                  ? colors.primary
                   : dark
-                  ? "rgba(255,255,255,0.05)"
-                  : colors.surface,
-                borderColor: isActive ? "#16382B" : colors.border,
+                  ? "rgba(255, 255, 255, 0.04)"
+                  : "#FFFFFF",
+                borderColor: isActive
+                  ? colors.primary
+                  : dark
+                  ? "rgba(255, 255, 255, 0.08)"
+                  : colors.border,
+                shadowColor: isActive ? colors.primary : "#1A1D20",
+                shadowOpacity: isActive ? 0.24 : 0.02,
+                shadowRadius: isActive ? 8 : 4,
+                elevation: isActive ? 3 : 1,
                 opacity: pressed ? 0.8 : 1,
                 transform: [{ scale: pressed ? 0.96 : 1 }],
               },
             ]}
           >
-            <View
-              style={[
-                styles.iconWrap,
-                {
-                  backgroundColor: isActive
-                    ? "rgba(255,255,255,0.18)"
-                    : dark
-                    ? "rgba(255,255,255,0.06)"
-                    : "rgba(0,0,0,0.04)",
-                },
-              ]}
-            >
-              <Ionicons
-                name={iconName}
-                size={12}
-                color={isActive ? "#FFFFFF" : colors.muted}
-              />
-            </View>
+            {/* Small colored dot for categories when not active */}
+            {!isActive && !isAll && (
+              <View style={[styles.colorDot, { backgroundColor: catStyle.color }]} />
+            )}
+
             <Text
               style={[
                 styles.chipText,
                 {
-                  color: isActive ? "#FFFFFF" : colors.muted,
+                  color: isActive ? "#FFFFFF" : colors.foreground,
                   fontWeight: isActive ? "700" : "500",
                 },
               ]}
             >
               {item}
             </Text>
+
+            {/* Optional count pill for All */}
+            {isAll && count !== undefined && (
+              <View
+                style={[
+                  styles.countPill,
+                  {
+                    backgroundColor: isActive
+                      ? "rgba(255, 255, 255, 0.25)"
+                      : dark
+                      ? "rgba(255, 255, 255, 0.08)"
+                      : colors.surfaceSubtle,
+                  },
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.countText,
+                    { color: isActive ? "#FFFFFF" : colors.muted },
+                  ]}
+                >
+                  {count}
+                </Text>
+              </View>
+            )}
           </Pressable>
         );
       })}
@@ -103,28 +119,34 @@ export function CategoryChips({ selected, onSelect }: CategoryChipsProps) {
 const styles = StyleSheet.create({
   chips: {
     gap: 8,
-    paddingVertical: 4,
+    paddingVertical: 2,
     paddingRight: 16,
   },
   chip: {
     flexDirection: "row",
     alignItems: "center",
-    height: 38,
-    paddingHorizontal: 13,
-    borderRadius: 19,
+    height: 36,
+    paddingHorizontal: 14,
+    borderRadius: 18,
     borderWidth: 1,
-    gap: 7,
+    gap: 6,
     ...(Platform.OS === "web" ? ({ cursor: "pointer" } as any) : {}),
   },
-  iconWrap: {
-    width: 22,
-    height: 22,
-    borderRadius: 11,
-    alignItems: "center",
-    justifyContent: "center",
+  colorDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
   },
   chipText: {
-    fontSize: 12,
+    fontSize: 12.5,
+  },
+  countPill: {
+    paddingHorizontal: 6,
+    paddingVertical: 1,
+    borderRadius: 999,
+  },
+  countText: {
+    fontSize: 10,
+    fontWeight: "700",
   },
 });
-

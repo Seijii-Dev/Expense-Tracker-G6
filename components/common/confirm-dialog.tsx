@@ -1,8 +1,6 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect } from "react";
 import {
   ActivityIndicator,
-  Animated,
-  Easing,
   Modal,
   Platform,
   Pressable,
@@ -10,10 +8,17 @@ import {
   Text,
   View,
 } from "react-native";
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring,
+  withTiming,
+} from "react-native-reanimated";
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { useTheme } from "@/lib/theme-store";
 import { GlassSurface } from "@/components/ui/glass-surface";
+import { PressableScale } from "@/components/motion";
 
 export type DialogVariant = "danger" | "warning" | "success" | "info" | "neutral";
 
@@ -31,6 +36,13 @@ export interface ConfirmDialogProps {
   onCancel?: () => void;
   destructive?: boolean;
   loading?: boolean;
+  snippet?: {
+    title: string;
+    subtitle?: string;
+    amount?: string | number;
+    badge?: string;
+    icon?: keyof typeof Ionicons.glyphMap;
+  };
 }
 
 export function ConfirmDialog({
@@ -47,36 +59,31 @@ export function ConfirmDialog({
   onCancel,
   destructive = false,
   loading = false,
+  snippet,
 }: ConfirmDialogProps) {
   const { colors, dark } = useTheme();
 
-  // Smooth entrance animations
-  const fadeAnim = useRef(new Animated.Value(0)).current;
-  const scaleAnim = useRef(new Animated.Value(0.92)).current;
+  const fade = useSharedValue(0);
+  const scale = useSharedValue(0.94);
 
   useEffect(() => {
     if (visible) {
-      Animated.parallel([
-        Animated.timing(fadeAnim, {
-          toValue: 1,
-          duration: 200,
-          easing: Easing.out(Easing.quad),
-          useNativeDriver: true,
-        }),
-        Animated.spring(scaleAnim, {
-          toValue: 1,
-          friction: 8,
-          tension: 70,
-          useNativeDriver: true,
-        }),
-      ]).start();
+      fade.value = withTiming(1, { duration: 200 });
+      scale.value = withSpring(1, {
+        damping: 18,
+        stiffness: 260,
+      });
     } else {
-      fadeAnim.setValue(0);
-      scaleAnim.setValue(0.92);
+      fade.value = 0;
+      scale.value = 0.94;
     }
-  }, [visible]);
+  }, [visible, fade, scale]);
 
-  // Derive visual theme based on variant / destructive
+  const dialogAnimatedStyle = useAnimatedStyle(() => ({
+    opacity: fade.value,
+    transform: [{ scale: scale.value }],
+  }));
+
   const effectiveVariant: DialogVariant = destructive ? "danger" : variant;
 
   let defaultIcon: keyof typeof Ionicons.glyphMap = "alert-circle-outline";
@@ -85,28 +92,28 @@ export function ConfirmDialog({
 
   switch (effectiveVariant) {
     case "danger":
-      defaultIcon = "trash-outline";
-      variantAccent = colors.error || "#EF4444";
-      variantSoft = dark ? "rgba(239, 68, 68, 0.16)" : "#FEE2E2";
+      defaultIcon = "trash";
+      variantAccent = colors.primary;
+      variantSoft = dark ? "rgba(232, 74, 63, 0.22)" : "#FEECEB";
       break;
     case "warning":
-      defaultIcon = "warning-outline";
+      defaultIcon = "warning";
       variantAccent = colors.warning || "#F59E0B";
-      variantSoft = dark ? "rgba(245, 158, 11, 0.16)" : "#FEF3C7";
+      variantSoft = dark ? "rgba(245, 158, 11, 0.20)" : "#FEF3C7";
       break;
     case "success":
-      defaultIcon = "checkmark-circle-outline";
+      defaultIcon = "checkmark-circle";
       variantAccent = colors.success || "#10B981";
-      variantSoft = dark ? "rgba(16, 185, 129, 0.16)" : "#D1FAE5";
+      variantSoft = dark ? "rgba(16, 185, 129, 0.20)" : "#ECFDF5";
       break;
     case "info":
-      defaultIcon = "information-circle-outline";
+      defaultIcon = "information-circle";
       variantAccent = "#0EA5E9";
-      variantSoft = dark ? "rgba(14, 165, 233, 0.16)" : "#E0F2FE";
+      variantSoft = dark ? "rgba(14, 165, 233, 0.20)" : "#E0F2FE";
       break;
     case "neutral":
     default:
-      defaultIcon = "alert-circle-outline";
+      defaultIcon = "alert-circle";
       variantAccent = colors.primary;
       variantSoft = colors.primarySoft;
       break;
@@ -124,9 +131,7 @@ export function ConfirmDialog({
       } else {
         Haptics.selectionAsync();
       }
-    } catch {
-      // Non-fatal
-    }
+    } catch {}
     onConfirm();
   };
 
@@ -134,9 +139,7 @@ export function ConfirmDialog({
     if (loading) return;
     try {
       Haptics.selectionAsync();
-    } catch {
-      // Non-fatal
-    }
+    } catch {}
     onCancel?.();
   };
 
@@ -148,73 +151,127 @@ export function ConfirmDialog({
       onRequestClose={handleCancel}
     >
       <View style={[styles.backdrop, { backgroundColor: colors.dialogBackdrop }]}>
-        <Animated.View
-          style={[
-            styles.cardWrap,
-            {
-              opacity: fadeAnim,
-              transform: [{ scale: scaleAnim }],
-            },
-          ]}
-        >
+        <Animated.View style={[styles.cardWrap, dialogAnimatedStyle]}>
           <GlassSurface
             variant="sheet"
-            radius={28}
+            radius={26}
             style={styles.cardContainer}
-            contentStyle={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}
+            contentStyle={[
+              styles.card,
+              {
+                backgroundColor: colors.card,
+                borderColor: colors.border,
+              },
+            ]}
           >
-            {/* Icon Pill */}
-            <View style={[styles.iconWrap, { backgroundColor: effectiveIconBg }]}>
-              <Ionicons name={effectiveIcon} size={24} color={effectiveIconColor} />
+            {/* Soft Warm Floating Warning Badge */}
+            <View style={[styles.iconWrapOuter, { backgroundColor: effectiveIconBg }]}>
+              <View style={[styles.iconWrapInner, { backgroundColor: effectiveIconBg }]}>
+                <Ionicons name={effectiveIcon} size={24} color={effectiveIconColor} />
+              </View>
             </View>
 
             {/* Title & Message */}
             <Text style={[styles.title, { color: colors.foreground }]}>{title}</Text>
             <Text style={[styles.message, { color: colors.muted }]}>{message}</Text>
 
-            {/* Actions */}
-            <View style={styles.actions}>
-              {cancelText && onCancel && (
-                <Pressable
-                  disabled={loading}
-                  style={({ pressed }) => [
-                    styles.cancelBtn,
-                    {
-                      backgroundColor: dark ? "rgba(255,255,255,0.06)" : colors.surfaceSubtle,
-                      borderColor: colors.border,
-                      opacity: loading ? 0.5 : pressed ? 0.8 : 1,
-                    },
-                    pressed && styles.pressed,
-                  ]}
-                  onPress={handleCancel}
-                  accessibilityRole="button"
-                >
-                  <Text style={[styles.cancelText, { color: colors.foreground }]}>
-                    {cancelText}
+            {/* In-Dialog Snippet Preview if provided */}
+            {snippet && (
+              <View
+                style={[
+                  styles.snippetCard,
+                  {
+                    backgroundColor: dark ? "rgba(255,255,255,0.04)" : colors.surfaceSubtle,
+                    borderColor: colors.border,
+                  },
+                ]}
+              >
+                <View style={styles.snippetLeft}>
+                  <View
+                    style={[
+                      styles.snippetIconBox,
+                      { backgroundColor: colors.card },
+                    ]}
+                  >
+                    <Ionicons
+                      name={snippet.icon || "receipt-outline"}
+                      size={18}
+                      color={colors.primary}
+                    />
+                  </View>
+                  <View style={styles.snippetTextWrap}>
+                    <Text
+                      style={[styles.snippetTitle, { color: colors.foreground }]}
+                      numberOfLines={1}
+                    >
+                      {snippet.title}
+                    </Text>
+                    {snippet.subtitle && (
+                      <Text style={[styles.snippetSubtitle, { color: colors.muted }]}>
+                        {snippet.subtitle}
+                      </Text>
+                    )}
+                  </View>
+                </View>
+                {snippet.amount !== undefined && (
+                  <Text style={[styles.snippetAmount, { color: colors.foreground }]}>
+                    {snippet.amount}
                   </Text>
-                </Pressable>
-              )}
-              <Pressable
+                )}
+              </View>
+            )}
+
+            {/* High-Contrast Action Buttons */}
+            <View style={styles.actions}>
+              <PressableScale
                 disabled={loading}
-                style={({ pressed }) => [
+                style={[
                   styles.confirmBtn,
                   {
                     backgroundColor: variantAccent,
                     shadowColor: variantAccent,
                   },
-                  !cancelText && styles.fullWidthBtn,
                   loading && styles.disabledBtn,
-                  pressed && !loading && styles.pressed,
                 ]}
                 onPress={handleConfirm}
                 accessibilityRole="button"
+                hapticFeedback={destructive ? "medium" : "selection"}
               >
                 {loading ? (
                   <ActivityIndicator size="small" color="#FFFFFF" />
                 ) : (
                   <Text style={styles.confirmText}>{confirmText}</Text>
                 )}
-              </Pressable>
+              </PressableScale>
+
+              {cancelText && onCancel && (
+                <PressableScale
+                  disabled={loading}
+                  style={[
+                    styles.cancelBtn,
+                    {
+                      backgroundColor: dark ? "rgba(255,255,255,0.06)" : colors.surfaceSubtle,
+                      borderColor: colors.border,
+                      opacity: loading ? 0.5 : 1,
+                    },
+                  ]}
+                  onPress={handleCancel}
+                  accessibilityRole="button"
+                  hapticFeedback="selection"
+                >
+                  <Text style={[styles.cancelText, { color: colors.foreground }]}>
+                    {cancelText}
+                  </Text>
+                </PressableScale>
+              )}
+            </View>
+
+            {/* Trust Assurance Microcopy */}
+            <View style={styles.trustNoteRow}>
+              <Ionicons name="shield-checkmark" size={13} color={colors.muted} />
+              <Text style={[styles.trustNoteText, { color: colors.muted }]}>
+                Encrypted ledger balance recalculates automatically
+              </Text>
             </View>
           </GlassSurface>
         </Animated.View>
@@ -228,10 +285,10 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    padding: 24,
+    padding: 20,
   },
   cardWrap: {
-    maxWidth: 380,
+    maxWidth: 360,
     width: "100%",
   },
   cardContainer: {
@@ -239,40 +296,111 @@ const styles = StyleSheet.create({
   },
   card: {
     padding: 24,
-    borderRadius: 28,
+    borderRadius: 26,
     borderWidth: 1,
-    shadowColor: "#000",
-    shadowOpacity: 0.18,
-    shadowRadius: 20,
-    shadowOffset: { width: 0, height: 6 },
+    alignItems: "center",
+    textAlign: "center",
+    shadowColor: "#1A1D20",
+    shadowOpacity: 0.16,
+    shadowRadius: 28,
+    shadowOffset: { width: 0, height: 12 },
     elevation: 8,
   },
-  iconWrap: {
-    width: 52,
-    height: 52,
-    borderRadius: 18,
+  iconWrapOuter: {
+    width: 60,
+    height: 60,
+    borderRadius: 20,
     alignItems: "center",
     justifyContent: "center",
     marginBottom: 16,
   },
+  iconWrapInner: {
+    width: 44,
+    height: 44,
+    borderRadius: 15,
+    alignItems: "center",
+    justifyContent: "center",
+  },
   title: {
-    fontFamily: "Fraunces_700Bold",
-    fontSize: 22,
-    letterSpacing: -0.4,
+    fontSize: 20,
+    fontWeight: "700",
+    letterSpacing: -0.3,
+    textAlign: "center",
   },
   message: {
     fontSize: 13.5,
     lineHeight: 20,
     marginTop: 8,
+    textAlign: "center",
+  },
+  snippetCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    width: "100%",
+    padding: 12,
+    borderRadius: 14,
+    borderWidth: 1,
+    marginTop: 16,
+  },
+  snippetLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    flex: 1,
+    minWidth: 0,
+  },
+  snippetIconBox: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  snippetTextWrap: {
+    flex: 1,
+    minWidth: 0,
+  },
+  snippetTitle: {
+    fontSize: 13,
+    fontWeight: "700",
+  },
+  snippetSubtitle: {
+    fontSize: 11,
+    marginTop: 2,
+  },
+  snippetAmount: {
+    fontSize: 14,
+    fontWeight: "700",
+    marginLeft: 8,
   },
   actions: {
-    flexDirection: "row",
-    gap: 12,
-    marginTop: 24,
+    flexDirection: "column",
+    gap: 8,
+    marginTop: 20,
+    width: "100%",
+  },
+  confirmBtn: {
+    width: "100%",
+    height: 50,
+    borderRadius: 14,
+    alignItems: "center",
+    justifyContent: "center",
+    shadowOpacity: 0.3,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 4,
+    ...(Platform.OS === "web" ? ({ cursor: "pointer" } as any) : {}),
+  },
+  confirmText: {
+    color: "#FFFFFF",
+    fontSize: 14.5,
+    fontWeight: "700",
+    letterSpacing: -0.1,
   },
   cancelBtn: {
-    flex: 1,
-    height: 46,
+    width: "100%",
+    height: 50,
     borderRadius: 14,
     borderWidth: 1,
     alignItems: "center",
@@ -280,34 +408,24 @@ const styles = StyleSheet.create({
     ...(Platform.OS === "web" ? ({ cursor: "pointer" } as any) : {}),
   },
   cancelText: {
-    fontSize: 13.5,
-    fontWeight: "700",
+    fontSize: 14,
+    fontWeight: "600",
   },
-  confirmBtn: {
-    flex: 1,
-    height: 46,
-    borderRadius: 14,
+  trustNoteRow: {
+    flexDirection: "row",
     alignItems: "center",
-    justifyContent: "center",
-    shadowOpacity: 0.28,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 4,
-    ...(Platform.OS === "web" ? ({ cursor: "pointer" } as any) : {}),
+    gap: 6,
+    marginTop: 16,
   },
-  fullWidthBtn: {
-    flex: 1,
-  },
-  confirmText: {
-    color: "#FFFFFF",
-    fontSize: 13.5,
-    fontWeight: "700",
+  trustNoteText: {
+    fontSize: 11,
+    fontWeight: "500",
   },
   disabledBtn: {
     opacity: 0.6,
   },
   pressed: {
     opacity: 0.85,
-    transform: [{ scale: 0.98 }],
+    transform: [{ scale: 0.985 }],
   },
 });

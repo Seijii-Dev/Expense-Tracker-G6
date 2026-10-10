@@ -20,13 +20,13 @@ export const PAYMENT_METHODS: readonly Payment[] = [
 ] as const;
 
 export const CATEGORY_META: CategoryMeta = {
-  Food: { color: "#FF6554", soft: "#FFF0ED" },
+  Food: { color: "#E84A3F", soft: "#FEECEB" },
   Transport: { color: "#0EA5E9", soft: "#E0F2FE" },
-  School: { color: "#6366F1", soft: "#EEF2FF" },
+  School: { color: "#8B5CF6", soft: "#F3E8FF" },
   Shopping: { color: "#F59E0B", soft: "#FEF3C7" },
-  Bills: { color: "#10B981", soft: "#ECFDF5" },
+  Bills: { color: "#6366F1", soft: "#EEF2FF" },
   Fun: { color: "#EC4899", soft: "#FDF2F8" },
-  Health: { color: "#14B8A6", soft: "#F0FDFA" },
+  Health: { color: "#10B981", soft: "#ECFDF5" },
   Other: { color: "#64748B", soft: "#F1F5F9" },
 };
 

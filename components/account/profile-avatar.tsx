@@ -1,5 +1,10 @@
-import React, { useEffect, useRef, useState } from "react";
-import { Animated, StyleSheet, Text, View } from "react-native";
+import React, { useEffect, useState } from "react";
+import { StyleSheet, Text, View } from "react-native";
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
+} from "react-native-reanimated";
 import { Account } from "@/types/auth";
 
 interface ProfileAvatarProps {
@@ -21,21 +26,21 @@ export function ProfileAvatar({
 }: ProfileAvatarProps) {
   const uri = account?.profilePictureUri;
   const [imageFailed, setImageFailed] = useState(false);
-  const imageOpacity = useRef(new Animated.Value(0)).current;
+  const imageOpacity = useSharedValue(0);
 
   useEffect(() => {
     setImageFailed(false);
-    imageOpacity.setValue(uri ? 0 : 1);
-    if (!uri) return;
-
-    const animation = Animated.timing(imageOpacity, {
-      toValue: 1,
-      duration: 180,
-      useNativeDriver: true,
-    });
-    animation.start();
-    return () => animation.stop();
+    if (!uri) {
+      imageOpacity.value = 1;
+      return;
+    }
+    imageOpacity.value = 0;
+    imageOpacity.value = withTiming(1, { duration: 180 });
   }, [imageOpacity, uri]);
+
+  const animatedImageStyle = useAnimatedStyle(() => ({
+    opacity: imageOpacity.value,
+  }));
 
   const initials =
     (account?.name || "User")
@@ -54,7 +59,7 @@ export function ProfileAvatar({
           source={{ uri }}
           resizeMode="cover"
           onError={() => setImageFailed(true)}
-          style={[StyleSheet.absoluteFillObject, { borderRadius, opacity: imageOpacity }]}
+          style={[StyleSheet.absoluteFillObject, { borderRadius }, animatedImageStyle]}
           accessibilityLabel={`${account?.name || "Account"} profile picture`}
         />
       ) : (

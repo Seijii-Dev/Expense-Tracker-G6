@@ -26,7 +26,7 @@ export function SortSelector({ selected, onSelect }: SortSelectorProps) {
 
   return (
     <View style={styles.sortRow}>
-      <Text style={[styles.filterLabel, { color: colors.subtle }]}>SORT:</Text>
+      <Text style={[styles.filterLabel, { color: colors.muted }]}>SORT:</Text>
       <View style={styles.chipsWrap}>
         {SORT_OPTIONS.map((opt) => {
           const isActive = selected === opt.key;
@@ -36,38 +36,36 @@ export function SortSelector({ selected, onSelect }: SortSelectorProps) {
               onPress={() => {
                 try {
                   Haptics.selectionAsync();
-                } catch {
-                  // Non-fatal
-                }
+                } catch {}
                 onSelect(opt.key);
               }}
               style={({ pressed }) => [
                 styles.sortChip,
                 {
-                  borderColor: isActive
-                    ? colors.primary
-                    : colors.border,
+                  borderColor: isActive ? colors.primary : colors.border,
                   backgroundColor: isActive
                     ? dark
-                      ? "rgba(255, 117, 101, 0.16)"
+                      ? "rgba(232, 74, 63, 0.18)"
                       : colors.primarySoft
                     : dark
                     ? "rgba(255,255,255,0.04)"
-                    : colors.surface,
+                    : "#FFFFFF",
                 },
                 pressed && styles.pressed,
               ]}
             >
               <Ionicons
                 name={opt.icon}
-                size={12}
+                size={13}
                 color={isActive ? colors.primary : colors.muted}
               />
               <Text
                 style={[
                   styles.sortChipText,
-                  { color: colors.muted },
-                  isActive && { color: colors.primary, fontWeight: "700" },
+                  {
+                    color: isActive ? colors.primary : colors.muted,
+                    fontWeight: isActive ? "700" : "500",
+                  },
                 ]}
               >
                 {opt.label}
@@ -85,8 +83,8 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 8,
-    marginTop: 14,
-    marginBottom: 10,
+    marginTop: 10,
+    marginBottom: 8,
   },
   filterLabel: {
     fontSize: 9.5,
@@ -103,19 +101,17 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 5,
-    height: 34,
-    paddingHorizontal: 11,
-    borderRadius: 10,
+    height: 32,
+    paddingHorizontal: 10,
+    borderRadius: 16,
     borderWidth: 1,
     ...(Platform.OS === "web" ? ({ cursor: "pointer" } as any) : {}),
   },
   sortChipText: {
     fontSize: 11,
-    fontWeight: "600",
   },
   pressed: {
     opacity: 0.8,
     transform: [{ scale: 0.96 }],
   },
 });
-
