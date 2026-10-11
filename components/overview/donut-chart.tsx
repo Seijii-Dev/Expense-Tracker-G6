@@ -12,6 +12,7 @@ import { getCategoryStyle } from "@/constants/categories";
 import { useExpenses } from "@/lib/expense-store";
 import { useTheme } from "@/lib/theme-store";
 import { formatMoney } from "@/utils/formatters";
+import { radii } from "@/constants/design-tokens";
 
 interface DonutChartProps {
   total: number;
@@ -99,13 +100,13 @@ export const DonutChart = React.memo(function DonutChart({ total, expenses }: Do
         style={[
           styles.donutHole,
           {
-            backgroundColor: dark ? "#171B1F" : "#FFFFFF",
-            borderColor: dark ? "rgba(255, 255, 255, 0.08)" : "#F1F3F5",
+            backgroundColor: colors.card,
+            borderColor: colors.borderSubtle,
           },
         ]}
       >
         <Text style={[styles.kickerLabel, { color: colors.muted }]}>THIS MONTH</Text>
-        <Text style={[styles.donutTotal, { color: colors.foreground }]} numberOfLines={1}>
+        <Text style={[styles.donutTotal, { color: colors.foreground }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.68}>
           {formatMoney(total)}
         </Text>
         <Text style={[styles.donutLabel, { color: colors.muted }]}>tracked</Text>
@@ -131,7 +132,7 @@ const styles = StyleSheet.create({
     height: 96,
     alignItems: "center",
     justifyContent: "center",
-    borderRadius: 48,
+    borderRadius: radii.pill,
     borderWidth: 1,
     shadowColor: "#1A1D20",
     shadowOpacity: 0.04,
@@ -147,9 +148,11 @@ const styles = StyleSheet.create({
     marginBottom: 2,
   },
   donutTotal: {
+    fontFamily: "DMSans_700Bold",
     fontSize: 15,
     fontWeight: "800",
     letterSpacing: -0.4,
+    fontVariant: ["tabular-nums"],
     textAlign: "center",
   },
   donutLabel: {

@@ -17,6 +17,7 @@ import { SpendingTrendChart } from "@/components/reports/spending-trend-chart";
 import { MotionEntrance, PressableScale } from "@/components/motion";
 import { getPhilippinesDate } from "@/utils/date";
 import { DatePickerModal } from "@/components/common/date-picker-modal";
+import { radii, spacing, typography } from "@/constants/design-tokens";
 import {
   buildSpendingTimeline,
   shiftTrajectoryAnchorDate,
@@ -131,8 +132,9 @@ export default function ReportsScreen() {
               return (
                 <PressableScale
                   key={tab}
-                  accessibilityRole="button"
+                  accessibilityRole="tab"
                   accessibilityState={{ selected: isActive }}
+                  accessibilityLabel={`${tab} report timeframe`}
                   onPress={() => {
                     setTimeframe(tab);
                   }}
@@ -141,8 +143,8 @@ export default function ReportsScreen() {
                     isActive && [
                       styles.timeframeTabActive,
                       {
-                        backgroundColor: "#E84A3F",
-                        shadowColor: "#E84A3F",
+                        backgroundColor: colors.primary,
+                        shadowColor: colors.primary,
                       },
                     ],
                   ]}
@@ -263,7 +265,7 @@ export default function ReportsScreen() {
                     <Ionicons name="speedometer-outline" size={15} color={colors.foreground} />
                   </View>
                 </View>
-                <Text style={[styles.metricValue, { color: colors.foreground }]} numberOfLines={1}>
+                <Text style={[styles.metricValue, { color: colors.foreground }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.72}>
                   {dailyAvg}
                 </Text>
                 <Text style={[styles.metricSub, { color: "#10B981" }]} numberOfLines={1}>
@@ -292,7 +294,7 @@ export default function ReportsScreen() {
                     <Ionicons name="flame" size={15} color="#E84A3F" />
                   </View>
                 </View>
-                <Text style={[styles.metricValue, { color: colors.foreground }]} numberOfLines={1}>
+                <Text style={[styles.metricValue, { color: colors.foreground }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.72}>
                   {topExpense ? formatMoney(topExpense.amount) : "₱0.00"}
                 </Text>
                 <Text style={[styles.metricSub, { color: colors.muted }]} numberOfLines={1}>
@@ -323,7 +325,7 @@ export default function ReportsScreen() {
                     <Ionicons name="receipt-outline" size={15} color="#10B981" />
                   </View>
                 </View>
-                <Text style={[styles.metricValue, { color: "#10B981" }]} numberOfLines={1}>
+                <Text style={[styles.metricValue, { color: colors.success }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.72}>
                   {periodExpenses.length} {periodExpenses.length === 1 ? "Txn" : "Txns"}
                 </Text>
                 <Text style={[styles.metricSub, { color: colors.muted }]} numberOfLines={1}>
@@ -352,7 +354,7 @@ export default function ReportsScreen() {
                     <Ionicons name="wallet-outline" size={15} color={colors.foreground} />
                   </View>
                 </View>
-                <Text style={[styles.metricValue, { color: colors.foreground }]} numberOfLines={1}>
+                <Text style={[styles.metricValue, { color: colors.foreground }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.72}>
                   {formatMoney(budgetLeft)}
                 </Text>
                 <Text style={[styles.metricSub, { color: colors.muted }]} numberOfLines={1}>
@@ -505,16 +507,17 @@ export default function ReportsScreen() {
 
 const styles = StyleSheet.create({
   scroll: {
-    paddingTop: 12,
+    paddingTop: spacing.md,
     paddingBottom: 28,
   },
   headerRow: {
     flexDirection: "row",
     alignItems: "flex-end",
     justifyContent: "space-between",
-    marginBottom: 16,
+    marginBottom: spacing.lg,
   },
   kicker: {
+    fontFamily: "DMSans_700Bold",
     fontSize: 10,
     fontWeight: "700",
     letterSpacing: 1.2,
@@ -522,9 +525,9 @@ const styles = StyleSheet.create({
     marginBottom: 2,
   },
   screenTitle: {
+    ...typography.screenTitle,
     fontSize: 22,
-    fontWeight: "800",
-    letterSpacing: -0.4,
+    lineHeight: 28,
   },
   exportBtn: {
     width: 40,
@@ -549,6 +552,7 @@ const styles = StyleSheet.create({
   },
   timeframeTab: {
     flex: 1,
+    minHeight: 40,
     paddingVertical: 7.5,
     borderRadius: 999,
     alignItems: "center",
@@ -572,9 +576,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 2,
   },
   navArrowBtn: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    width: 40,
+    height: 40,
+    borderRadius: radii.pill,
     alignItems: "center",
     justifyContent: "center",
     ...(Platform.OS === "web" ? ({ cursor: "pointer" } as any) : {}),
@@ -617,8 +621,8 @@ const styles = StyleSheet.create({
     fontWeight: "700",
   },
   metricsGrid: {
-    gap: 10,
-    marginBottom: 16,
+    gap: spacing.sm,
+    marginBottom: spacing.lg,
   },
   metricsRow: {
     flexDirection: "row",
@@ -628,7 +632,7 @@ const styles = StyleSheet.create({
     flex: 1,
     minWidth: 0,
     padding: 14,
-    borderRadius: 18,
+    borderRadius: radii.card,
     borderWidth: 1,
     shadowColor: "#1A1D20",
     shadowOpacity: 0.03,
@@ -656,9 +660,11 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   metricValue: {
+    fontFamily: "DMSans_700Bold",
     fontSize: 17,
     fontWeight: "800",
     letterSpacing: -0.4,
+    fontVariant: ["tabular-nums"],
     marginBottom: 2,
   },
   metricSub: {
@@ -697,9 +703,9 @@ const styles = StyleSheet.create({
     lineHeight: 16,
   },
   panel: {
-    padding: 18,
-    marginBottom: 16,
-    borderRadius: 20,
+    padding: spacing.lg,
+    marginBottom: spacing.lg,
+    borderRadius: radii.panel,
     borderWidth: 1,
   },
   panelHeader: {

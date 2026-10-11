@@ -7,6 +7,7 @@ import {
   StyleSheet,
   Text,
   View,
+  useWindowDimensions,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 
@@ -28,11 +29,14 @@ import { DatePickerModal } from "@/components/common/date-picker-modal";
 import { addCalendarDays, getExpenseDateKey, getPhilippinesDate, getYesterdayDate } from "@/utils/date";
 import { exportExpensesToCsv } from "@/utils/export-csv";
 import { ConfirmDialog } from "@/components/common/confirm-dialog";
+import { radii, spacing, typography } from "@/constants/design-tokens";
 
 export default function TransactionsScreen() {
   const { sortedExpenses, removeExpense, updateExpense, addExpense, refreshExpenses, syncing, hydrated } =
     useExpenses();
   const { colors, dark } = useTheme();
+  const { width: windowWidth } = useWindowDimensions();
+  const isNarrowScreen = windowWidth < 380;
 
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
@@ -140,13 +144,13 @@ export default function TransactionsScreen() {
     () => (
       <View>
         {/* Confident Screen Header & Month Switcher */}
-        <View style={styles.screenHeaderRow}>
-          <View style={styles.headerLeft}>
+        <View style={[styles.screenHeaderRow, isNarrowScreen && styles.screenHeaderRowCompact]}>
+          <View style={[styles.headerLeft, isNarrowScreen && styles.headerLeftCompact]}>
             <Text style={[styles.kicker, { color: colors.muted }]}>LEDGER & HISTORY</Text>
             <Text style={[styles.title, { color: colors.foreground }]}>Records</Text>
           </View>
 
-          <View style={styles.headerActions}>
+          <View style={[styles.headerActions, isNarrowScreen && styles.headerActionsCompact]}>
             {/* Interactive Month Selector Pill */}
             <PressableScale
               onPress={() => setShowDatePicker(true)}
@@ -158,6 +162,7 @@ export default function TransactionsScreen() {
                 },
               ]}
               accessibilityRole="button"
+              accessibilityLabel={selectedDate ? `Choose date, currently ${formatDate(selectedDate)}` : "Choose date or month"}
             >
               <Ionicons name="calendar-outline" size={14} color={colors.primary} />
               <Text style={[styles.monthPickerText, { color: colors.foreground }]}>
@@ -329,7 +334,7 @@ export default function TransactionsScreen() {
         <View style={{ height: 12 }} />
       </View>
     ),
-    [category, categoryCounts, colors, dark, filtered.length, handleExport, hasActiveFilters, navigateDate, query, selectedDate, setCategory, setQuery, setSortBy, showSortFilter, sortBy, todayDate, total]
+    [category, categoryCounts, colors, dark, filtered.length, handleExport, hasActiveFilters, isNarrowScreen, navigateDate, query, selectedDate, setCategory, setQuery, setSortBy, showSortFilter, sortBy, todayDate, total]
   );
 
   const renderGroup = useCallback(
@@ -498,41 +503,53 @@ export default function TransactionsScreen() {
 
 const styles = StyleSheet.create({
   scroll: {
-    paddingTop: 8,
+    paddingTop: spacing.sm,
     paddingBottom: 96,
   },
   screenHeaderRow: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    marginBottom: 14,
+    marginBottom: spacing.md,
+  },
+  screenHeaderRowCompact: {
+    flexWrap: "wrap",
+    rowGap: spacing.sm,
   },
   headerLeft: {
     flex: 1,
   },
+  headerLeftCompact: {
+    flexBasis: "100%",
+  },
   kicker: {
+    fontFamily: "DMSans_700Bold",
     fontSize: 9.5,
     fontWeight: "800",
     letterSpacing: 1.2,
     marginBottom: 2,
   },
   title: {
+    ...typography.screenTitle,
     fontSize: 24,
-    fontWeight: "800",
-    letterSpacing: -0.5,
+    lineHeight: 30,
   },
   headerActions: {
     flexDirection: "row",
     alignItems: "center",
     gap: 8,
   },
+  headerActionsCompact: {
+    flex: 1,
+    justifyContent: "flex-end",
+  },
   monthPickerPill: {
     flexDirection: "row",
     alignItems: "center",
     gap: 5,
-    height: 36,
+    minHeight: 40,
     paddingHorizontal: 11,
-    borderRadius: 18,
+    borderRadius: radii.pill,
     borderWidth: 1,
     shadowColor: "#1A1D20",
     shadowOpacity: 0.03,
@@ -542,13 +559,14 @@ const styles = StyleSheet.create({
     ...(Platform.OS === "web" ? ({ cursor: "pointer" } as any) : {}),
   },
   monthPickerText: {
+    fontFamily: "DMSans_700Bold",
     fontSize: 12,
     fontWeight: "700",
   },
   iconActionBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 40,
+    height: 40,
+    borderRadius: radii.pill,
     borderWidth: 1,
     alignItems: "center",
     justifyContent: "center",
@@ -605,6 +623,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   datePickerText: {
+    fontFamily: "DMSans_700Bold",
     fontSize: 12.5,
     fontWeight: "700",
     flexShrink: 1,
@@ -663,6 +682,8 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   ribbonAmount: {
+    fontFamily: "DMSans_700Bold",
+    fontVariant: ["tabular-nums"],
     fontSize: 16,
     fontWeight: "800",
     letterSpacing: -0.3,

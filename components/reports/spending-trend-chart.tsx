@@ -9,6 +9,7 @@ import Svg, { Circle, Defs, LinearGradient, Path, Stop, Line } from "react-nativ
 import { useTheme } from "@/lib/theme-store";
 import { formatMoney } from "@/utils/formatters";
 import { SpendingTimeline } from "@/utils/spending-trajectory";
+import { radii, spacing } from "@/constants/design-tokens";
 
 interface SpendingTrendChartProps {
   timeline: SpendingTimeline;
@@ -74,7 +75,8 @@ export function SpendingTrendChart({ timeline }: SpendingTrendChartProps) {
   const areaD = `${pathD} L ${lastPoint.x} ${baselineY} L ${points[0].x} ${baselineY} Z`;
   const activePoint =
     points.find((point) => point.key === selectedPointKey) ?? lastPoint;
-  const tooltipLeft = Math.max(16, Math.min(activePoint.x - 48, chartWidth - 110));
+  const tooltipWidth = Math.min(chartWidth - 24, 144);
+  const tooltipLeft = Math.max(12, Math.min(activePoint.x - tooltipWidth / 2, chartWidth - tooltipWidth - 12));
 
   return (
     <Animated.View
@@ -99,7 +101,12 @@ export function SpendingTrendChart({ timeline }: SpendingTrendChartProps) {
         <View style={styles.titleBlock}>
           <Text style={[styles.kicker, { color: colors.muted }]}>SPENDING TREND</Text>
           <View style={styles.amountRow}>
-            <Text style={[styles.amountText, { color: colors.foreground }]}>
+            <Text
+              style={[styles.amountText, { color: colors.foreground }]}
+              numberOfLines={1}
+              adjustsFontSizeToFit
+              minimumFontScale={0.8}
+            >
               {formatMoney(timeline.total)}
             </Text>
           </View>
@@ -111,12 +118,12 @@ export function SpendingTrendChart({ timeline }: SpendingTrendChartProps) {
           style={[
             styles.trendPill,
             {
-              backgroundColor: dark ? "rgba(232, 74, 63, 0.15)" : "#FFF0ED",
-              borderColor: dark ? "rgba(232, 74, 63, 0.3)" : "#FED7D2",
+              backgroundColor: colors.primarySoft,
+              borderColor: colors.primary,
             },
           ]}
         >
-          <Text style={styles.trendPillText}>{timeline.intervalLabel}</Text>
+          <Text style={[styles.trendPillText, { color: colors.primary }]}>{timeline.intervalLabel}</Text>
         </View>
       </View>
 
@@ -128,7 +135,8 @@ export function SpendingTrendChart({ timeline }: SpendingTrendChartProps) {
             {
               left: tooltipLeft,
               top: Math.max(6, activePoint.y - 32),
-              backgroundColor: dark ? "#1E293B" : "#0F172A",
+              backgroundColor: dark ? colors.cardElevated : colors.foreground,
+              width: tooltipWidth,
             },
           ]}
           accessibilityLiveRegion="polite"
@@ -147,9 +155,9 @@ export function SpendingTrendChart({ timeline }: SpendingTrendChartProps) {
         >
           <Defs>
             <LinearGradient id="chartGradient" x1="0" y1="0" x2="0" y2="1">
-              <Stop offset="0%" stopColor="#E84A3F" stopOpacity="0.22" />
-              <Stop offset="85%" stopColor="#E84A3F" stopOpacity="0.02" />
-              <Stop offset="100%" stopColor="#E84A3F" stopOpacity="0" />
+              <Stop offset="0%" stopColor={colors.primary} stopOpacity="0.22" />
+              <Stop offset="85%" stopColor={colors.primary} stopOpacity="0.02" />
+              <Stop offset="100%" stopColor={colors.primary} stopOpacity="0" />
             </LinearGradient>
           </Defs>
 
@@ -177,7 +185,7 @@ export function SpendingTrendChart({ timeline }: SpendingTrendChartProps) {
           <Path
             d={pathD}
             fill="none"
-            stroke="#E84A3F"
+            stroke={colors.primary}
             strokeWidth="3"
             strokeLinecap="round"
             strokeLinejoin="round"
@@ -193,7 +201,7 @@ export function SpendingTrendChart({ timeline }: SpendingTrendChartProps) {
                     cx={point.x}
                     cy={point.y}
                     r={8}
-                    fill="#E84A3F"
+                    fill={colors.primary}
                     fillOpacity={0.2}
                   />
                 )}
@@ -202,8 +210,14 @@ export function SpendingTrendChart({ timeline }: SpendingTrendChartProps) {
                   cy={point.y}
                   r={isSelected ? 4.5 : 3.5}
                   fill="#FFFFFF"
-                  stroke="#E84A3F"
+                  stroke={colors.primary}
                   strokeWidth={isSelected ? 3 : 2}
+                />
+                <Circle
+                  cx={point.x}
+                  cy={point.y}
+                  r={14}
+                  fill="transparent"
                   onPress={() => setSelectedPointKey(point.key)}
                   accessibilityLabel={`${point.label}: ${formatMoney(point.amount)}`}
                 />
@@ -223,7 +237,7 @@ export function SpendingTrendChart({ timeline }: SpendingTrendChartProps) {
               style={[
                 styles.axisText,
                 {
-                  color: isSelected ? "#E84A3F" : colors.muted,
+                  color: isSelected ? colors.primary : colors.muted,
                   fontWeight: isSelected ? "700" : "500",
                 },
               ]}
@@ -240,11 +254,11 @@ export function SpendingTrendChart({ timeline }: SpendingTrendChartProps) {
 
 const styles = StyleSheet.create({
   container: {
-    borderRadius: 20,
+    borderRadius: radii.panel,
     borderWidth: 1,
-    paddingTop: 16,
-    paddingBottom: 14,
-    marginBottom: 16,
+    paddingTop: spacing.lg,
+    paddingBottom: spacing.md,
+    marginBottom: spacing.lg,
     shadowOffset: { width: 0, height: 4 },
     shadowRadius: 12,
     elevation: 2,
@@ -275,9 +289,11 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   amountText: {
+    fontFamily: "DMSans_700Bold",
     fontSize: 26,
     fontWeight: "800",
     letterSpacing: -0.6,
+    fontVariant: ["tabular-nums"],
   },
   subtitle: {
     fontSize: 11,
@@ -320,6 +336,8 @@ const styles = StyleSheet.create({
     fontWeight: "500",
   },
   floatingBadgeText: {
+    fontFamily: "DMSans_700Bold",
+    flexShrink: 1,
     color: "#FFFFFF",
     fontSize: 11,
     fontWeight: "700",

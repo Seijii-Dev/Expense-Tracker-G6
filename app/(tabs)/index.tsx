@@ -34,6 +34,7 @@ import {
   getExpenseDateKey,
   getPhilippinesMonth,
 } from "@/utils/date";
+import { radii, spacing, typography } from "@/constants/design-tokens";
 
 export default function OverviewScreen() {
   const {
@@ -211,7 +212,7 @@ export default function OverviewScreen() {
               </View>
 
               {/* Prominent Monetary Display */}
-              <Text style={styles.heroAmount}>
+              <Text style={styles.heroAmount} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.78}>
                 {isBalanceHidden ? "••••••••" : formatMoney(displayBalance)}
               </Text>
 
@@ -242,11 +243,12 @@ export default function OverviewScreen() {
 
         {/* 2. QUICK FINANCIAL METRIC TILES (Income / Expenses / Remaining Budget) */}
         <MotionEntrance delay={100}>
-          <View style={styles.metricsGrid}>
+          <View style={[styles.metricsGrid, isNarrowMobile && styles.metricsGridNarrow]}>
             {/* Monthly Budget Target */}
             <View
               style={[
                 styles.metricTile,
+                isNarrowMobile && styles.metricTileNarrow,
                 {
                   backgroundColor: colors.card,
                   borderColor: colors.border,
@@ -255,11 +257,11 @@ export default function OverviewScreen() {
             >
               <View style={styles.metricTileTop}>
                 <Text style={[styles.metricTileLabel, { color: colors.muted }]}>BUDGET</Text>
-                <View style={[styles.metricTileIconCircle, { backgroundColor: dark ? "rgba(16,185,129,0.18)" : "#ECFDF5" }]}>
+                <View style={[styles.metricTileIconCircle, { backgroundColor: colors.successSoft }]}>
                   <Ionicons name="arrow-down" size={13} color={colors.success} />
                 </View>
               </View>
-              <Text style={[styles.metricTileValue, { color: colors.foreground }]} numberOfLines={1}>
+              <Text style={[styles.metricTileValue, { color: colors.foreground }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75}>
                 {formatMoney(budget)}
               </Text>
               <Text style={[styles.metricTileSub, { color: colors.success }]}>Monthly Target</Text>
@@ -269,6 +271,7 @@ export default function OverviewScreen() {
             <View
               style={[
                 styles.metricTile,
+                isNarrowMobile && styles.metricTileNarrow,
                 {
                   backgroundColor: colors.card,
                   borderColor: colors.border,
@@ -281,7 +284,7 @@ export default function OverviewScreen() {
                   <Ionicons name="arrow-up" size={13} color={colors.primary} />
                 </View>
               </View>
-              <Text style={[styles.metricTileValue, { color: colors.primary }]} numberOfLines={1}>
+              <Text style={[styles.metricTileValue, { color: colors.primary }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75}>
                 {formatMoney(monthTotal)}
               </Text>
               <Text style={[styles.metricTileSub, { color: colors.primary }]}>
@@ -293,6 +296,7 @@ export default function OverviewScreen() {
             <View
               style={[
                 styles.metricTile,
+                isNarrowMobile && styles.metricTileWide,
                 {
                   backgroundColor: colors.card,
                   borderColor: colors.border,
@@ -301,11 +305,11 @@ export default function OverviewScreen() {
             >
               <View style={styles.metricTileTop}>
                 <Text style={[styles.metricTileLabel, { color: colors.muted }]}>REMAINING</Text>
-                <View style={[styles.metricTileIconCircle, { backgroundColor: dark ? "rgba(245,158,11,0.18)" : "#FFFBEB" }]}>
+                <View style={[styles.metricTileIconCircle, { backgroundColor: colors.warningSoft }]}>
                   <Ionicons name="wallet-outline" size={13} color={colors.warning} />
                 </View>
               </View>
-              <Text style={[styles.metricTileValue, { color: colors.foreground }]} numberOfLines={1}>
+              <Text style={[styles.metricTileValue, { color: colors.foreground }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75}>
                 {formatMoney(remaining)}
               </Text>
               {/* Progress Bar */}
@@ -462,8 +466,9 @@ const styles = StyleSheet.create({
     letterSpacing: 1.2,
   },
   brandTitle: {
+    ...typography.screenTitle,
     fontSize: 22,
-    fontWeight: "800",
+    lineHeight: 27,
     letterSpacing: -0.4,
     marginTop: 1,
   },
@@ -508,13 +513,13 @@ const styles = StyleSheet.create({
     overflow: "hidden",
     marginBottom: 16,
     shadowColor: "#E84A3F",
-    shadowOpacity: 0.32,
-    shadowRadius: 28,
-    shadowOffset: { width: 0, height: 12 },
-    elevation: 8,
+    shadowOpacity: 0.2,
+    shadowRadius: 20,
+    shadowOffset: { width: 0, height: 8 },
+    elevation: 5,
   },
   heroCardGradient: {
-    padding: 22,
+    padding: spacing.xl,
     position: "relative",
     overflow: "hidden",
   },
@@ -574,10 +579,8 @@ const styles = StyleSheet.create({
     fontWeight: "700",
   },
   heroAmount: {
+    ...typography.moneyLarge,
     color: "#FFFFFF",
-    fontSize: 34,
-    fontWeight: "800",
-    letterSpacing: -1,
     marginVertical: 4,
   },
   heroPillRow: {
@@ -617,16 +620,25 @@ const styles = StyleSheet.create({
     gap: 10,
     marginBottom: 16,
   },
+  metricsGridNarrow: {
+    flexWrap: "wrap",
+  },
   metricTile: {
     flex: 1,
-    padding: 12,
-    borderRadius: 18,
+    padding: spacing.md,
+    borderRadius: radii.card,
     borderWidth: 1,
     shadowColor: "#1A1D20",
     shadowOpacity: 0.04,
     shadowRadius: 10,
     shadowOffset: { width: 0, height: 4 },
     elevation: 2,
+  },
+  metricTileNarrow: {
+    flexBasis: "48%",
+  },
+  metricTileWide: {
+    flexBasis: "100%",
   },
   metricTileTop: {
     flexDirection: "row",
@@ -635,6 +647,7 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   metricTileLabel: {
+    fontFamily: "DMSans_700Bold",
     fontSize: 9.5,
     fontWeight: "800",
     letterSpacing: 0.8,
@@ -647,11 +660,14 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   metricTileValue: {
-    fontSize: 15,
-    fontWeight: "800",
-    letterSpacing: -0.3,
+    fontFamily: "DMSans_700Bold",
+    fontSize: 16,
+    fontWeight: "700",
+    letterSpacing: -0.25,
+    fontVariant: ["tabular-nums"],
   },
   metricTileSub: {
+    fontFamily: "DMSans_500Medium",
     fontSize: 9.5,
     fontWeight: "600",
     marginTop: 4,
@@ -670,8 +686,8 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   panelInner: {
-    padding: 18,
-    borderRadius: 24,
+    padding: spacing.lg,
+    borderRadius: radii.panel,
     borderWidth: 1,
     shadowColor: "#1A1D20",
     shadowOpacity: 0.04,
@@ -686,9 +702,7 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   panelSectionTitle: {
-    fontSize: 17,
-    fontWeight: "700",
-    letterSpacing: -0.3,
+    ...typography.sectionTitle,
   },
   panelSubText: {
     fontSize: 11.5,

@@ -5,7 +5,7 @@ import { Platform, StyleProp, StyleSheet, View, ViewStyle } from "react-native";
 import { useTheme } from "@/lib/theme-store";
 
 export type GlassVariant = "card" | "pill" | "sheet" | "nav";
-const INTENSITY: Record<GlassVariant, number> = { pill: 20, card: 28, sheet: 40, nav: 44 };
+const INTENSITY: Record<GlassVariant, number> = { pill: 0, card: 0, sheet: 0, nav: 24 };
 
 type GlassSurfaceProps = {
   children?: React.ReactNode;
@@ -27,10 +27,11 @@ export function GlassSurface({
   const { dark, colors } = useTheme();
   const tint: BlurTint = dark ? "dark" : "light";
   const isWeb = Platform.OS === "web";
+  const usesGlass = variant === "nav";
 
   // On web, BlurView causes severe rendering lag because it triggers
   // expensive compositing. Instead we use CSS backdrop-filter (GPU-accelerated).
-  const webBlurStyle: ViewStyle | undefined = isWeb
+  const webBlurStyle: ViewStyle | undefined = isWeb && usesGlass
     ? ({
         backdropFilter: `blur(${(intensity ?? INTENSITY[variant]) * 0.4}px) saturate(1.6)`,
         WebkitBackdropFilter: `blur(${(intensity ?? INTENSITY[variant]) * 0.4}px) saturate(1.6)`,
@@ -43,47 +44,50 @@ export function GlassSurface({
         styles.base,
         {
           borderRadius: radius,
-          borderColor: colors.glassBorder,
-          backgroundColor: colors.glassFill,
+          borderColor: usesGlass ? colors.glassBorder : colors.border,
+          backgroundColor: usesGlass ? colors.glassFill : colors.card,
           shadowColor: dark ? "#000000" : "#1A332C",
-          shadowOpacity: dark ? 0.38 : 0.08,
-          shadowRadius: variant === "pill" ? 10 : variant === "nav" ? 24 : 20,
+          shadowOpacity: usesGlass ? (dark ? 0.34 : 0.07) : dark ? 0.16 : 0.035,
+          shadowRadius: variant === "pill" ? 8 : usesGlass ? 18 : 12,
           shadowOffset: {
             width: 0,
-            height: variant === "pill" ? 3 : variant === "nav" ? 8 : 6,
+            height: variant === "pill" ? 2 : usesGlass ? 7 : 3,
           },
-          elevation: variant === "pill" ? 3 : variant === "nav" ? 8 : 5,
+          elevation: variant === "pill" ? 1 : usesGlass ? 6 : 2,
         },
         style,
       ]}
     >
-      {isWeb ? (
+      {usesGlass && isWeb ? (
         // CSS backdrop-filter: smooth, GPU-accelerated blur on web
         <View style={[StyleSheet.absoluteFill, webBlurStyle]} />
-      ) : (
+      ) : usesGlass ? (
         // Native BlurView (iOS / Android)
         <BlurView
           intensity={intensity ?? INTENSITY[variant]}
           tint={tint}
           style={StyleSheet.absoluteFill}
         />
-      )}
-      <View
-        pointerEvents="none"
-        style={[StyleSheet.absoluteFill, { backgroundColor: colors.glassFill }]}
-      />
-      {/* Specular high-light rim at top */}
-      <LinearGradient
-        pointerEvents="none"
-        colors={
-          dark
-            ? ["rgba(255,255,255,0.18)", "rgba(255,255,255,0.02)"]
-            : ["rgba(255,255,255,0.9)", "rgba(255,255,255,0.0)"]
-        }
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 0 }}
-        style={styles.rim}
-      />
+      ) : null}
+      {usesGlass ? (
+        <>
+          <View
+            pointerEvents="none"
+            style={[StyleSheet.absoluteFill, { backgroundColor: colors.glassFill }]}
+          />
+          <LinearGradient
+            pointerEvents="none"
+            colors={
+              dark
+                ? ["rgba(255,255,255,0.12)", "rgba(255,255,255,0.01)"]
+                : ["rgba(255,255,255,0.55)", "rgba(255,255,255,0.0)"]
+            }
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            style={styles.rim}
+          />
+        </>
+      ) : null}
       <View style={[styles.content, contentStyle]}>{children}</View>
     </View>
   );

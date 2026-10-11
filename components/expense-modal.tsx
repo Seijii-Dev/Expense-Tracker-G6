@@ -26,6 +26,9 @@ import { PressableScale } from "@/components/motion";
 import { formatDate } from "@/utils/formatters";
 import { AppLottieView } from "@/components/ui/app-lottie-view";
 import { GlassSurface } from "@/components/ui/glass-surface";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useReducedMotion } from "react-native-reanimated";
+import { radii, spacing } from "@/constants/design-tokens";
 
 interface ExpenseModalProps {
   visible: boolean;
@@ -37,7 +40,9 @@ interface ExpenseModalProps {
 export function ExpenseModal({ visible, initialExpense, onClose, onSubmit }: ExpenseModalProps) {
   const { colors, dark } = useTheme();
   const { allCategories, customCategories, addCustomCategory } = useExpenses();
-  const { width: windowWidth } = useWindowDimensions();
+  const { width: windowWidth, height: windowHeight } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
+  const reduceMotion = useReducedMotion();
 
   const isEditing = Boolean(initialExpense);
 
@@ -142,11 +147,11 @@ export function ExpenseModal({ visible, initialExpense, onClose, onSubmit }: Exp
     <Modal
       visible={visible}
       transparent
-      animationType="slide"
+      animationType={reduceMotion ? "none" : "slide"}
       onRequestClose={onClose}
     >
       <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
         style={styles.backdrop}
       >
         {/* Full-screen backdrop overlay for dismissing */}
@@ -160,6 +165,11 @@ export function ExpenseModal({ visible, initialExpense, onClose, onSubmit }: Exp
         <View
           style={[
             styles.card,
+            {
+              maxHeight: Math.min(windowHeight * 0.9, 820),
+              paddingBottom: Math.max(insets.bottom + 16, 20),
+              paddingHorizontal: windowWidth < 360 ? 14 : spacing.lg,
+            },
             {
               backgroundColor: colors.surface,
               borderColor: colors.border,
@@ -219,6 +229,7 @@ export function ExpenseModal({ visible, initialExpense, onClose, onSubmit }: Exp
             style={styles.scroll}
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
+            keyboardDismissMode={Platform.OS === "ios" ? "interactive" : "on-drag"}
             contentContainerStyle={styles.scrollContent}
           >
             {/* Inline Validation Warning */}
@@ -258,6 +269,7 @@ export function ExpenseModal({ visible, initialExpense, onClose, onSubmit }: Exp
                 <Text style={[styles.currencyPrefix, { color: colors.primary }]}>₱</Text>
                 <TextInput
                   value={amount}
+                  accessibilityLabel="Expense amount in Philippine pesos"
                   onChangeText={(val) => {
                     setAmount(val);
                     if (validationError) setValidationError(null);
@@ -409,6 +421,7 @@ export function ExpenseModal({ visible, initialExpense, onClose, onSubmit }: Exp
               </View>
               <TextInput
                 value={description}
+                accessibilityLabel="Expense note and description"
                 onChangeText={(val) => {
                   setDescription(val);
                   if (validationError) setValidationError(null);
@@ -589,6 +602,7 @@ export function ExpenseModal({ visible, initialExpense, onClose, onSubmit }: Exp
               disabled={isSubmitting}
               onPress={handleSave}
               accessibilityRole="button"
+              accessibilityLabel={isEditing ? "Save expense changes" : "Save expense"}
             >
               <LinearGradient
                 colors={["#FF5A4E", "#E84A3F", "#D43C32"]}
@@ -676,14 +690,14 @@ const styles = StyleSheet.create({
     width: "100%",
     maxWidth: 540,
     alignSelf: "center",
-    maxHeight: "88%",
+    maxHeight: "90%",
     borderTopLeftRadius: 28,
     borderTopRightRadius: 28,
     borderWidth: 1,
     borderBottomWidth: 0,
     paddingTop: 8,
-    paddingHorizontal: 18,
-    paddingBottom: Platform.OS === "ios" ? 36 : 20,
+    paddingHorizontal: spacing.lg,
+    paddingBottom: Platform.OS === "ios" ? 28 : 20,
     shadowColor: "#000",
     shadowOpacity: 0.25,
     shadowRadius: 20,
@@ -722,6 +736,7 @@ const styles = StyleSheet.create({
     letterSpacing: 1.2,
   },
   topTitle: {
+    fontFamily: "DMSans_700Bold",
     fontSize: 16,
     fontWeight: "700",
     letterSpacing: -0.2,
@@ -761,7 +776,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   amountHeroCard: {
-    borderRadius: 20,
+    borderRadius: radii.panel,
     borderWidth: 1.5,
     paddingVertical: 18,
     paddingHorizontal: 16,
@@ -788,6 +803,7 @@ const styles = StyleSheet.create({
     fontWeight: "700",
   },
   amountInput: {
+    fontFamily: "DMSans_700Bold",
     fontSize: 38,
     fontWeight: "800",
     letterSpacing: -1,
@@ -945,7 +961,7 @@ const styles = StyleSheet.create({
     ...(Platform.OS === "web" ? ({ cursor: "pointer" } as any) : {}),
   },
   saveBtnGradient: {
-    height: 50,
+    minHeight: 52,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
@@ -957,6 +973,7 @@ const styles = StyleSheet.create({
     transform: [{ scale: 0.985 }],
   },
   saveBtnText: {
+    fontFamily: "DMSans_700Bold",
     color: "#FFFFFF",
     fontSize: 14.5,
     fontWeight: "700",

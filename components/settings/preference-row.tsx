@@ -1,6 +1,7 @@
 import React from "react";
 import { StyleSheet, Switch, Text, View } from "react-native";
 import { useTheme } from "@/lib/theme-store";
+import { radii, spacing } from "@/constants/design-tokens";
 
 interface PreferenceRowProps {
   icon: React.ReactNode;
@@ -46,6 +47,7 @@ export function PreferenceRow({
       <Switch
         value={value}
         onValueChange={onChange}
+        accessibilityLabel={title}
         trackColor={{
           false: dark ? "rgba(255,255,255,0.12)" : colors.border,
           true: colors.primary,
@@ -60,8 +62,9 @@ const styles = StyleSheet.create({
   preference: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 14,
-    paddingVertical: 14,
+    gap: spacing.md,
+    minHeight: 68,
+    paddingVertical: spacing.md,
   },
   preferenceBorder: {
     borderBottomWidth: 1,
@@ -71,7 +74,7 @@ const styles = StyleSheet.create({
     height: 38,
     alignItems: "center",
     justifyContent: "center",
-    borderRadius: 12,
+    borderRadius: radii.control,
     borderWidth: 1,
   },
   preferenceBody: {
@@ -79,11 +82,13 @@ const styles = StyleSheet.create({
     paddingRight: 8,
   },
   preferenceTitle: {
+    fontFamily: "DMSans_700Bold",
     fontSize: 14,
     fontWeight: "700",
     letterSpacing: -0.2,
   },
   preferenceCopy: {
+    fontFamily: "DMSans_400Regular",
     fontSize: 11,
     lineHeight: 16,
     marginTop: 2,

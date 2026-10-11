@@ -1,5 +1,5 @@
 import React from "react";
-import { Platform, Pressable, StyleSheet, Text, View } from "react-native";
+import { Platform, Pressable, StyleSheet, Text, View, useWindowDimensions } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 
 import { CategoryIcon } from "@/components/ui/category-icon";
@@ -10,6 +10,7 @@ import { useTheme } from "@/lib/theme-store";
 import { formatDate, formatMoney } from "@/utils/formatters";
 import { ConfirmDialog } from "@/components/common/confirm-dialog";
 import { PressableScale } from "@/components/motion";
+import { radii, spacing } from "@/constants/design-tokens";
 
 interface ExpenseRowProps {
   expense: Expense;
@@ -28,6 +29,8 @@ export const ExpenseRow = React.memo(function ExpenseRow({
 }: ExpenseRowProps) {
   const { colors, dark } = useTheme();
   const { customCategories } = useExpenses();
+  const { width } = useWindowDimensions();
+  const compact = width < 360;
   const meta = getCategoryStyle(expense.category, customCategories);
   const [showDeleteConfirm, setShowDeleteConfirm] = React.useState(false);
 
@@ -36,11 +39,12 @@ export const ExpenseRow = React.memo(function ExpenseRow({
   }, []);
 
   return (
-    <View style={[styles.row, { borderBottomColor: dark ? "rgba(255,255,255,0.06)" : "#F1F3F5" }]}>
+    <View style={[styles.row, compact && styles.rowCompact, { borderBottomColor: colors.borderSubtle }]}>
       {/* Category Avatar (44px, 12px radius, contextual pastel tint) */}
       <View
         style={[
           styles.iconWrap,
+          compact && styles.iconWrapCompact,
           {
             backgroundColor: dark ? `${meta.color}25` : meta.soft,
             borderColor: dark ? `${meta.color}35` : "transparent",
@@ -52,12 +56,12 @@ export const ExpenseRow = React.memo(function ExpenseRow({
 
       {/* Main Content */}
       <Pressable
-        style={styles.body}
+        style={[styles.body, compact && styles.bodyCompact]}
         onPress={onPress || onEdit}
         accessibilityRole="button"
         accessibilityLabel={`${expense.description}, ${formatMoney(expense.amount)}, ${expense.category}, ${formatDate(expense.date)}`}
       >
-        <Text style={[styles.title, { color: colors.foreground }]} numberOfLines={1}>
+        <Text style={[styles.title, { color: colors.foreground }]} numberOfLines={2}>
           {expense.description}
         </Text>
         <View style={styles.metaRow}>
@@ -79,8 +83,8 @@ export const ExpenseRow = React.memo(function ExpenseRow({
       </Pressable>
 
       {/* Amount & Actions */}
-      <View style={styles.rightSide}>
-        <Text style={[styles.amount, { color: colors.primary }]} numberOfLines={1} adjustsFontSizeToFit>
+      <View style={[styles.rightSide, compact && styles.rightSideCompact]}>
+        <Text style={[styles.amount, compact && styles.amountCompact, { color: colors.primary }]} numberOfLines={1} adjustsFontSizeToFit>
           −{formatMoney(expense.amount)}
         </Text>
         {showActions && (
@@ -93,6 +97,7 @@ export const ExpenseRow = React.memo(function ExpenseRow({
                 accessibilityLabel={`Edit ${expense.description}`}
                 style={[
                   styles.actionButton,
+                  compact && styles.actionButtonCompact,
                   { backgroundColor: dark ? "rgba(255,255,255,0.06)" : colors.surfaceSubtle },
                 ]}
               >
@@ -107,6 +112,7 @@ export const ExpenseRow = React.memo(function ExpenseRow({
                 accessibilityLabel={`Delete ${expense.description}`}
                 style={[
                   styles.actionButton,
+                  compact && styles.actionButtonCompact,
                   { backgroundColor: dark ? "rgba(232, 74, 63, 0.16)" : colors.primarySoft },
                 ]}
               >
@@ -149,23 +155,35 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: "row",
     alignItems: "center",
-    paddingVertical: 12,
+    minHeight: 66,
+    paddingVertical: 10,
     borderBottomWidth: 1,
-    gap: 12,
+    gap: spacing.md,
+  },
+  rowCompact: {
+    gap: spacing.sm,
   },
   iconWrap: {
-    width: 44,
-    height: 44,
+    width: 40,
+    height: 40,
     alignItems: "center",
     justifyContent: "center",
-    borderRadius: 12,
+    borderRadius: radii.control,
+  },
+  iconWrapCompact: {
+    width: 36,
+    height: 36,
   },
   body: {
     flex: 1,
     minWidth: 0,
     ...(Platform.OS === "web" ? ({ cursor: "pointer" } as any) : {}),
   },
+  bodyCompact: {
+    minWidth: 0,
+  },
   title: {
+    fontFamily: "DMSans_700Bold",
     fontSize: 14,
     fontWeight: "600",
     letterSpacing: -0.2,
@@ -174,9 +192,11 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 5,
+    flexWrap: "wrap",
     marginTop: 3,
   },
   metaCategory: {
+    fontFamily: "DMSans_500Medium",
     fontSize: 11.5,
     fontWeight: "500",
   },
@@ -186,6 +206,7 @@ const styles = StyleSheet.create({
     borderRadius: 4,
   },
   paymentText: {
+    fontFamily: "DMSans_500Medium",
     fontSize: 10,
     fontWeight: "600",
   },
@@ -193,6 +214,7 @@ const styles = StyleSheet.create({
     fontSize: 8,
   },
   metaDate: {
+    fontFamily: "DMSans_500Medium",
     fontSize: 11,
     fontWeight: "500",
   },
@@ -201,10 +223,17 @@ const styles = StyleSheet.create({
     gap: 4,
     flexShrink: 0,
   },
+  rightSideCompact: {
+    maxWidth: "36%",
+  },
   amount: {
+    fontFamily: "DMSans_700Bold",
     fontSize: 15,
     fontWeight: "700",
     letterSpacing: -0.2,
+  },
+  amountCompact: {
+    fontSize: 13,
   },
   actions: {
     flexDirection: "row",
@@ -212,12 +241,16 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   actionButton: {
-    width: 28,
-    height: 28,
-    borderRadius: 8,
+    width: 36,
+    height: 36,
+    borderRadius: 10,
     alignItems: "center",
     justifyContent: "center",
     ...(Platform.OS === "web" ? ({ cursor: "pointer" } as any) : {}),
+  },
+  actionButtonCompact: {
+    width: 32,
+    height: 32,
   },
   actionPressed: {
     opacity: 0.6,

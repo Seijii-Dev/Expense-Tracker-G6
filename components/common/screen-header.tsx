@@ -1,6 +1,7 @@
 import React from "react";
 import { StyleSheet, Text, View } from "react-native";
 import { useTheme } from "@/lib/theme-store";
+import { spacing, typography } from "@/constants/design-tokens";
 
 interface ScreenHeaderProps {
   kicker: string;
@@ -10,7 +11,7 @@ interface ScreenHeaderProps {
 }
 
 export function ScreenHeader({ kicker, title, subtitle, rightAction }: ScreenHeaderProps) {
-  const { colors, dark } = useTheme();
+  const { colors } = useTheme();
 
   return (
     <View style={styles.header}>
@@ -38,29 +39,26 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "flex-start",
-    paddingTop: 4,
-    marginBottom: 16,
+    paddingTop: spacing.xs,
+    marginBottom: spacing.lg,
   },
   titleArea: {
     flex: 1,
     paddingRight: 12,
   },
   kicker: {
+    fontFamily: "DMSans_700Bold",
     fontSize: 10,
     fontWeight: "800",
     letterSpacing: 1.2,
     marginBottom: 4,
   },
   title: {
-    fontSize: 26,
-    fontWeight: "800",
-    letterSpacing: -0.6,
-    lineHeight: 32,
+    ...typography.screenTitle,
   },
   subtitle: {
-    fontSize: 12.5,
-    lineHeight: 18,
-    marginTop: 4,
+    ...typography.bodyMedium,
+    marginTop: spacing.xs,
     maxWidth: 420,
     fontWeight: "500",
   },

@@ -11,6 +11,7 @@ import {
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
+  useReducedMotion,
   withSpring,
 } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -57,17 +58,20 @@ interface TabButtonProps {
 
 function TabButton({ name, isFocused, onPress, onLongPress, isCompact }: TabButtonProps) {
   const { colors } = useTheme();
+  const reduceMotion = useReducedMotion();
   const info = TAB_NAME_MAP[name] || { tab: "overview" as NavTabName, label: name };
   const scale = useSharedValue(1);
   const active = useSharedValue(isFocused ? 1 : 0);
 
   useEffect(() => {
-    active.value = withSpring(isFocused ? 1 : 0, {
-      damping: 18,
-      stiffness: 240,
-      mass: 0.8,
-    });
-  }, [active, isFocused]);
+    active.value = reduceMotion
+      ? isFocused ? 1 : 0
+      : withSpring(isFocused ? 1 : 0, {
+          damping: 18,
+          stiffness: 240,
+          mass: 0.8,
+        });
+  }, [active, isFocused, reduceMotion]);
 
   const scaleStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }],
@@ -79,20 +83,24 @@ function TabButton({ name, isFocused, onPress, onLongPress, isCompact }: TabButt
   }));
 
   const handlePressIn = () => {
-    scale.value = withSpring(0.92, {
-      damping: 20,
-      stiffness: 320,
-    });
+    if (!reduceMotion) {
+      scale.value = withSpring(0.92, {
+        damping: 20,
+        stiffness: 320,
+      });
+    }
   };
 
   const handlePressOut = () => {
-    scale.value = withSpring(1, {
-      damping: 16,
-      stiffness: 240,
-    });
+    if (!reduceMotion) {
+      scale.value = withSpring(1, {
+        damping: 16,
+        stiffness: 240,
+      });
+    }
   };
 
-  const iconSize = isCompact ? 20 : 22;
+  const iconSize = isCompact ? 18 : 21;
 
   return (
     <Pressable
@@ -125,7 +133,7 @@ function TabButton({ name, isFocused, onPress, onLongPress, isCompact }: TabButt
             styles.label,
             {
               color: isFocused ? colors.primary : colors.muted,
-              fontSize: isCompact ? 10 : 11,
+              fontSize: isCompact ? 9 : 10,
               fontWeight: isFocused ? "700" : "500",
             },
           ]}
@@ -153,6 +161,7 @@ export function FloatingTabBar({ state, descriptors, navigation }: FloatingTabBa
   const insets = useSafeAreaInsets();
   const { width: windowWidth } = useWindowDimensions();
   const { openAddExpenseModal } = useExpenses();
+  const reduceMotion = useReducedMotion();
   const [keyboardVisible, setKeyboardVisible] = useState(false);
   const fabScale = useSharedValue(1);
 
@@ -182,9 +191,9 @@ export function FloatingTabBar({ state, descriptors, navigation }: FloatingTabBa
   }
 
   // Responsive dock sizing
-  const isSmallScreen = windowWidth < 360;
+  const isSmallScreen = windowWidth < 380;
   const isTabletOrDesktop = windowWidth >= 600;
-  const dockMaxWidth = 420;
+  const dockMaxWidth = 500;
 
   // Horizontal dock positioning
   const dockWidth = isTabletOrDesktop
@@ -198,17 +207,21 @@ export function FloatingTabBar({ state, descriptors, navigation }: FloatingTabBa
   };
 
   const handleFabPressIn = () => {
-    fabScale.value = withSpring(0.9, {
-      damping: 18,
-      stiffness: 320,
-    });
+    if (!reduceMotion) {
+      fabScale.value = withSpring(0.92, {
+        damping: 18,
+        stiffness: 320,
+      });
+    }
   };
 
   const handleFabPressOut = () => {
-    fabScale.value = withSpring(1, {
-      damping: 15,
-      stiffness: 240,
-    });
+    if (!reduceMotion) {
+      fabScale.value = withSpring(1, {
+        damping: 15,
+        stiffness: 240,
+      });
+    }
   };
 
   const renderTab = (routeName: string) => {
@@ -265,7 +278,7 @@ export function FloatingTabBar({ state, descriptors, navigation }: FloatingTabBa
     >
       <GlassSurface
         variant="nav"
-        radius={36}
+        radius={32}
         style={[
           styles.dockSurface,
           {
@@ -280,7 +293,7 @@ export function FloatingTabBar({ state, descriptors, navigation }: FloatingTabBa
         ]}
         contentStyle={styles.dockContent}
       >
-        {/* Left Tabs: Overview & Records */}
+        {/* Keep the original tab order around the add action. */}
         {renderTab("index")}
         {renderTab("transactions")}
 
@@ -306,13 +319,14 @@ export function FloatingTabBar({ state, descriptors, navigation }: FloatingTabBa
               fabAnimatedStyle,
             ]}
           >
-            <Ionicons name="add" size={28} color="#FFFFFF" />
+            <Ionicons name="add" size={26} color="#FFFFFF" />
           </Animated.View>
         </Pressable>
 
-        {/* Right Tabs: Reports & Settings */}
+        {/* Remaining destinations, including Account. */}
         {renderTab("reports")}
         {renderTab("settings")}
+        {renderTab("account")}
       </GlassSurface>
     </View>
   );
@@ -328,18 +342,19 @@ const styles = StyleSheet.create({
     zIndex: 999,
   },
   dockSurface: {
-    height: 66,
-    borderRadius: 36,
+    height: 64,
+    borderRadius: 32,
   },
   dockContent: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     height: "100%",
-    paddingHorizontal: 8,
+    paddingHorizontal: 6,
   },
   tabBtn: {
     flex: 1,
+    minWidth: 0,
     height: "100%",
     alignItems: "center",
     justifyContent: "center",
@@ -349,6 +364,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     width: "100%",
+    minWidth: 0,
     position: "relative",
     paddingVertical: 2,
   },
@@ -364,21 +380,22 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   label: {
+    fontFamily: "DMSans_500Medium",
     letterSpacing: -0.1,
     marginTop: 2,
     lineHeight: 13,
     textAlign: "center",
   },
   fabContainer: {
-    width: 54,
+    width: 48,
     alignItems: "center",
     justifyContent: "center",
     height: "100%",
   },
   fabButton: {
-    width: 46,
-    height: 46,
-    borderRadius: 23,
+    width: 42,
+    height: 42,
+    borderRadius: 21,
     alignItems: "center",
     justifyContent: "center",
     shadowOpacity: 0.38,

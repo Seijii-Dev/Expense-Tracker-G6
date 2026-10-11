@@ -2,6 +2,7 @@ import React from "react";
 import { StyleProp, StyleSheet, Text, View, ViewStyle } from "react-native";
 import { useTheme } from "@/lib/theme-store";
 import { GlassSurface } from "@/components/ui/glass-surface";
+import { radii, spacing, typography } from "@/constants/design-tokens";
 
 export type MetricTone = "coral" | "blue" | "green" | "warning";
 
@@ -30,7 +31,7 @@ export function MetricCard({
 
   const toneColor =
     tone === "blue"
-      ? "#0EA5E9"
+      ? colors.accent
       : tone === "green"
       ? colors.success
       : tone === "warning"
@@ -104,9 +105,9 @@ export function MetricCard({
 
 const styles = StyleSheet.create({
   card: {
-    minHeight: 114,
-    padding: 16,
-    borderRadius: 20,
+    minHeight: 112,
+    padding: spacing.lg,
+    borderRadius: radii.card,
     borderWidth: 1,
     shadowColor: "#1A1D20",
     shadowOpacity: 0.04,
@@ -130,6 +131,7 @@ const styles = StyleSheet.create({
     borderRadius: 3,
   },
   label: {
+    fontFamily: "DMSans_700Bold",
     fontSize: 10,
     fontWeight: "700",
     letterSpacing: 0.6,
@@ -143,9 +145,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
   },
   value: {
-    fontSize: 22,
-    fontWeight: "800",
-    letterSpacing: -0.5,
+    ...typography.money,
     marginTop: 8,
   },
   progressContainer: {
@@ -164,6 +164,7 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   foot: {
+    fontFamily: "DMSans_500Medium",
     fontSize: 11,
     fontWeight: "600",
   },

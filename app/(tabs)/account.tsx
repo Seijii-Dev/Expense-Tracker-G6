@@ -27,6 +27,7 @@ import { useTheme } from "@/lib/theme-store";
 import { formatMoney } from "@/utils/formatters";
 import { ProfileAvatar } from "@/components/account/profile-avatar";
 import { ProfileBannerLayer } from "@/components/account/profile-banner-layer";
+import { radii, spacing, typography } from "@/constants/design-tokens";
 import { MotionEntrance, PressableScale } from "@/components/motion";
 import {
   persistProfilePicture,
@@ -357,7 +358,7 @@ export default function AccountScreen() {
 
               {/* Decorative Micro Badge on Banner matching Stitch */}
               <View style={styles.bannerBadge}>
-                <Ionicons name="shield-checkmark" size={12} color="#E84A3F" />
+                <Ionicons name="shield-checkmark" size={12} color={colors.primary} />
                 <Text style={styles.bannerBadgeText}>PHILIPPINES ED.</Text>
               </View>
             </View>
@@ -368,7 +369,7 @@ export default function AccountScreen() {
                 <ProfileAvatar
                   account={account}
                   size={84}
-                  backgroundColor="#E84A3F"
+                  backgroundColor={colors.primary}
                   textColor="#FFFFFF"
                   fontSize={28}
                 />
@@ -387,7 +388,7 @@ export default function AccountScreen() {
                   accessibilityRole="button"
                   accessibilityLabel="Edit profile picture"
                 >
-                  <Ionicons name="camera" size={13} color="#E84A3F" />
+                  <Ionicons name="camera" size={13} color={colors.primary} />
                 </PressableScale>
               </View>
 
@@ -411,23 +412,24 @@ export default function AccountScreen() {
 
         {/* Financial Snapshot Overview (3 Mini-Cards Grid matching Stitch) */}
         <MotionEntrance delay={120}>
-          <View style={styles.snapshotGrid}>
+          <View style={[styles.snapshotGrid, windowWidth < 380 && styles.snapshotGridNarrow]}>
             {/* 1. Total Tracked */}
             <View
               style={[
                 styles.snapshotCard,
+                windowWidth < 380 && styles.snapshotCardNarrow,
                 {
                   backgroundColor: colors.surface,
                   borderColor: colors.border,
                 },
               ]}
             >
-              <View style={[styles.snapshotIconBox, { backgroundColor: "#FFF0ED" }]}>
-                <Ionicons name="wallet-outline" size={16} color="#E84A3F" />
+              <View style={[styles.snapshotIconBox, { backgroundColor: colors.primarySoft }]}>
+                <Ionicons name="wallet-outline" size={16} color={colors.primary} />
               </View>
               <View>
                 <Text style={[styles.snapshotLabel, { color: colors.muted }]}>TOTAL TRACKED</Text>
-                <Text style={[styles.snapshotAmount, { color: colors.foreground }]} numberOfLines={1}>
+                <Text style={[styles.snapshotAmount, { color: colors.foreground }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.72}>
                   {formatMoney(totalTracked)}
                 </Text>
               </View>
@@ -437,18 +439,19 @@ export default function AccountScreen() {
             <View
               style={[
                 styles.snapshotCard,
+                windowWidth < 380 && styles.snapshotCardNarrow,
                 {
                   backgroundColor: colors.surface,
                   borderColor: colors.border,
                 },
               ]}
             >
-              <View style={[styles.snapshotIconBox, { backgroundColor: "#E6F4EA" }]}>
-                <Ionicons name="pie-chart-outline" size={16} color="#10B981" />
+              <View style={[styles.snapshotIconBox, { backgroundColor: colors.successSoft }]}>
+                <Ionicons name="pie-chart-outline" size={16} color={colors.success} />
               </View>
               <View>
                 <Text style={[styles.snapshotLabel, { color: colors.muted }]}>BUDGET</Text>
-                <Text style={[styles.snapshotAmount, { color: colors.foreground }]} numberOfLines={1}>
+                <Text style={[styles.snapshotAmount, { color: colors.foreground }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.72}>
                   {formatMoney(budget)}
                 </Text>
               </View>
@@ -458,6 +461,7 @@ export default function AccountScreen() {
             <View
               style={[
                 styles.snapshotCard,
+                windowWidth < 380 && styles.snapshotCardWide,
                 {
                   backgroundColor: colors.surface,
                   borderColor: colors.border,
@@ -472,9 +476,11 @@ export default function AccountScreen() {
                 <Text
                   style={[
                     styles.snapshotAmount,
-                    { color: totalBalance > 0 ? "#10B981" : colors.foreground },
+                    { color: totalBalance > 0 ? colors.success : colors.foreground },
                   ]}
                   numberOfLines={1}
+                  adjustsFontSizeToFit
+                  minimumFontScale={0.72}
                 >
                   {isBalanceHidden ? "••••••" : formatMoney(totalBalance)}
                 </Text>
@@ -565,7 +571,7 @@ export default function AccountScreen() {
               >
                 <View style={styles.detailsLeft}>
                   <Text style={[styles.detailsLabel, { color: colors.muted }]}>Monthly Budget Limit</Text>
-                  <Text style={[styles.detailsValue, { color: "#10B981" }]}>
+                  <Text style={[styles.detailsValue, { color: colors.success }]}>
                     {formatMoney(budget)}
                   </Text>
                 </View>
@@ -592,7 +598,7 @@ export default function AccountScreen() {
               accessibilityRole="button"
               accessibilityLabel="Log Out of Ledgerly"
             >
-              <Ionicons name="log-out-outline" size={19} color="#E84A3F" />
+              <Ionicons name="log-out-outline" size={19} color={colors.primary} />
               <Text style={styles.logoutButtonText}>Log Out of Ledgerly</Text>
             </PressableScale>
           </View>
@@ -998,7 +1004,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingHorizontal: 16,
+    paddingHorizontal: spacing.lg,
     paddingBottom: 10,
   },
   cloudSyncBadge: {
@@ -1027,8 +1033,9 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 5,
-    paddingHorizontal: 11,
-    paddingVertical: 6,
+    minHeight: 40,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
     borderRadius: 999,
     shadowColor: "#000",
     shadowOpacity: 0.04,
@@ -1042,9 +1049,9 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
   gearCircleBtn: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    width: 40,
+    height: 40,
+    borderRadius: radii.pill,
     alignItems: "center",
     justifyContent: "center",
     shadowColor: "#000",
@@ -1056,12 +1063,12 @@ const styles = StyleSheet.create({
   },
   bannerContainer: {
     position: "relative",
-    paddingHorizontal: 16,
+    paddingHorizontal: spacing.lg,
     marginBottom: 16,
   },
   bannerCard: {
     width: "100%",
-    borderRadius: 22,
+    borderRadius: radii.panel,
     overflow: "hidden",
     position: "relative",
     shadowColor: "#E84A3F",
@@ -1141,11 +1148,13 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   userName: {
+    fontFamily: "Fraunces_600SemiBold",
     fontSize: 20,
-    fontWeight: "800",
+    fontWeight: "600",
     letterSpacing: -0.4,
   },
   userHandle: {
+    fontFamily: "DMSans_500Medium",
     fontSize: 12.5,
     fontWeight: "500",
     marginTop: 2,
@@ -1198,10 +1207,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     marginBottom: 20,
   },
+  snapshotGridNarrow: {
+    flexWrap: "wrap",
+  },
   snapshotCard: {
     flex: 1,
     padding: 12,
-    borderRadius: 18,
+    borderRadius: radii.card,
     borderWidth: 1,
     shadowColor: "#1A1D20",
     shadowOpacity: 0.03,
@@ -1209,6 +1221,12 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     elevation: 1,
     justifyContent: "space-between",
+  },
+  snapshotCardNarrow: {
+    flexBasis: "48%",
+  },
+  snapshotCardWide: {
+    flexBasis: "100%",
   },
   snapshotIconBox: {
     width: 30,
@@ -1219,12 +1237,15 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   snapshotLabel: {
+    fontFamily: "DMSans_700Bold",
     fontSize: 9,
     fontWeight: "700",
     letterSpacing: 0.8,
     textTransform: "uppercase",
   },
   snapshotAmount: {
+    fontFamily: "DMSans_700Bold",
+    fontVariant: ["tabular-nums"],
     fontSize: 14,
     fontWeight: "800",
     letterSpacing: -0.2,

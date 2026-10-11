@@ -30,6 +30,7 @@ import { ConfirmDialog } from "@/components/common/confirm-dialog";
 import { AboutDialog } from "@/components/common/about-dialog";
 import { ProfileAvatar } from "@/components/account/profile-avatar";
 import { MotionEntrance, PressableScale } from "@/components/motion";
+import { radii, spacing, typography } from "@/constants/design-tokens";
 
 const BUDGET_PRESETS = [3000, 5000, 10000, 15000, 20000] as const;
 
@@ -136,7 +137,7 @@ export default function SettingsScreen() {
 
         {syncError && (
           <View style={styles.syncBanner}>
-            <Ionicons name="cloud-offline-outline" size={16} color="#B5502E" />
+            <Ionicons name="cloud-offline-outline" size={16} color={colors.error} />
             <Text style={styles.syncBannerText}>{syncError}</Text>
           </View>
         )}
@@ -225,10 +226,10 @@ export default function SettingsScreen() {
             <View
               style={[
                 styles.iconContainer,
-                { backgroundColor: dark ? "rgba(245, 158, 11, 0.15)" : "#FEF3C7" },
+                { backgroundColor: colors.warningSoft },
               ]}
             >
-              <Ionicons name={dark ? "moon" : "sunny"} size={19} color="#F59E0B" />
+              <Ionicons name={dark ? "moon" : "sunny"} size={19} color={colors.warning} />
             </View>
             <View style={styles.rowContent}>
               <Text style={[styles.rowTitle, { color: colors.foreground }]}>Appearance</Text>
@@ -240,10 +241,11 @@ export default function SettingsScreen() {
               value={dark}
               onValueChange={toggleDarkMode}
               trackColor={{
-                false: dark ? "rgba(255,255,255,0.12)" : "#E2E8F0",
-                true: "#E84A3F",
+                false: colors.border,
+                true: colors.primary,
               }}
               thumbColor="#FFFFFF"
+              accessibilityLabel="Dark theme"
             />
           </Pressable>
 
@@ -256,10 +258,10 @@ export default function SettingsScreen() {
             <View
               style={[
                 styles.iconContainer,
-                { backgroundColor: dark ? "rgba(232, 74, 63, 0.15)" : "#FFF0ED" },
+                { backgroundColor: colors.primarySoft },
               ]}
             >
-              <Ionicons name="notifications" size={19} color="#E84A3F" />
+              <Ionicons name="notifications" size={19} color={colors.primary} />
             </View>
             <View style={styles.rowContent}>
               <Text style={[styles.rowTitle, { color: colors.foreground }]}>Notifications</Text>
@@ -271,10 +273,11 @@ export default function SettingsScreen() {
               value={budgetNudges}
               onValueChange={toggleBudgetNudges}
               trackColor={{
-                false: dark ? "rgba(255,255,255,0.12)" : "#E2E8F0",
-                true: "#E84A3F",
+                false: colors.border,
+                true: colors.primary,
               }}
               thumbColor="#FFFFFF"
+              accessibilityLabel="Budget reminders"
             />
           </Pressable>
         </View>
@@ -793,13 +796,14 @@ export default function SettingsScreen() {
 
 const styles = StyleSheet.create({
   scroll: {
-    paddingTop: 12,
+    paddingTop: spacing.md,
     paddingBottom: 96,
   },
   header: {
-    marginBottom: 16,
+    marginBottom: spacing.lg,
   },
   kicker: {
+    fontFamily: "DMSans_700Bold",
     fontSize: 10,
     fontWeight: "700",
     letterSpacing: 1.2,
@@ -807,9 +811,9 @@ const styles = StyleSheet.create({
     marginBottom: 2,
   },
   title: {
+    ...typography.screenTitle,
     fontSize: 24,
-    fontWeight: "800",
-    letterSpacing: -0.5,
+    lineHeight: 30,
   },
   subtitle: {
     fontSize: 13,
@@ -835,8 +839,8 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    padding: 16,
-    borderRadius: 20,
+    padding: spacing.lg,
+    borderRadius: radii.panel,
     borderWidth: 1,
     marginBottom: 20,
     shadowColor: "#1A1D20",
@@ -883,6 +887,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   profileHeroName: {
+    fontFamily: "DMSans_700Bold",
     fontSize: 16,
     fontWeight: "700",
     letterSpacing: -0.2,
@@ -922,7 +927,7 @@ const styles = StyleSheet.create({
     textTransform: "uppercase",
   },
   groupedCard: {
-    borderRadius: 20,
+    borderRadius: radii.panel,
     borderWidth: 1,
     overflow: "hidden",
     marginBottom: 18,
@@ -935,10 +940,10 @@ const styles = StyleSheet.create({
   settingRow: {
     flexDirection: "row",
     alignItems: "center",
-    paddingVertical: 12,
+    paddingVertical: spacing.md,
     paddingHorizontal: 16,
     borderBottomWidth: 1,
-    minHeight: 58,
+    minHeight: 64,
     ...(Platform.OS === "web" ? ({ cursor: "pointer" } as any) : {}),
   },
   lastRow: {
@@ -948,9 +953,9 @@ const styles = StyleSheet.create({
     opacity: 0.75,
   },
   iconContainer: {
-    width: 38,
-    height: 38,
-    borderRadius: 11,
+    width: 40,
+    height: 40,
+    borderRadius: radii.control,
     alignItems: "center",
     justifyContent: "center",
     marginRight: 14,
@@ -960,6 +965,7 @@ const styles = StyleSheet.create({
     paddingRight: 10,
   },
   rowTitle: {
+    fontFamily: "DMSans_700Bold",
     fontSize: 14,
     fontWeight: "600",
     letterSpacing: -0.1,
