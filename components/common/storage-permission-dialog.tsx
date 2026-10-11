@@ -15,7 +15,7 @@ import Animated, {
   withTiming,
 } from "react-native-reanimated";
 import { Ionicons } from "@expo/vector-icons";
-import * as Haptics from "expo-haptics";
+
 import { useTheme } from "@/lib/theme-store";
 import { GlassSurface } from "@/components/ui/glass-surface";
 import {
@@ -84,11 +84,6 @@ export function StoragePermissionDialog({
   }));
 
   const handleGrant = async () => {
-    try {
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    } catch {
-      // Non-fatal
-    }
     await requestStoragePermission();
     await setPromptedStoragePermission();
     onGranted?.();
@@ -96,11 +91,6 @@ export function StoragePermissionDialog({
   };
 
   const handleDismiss = async () => {
-    try {
-      Haptics.selectionAsync();
-    } catch {
-      // Non-fatal
-    }
     await setPromptedStoragePermission();
     onClose();
   };

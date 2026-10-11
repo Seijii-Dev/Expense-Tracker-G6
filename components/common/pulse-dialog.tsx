@@ -14,7 +14,7 @@ import Animated, {
   withTiming,
 } from "react-native-reanimated";
 import { Ionicons } from "@expo/vector-icons";
-import * as Haptics from "expo-haptics";
+
 import { useTheme } from "@/lib/theme-store";
 import { GlassSurface } from "@/components/ui/glass-surface";
 
@@ -195,11 +195,6 @@ export function PulseDialog({
               pressed && styles.btnPressed,
             ]}
             onPress={() => {
-              try {
-                Haptics.selectionAsync();
-              } catch {
-                // Non-fatal
-              }
               onClose();
             }}
           >

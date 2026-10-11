@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   Animated,
   AppState,
@@ -55,13 +55,15 @@ export function ProfileBannerLayer({ banner, visible, style }: ProfileBannerLaye
     };
   }, [banner?.uri, opacityAnim]);
 
-  const handleMediaLoaded = () => {
+  const handleMediaLoaded = useCallback(() => {
     Animated.timing(opacityAnim, {
       toValue: 1,
       duration: 320,
       useNativeDriver: true,
     }).start();
-  };
+  }, [opacityAnim]);
+
+  const handleMediaError = useCallback(() => setHasError(true), []);
 
   if (!banner || !sourceUri || hasError) {
     return null;
@@ -75,7 +77,7 @@ export function ProfileBannerLayer({ banner, visible, style }: ProfileBannerLaye
           resizeMode="cover"
           style={styles.image}
           onLoad={handleMediaLoaded}
-          onError={() => setHasError(true)}
+          onError={handleMediaError}
           accessibilityIgnoresInvertColors
         />
       </Animated.View>
@@ -89,7 +91,7 @@ export function ProfileBannerLayer({ banner, visible, style }: ProfileBannerLaye
         uri={sourceUri}
         visible={visible}
         onReady={handleMediaLoaded}
-        onError={() => setHasError(true)}
+        onError={handleMediaError}
       />
     </Animated.View>
   );

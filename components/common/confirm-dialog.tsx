@@ -15,7 +15,7 @@ import Animated, {
   withTiming,
 } from "react-native-reanimated";
 import { Ionicons } from "@expo/vector-icons";
-import * as Haptics from "expo-haptics";
+
 import { useTheme } from "@/lib/theme-store";
 import { GlassSurface } from "@/components/ui/glass-surface";
 import { PressableScale } from "@/components/motion";
@@ -125,21 +125,12 @@ export function ConfirmDialog({
 
   const handleConfirm = () => {
     if (loading) return;
-    try {
-      if (destructive) {
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-      } else {
-        Haptics.selectionAsync();
-      }
-    } catch {}
     onConfirm();
   };
 
   const handleCancel = () => {
     if (loading) return;
-    try {
-      Haptics.selectionAsync();
-    } catch {}
+
     onCancel?.();
   };
 
@@ -235,7 +226,7 @@ export function ConfirmDialog({
                 ]}
                 onPress={handleConfirm}
                 accessibilityRole="button"
-                hapticFeedback={destructive ? "medium" : "selection"}
+
               >
                 {loading ? (
                   <ActivityIndicator size="small" color="#FFFFFF" />
@@ -257,7 +248,7 @@ export function ConfirmDialog({
                   ]}
                   onPress={handleCancel}
                   accessibilityRole="button"
-                  hapticFeedback="selection"
+
                 >
                   <Text style={[styles.cancelText, { color: colors.foreground }]}>
                     {cancelText}

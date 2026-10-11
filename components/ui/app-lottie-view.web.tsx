@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { ReactNode, useEffect, useRef, useState } from "react";
 import {
   AccessibilityInfo,
   StyleProp,
@@ -15,6 +15,7 @@ export interface AppLottieViewProps {
   speed?: number;
   style?: StyleProp<ViewStyle>;
   onAnimationFinish?: (isCancelled: boolean) => void;
+  fallback?: ReactNode;
   [key: string]: any;
 }
 
@@ -25,10 +26,15 @@ export function AppLottieView({
   speed = 1,
   style,
   onAnimationFinish,
+  fallback,
 }: AppLottieViewProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const animInstance = useRef<AnimationItem | null>(null);
+  const onAnimationFinishRef = useRef(onAnimationFinish);
   const [reduceMotion, setReduceMotion] = useState(false);
+  const [hasRenderError, setHasRenderError] = useState(false);
+
+  onAnimationFinishRef.current = onAnimationFinish;
 
   useEffect(() => {
     let isMounted = true;
@@ -48,7 +54,9 @@ export function AppLottieView({
   }, []);
 
   useEffect(() => {
+    if (reduceMotion && autoPlay) return;
     if (!containerRef.current) return;
+    setHasRenderError(false);
 
     try {
       if (animInstance.current) {
@@ -73,24 +81,36 @@ export function AppLottieView({
       }
 
       const handleComplete = () => {
-        onAnimationFinish?.(false);
+        onAnimationFinishRef.current?.(false);
+      };
+      const handleFailure = () => {
+        animInstance.current?.destroy();
+        animInstance.current = null;
+        setHasRenderError(true);
       };
 
       animInstance.current.addEventListener("complete", handleComplete);
+      animInstance.current.addEventListener("data_failed", handleFailure);
 
       return () => {
         animInstance.current?.removeEventListener("complete", handleComplete);
+        animInstance.current?.removeEventListener("data_failed", handleFailure);
         animInstance.current?.destroy();
         animInstance.current = null;
       };
     } catch (e) {
       console.warn("Failed to load Lottie animation on web:", e);
+      setHasRenderError(true);
     }
-  }, [source, autoPlay, loop, speed, reduceMotion, onAnimationFinish]);
+  }, [source, autoPlay, loop, speed, reduceMotion]);
 
   const flatStyle = StyleSheet.flatten(style) || {};
   const width = flatStyle.width ?? 100;
   const height = flatStyle.height ?? 100;
+
+  if (hasRenderError || (reduceMotion && autoPlay)) {
+    return <View style={[styles.fallbackBox, style]}>{fallback}</View>;
+  }
 
   return (
     <View style={[styles.container, style]} pointerEvents="none">
@@ -110,6 +130,10 @@ export function AppLottieView({
 
 const styles = StyleSheet.create({
   container: {
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  fallbackBox: {
     alignItems: "center",
     justifyContent: "center",
   },

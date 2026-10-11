@@ -33,11 +33,8 @@ export function SpendingTrendChart({ timeline }: SpendingTrendChartProps) {
   const innerWidth = Math.max(10, chartWidth - paddingLeft - paddingRight);
   const innerHeight = chartHeight - paddingTop - paddingBottom;
 
-  if (!timeline?.points || timeline.points.length === 0) {
-    return null;
-  }
-
-  const maxVal = Math.max(...timeline.points.map((point) => point.amount), 1) * 1.15;
+  const pointsData = timeline?.points ?? [];
+  const maxVal = Math.max(...pointsData.map((point) => point.amount), 1) * 1.15;
 
   useEffect(() => {
     setSelectedPointKey(null);
@@ -48,14 +45,18 @@ export function SpendingTrendChart({ timeline }: SpendingTrendChartProps) {
 
     chartOpacity.value = 0.72;
     chartOpacity.value = withTiming(1, { duration: 180 });
-  }, [chartOpacity, timeline.interval, timeline.startDate, timeline.endDate]);
+  }, [chartOpacity, timeline?.interval, timeline?.startDate, timeline?.endDate]);
 
   const animatedContainerStyle = useAnimatedStyle(() => ({
     opacity: chartOpacity.value,
   }));
 
-  const points = timeline.points.map((point, index) => {
-    const x = paddingLeft + (index / Math.max(timeline.points.length - 1, 1)) * innerWidth;
+  if (pointsData.length === 0) {
+    return null;
+  }
+
+  const points = pointsData.map((point, index) => {
+    const x = paddingLeft + (index / Math.max(pointsData.length - 1, 1)) * innerWidth;
     const y = paddingTop + innerHeight - (point.amount / maxVal) * innerHeight;
     return { ...point, x, y };
   });

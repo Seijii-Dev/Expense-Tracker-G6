@@ -25,7 +25,13 @@ export function EmptyState({
     <View style={styles.container}>
       {lottieSource ? (
         <View style={styles.lottieWrap}>
-          <AppLottieView source={lottieSource} style={styles.lottie} autoPlay loop />
+          <AppLottieView
+            source={lottieSource}
+            style={styles.lottie}
+            autoPlay
+            loop
+            fallback={<Ionicons name={icon} size={42} color={colors.primary} />}
+          />
         </View>
       ) : (
         <View

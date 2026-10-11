@@ -9,12 +9,10 @@ import {
   StyleSheet,
   ViewStyle,
 } from "react-native";
-import * as Haptics from "expo-haptics";
 
 export interface PressableScaleProps extends Omit<PressableProps, "style"> {
   children: React.ReactNode;
   activeScale?: number;
-  hapticFeedback?: "light" | "medium" | "selection" | "none";
   style?: StyleProp<ViewStyle>;
   containerStyle?: StyleProp<ViewStyle>;
 }
@@ -22,7 +20,6 @@ export interface PressableScaleProps extends Omit<PressableProps, "style"> {
 export function PressableScale({
   children,
   activeScale = 0.96,
-  hapticFeedback = "none",
   style,
   containerStyle,
   onPressIn,
@@ -67,20 +64,6 @@ export function PressableScale({
 
   const handlePressIn = (event: GestureResponderEvent) => {
     if (disabled) return;
-    if (hapticFeedback !== "none") {
-      try {
-        if (hapticFeedback === "selection") {
-          Haptics.selectionAsync();
-        } else if (hapticFeedback === "light") {
-          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-        } else if (hapticFeedback === "medium") {
-          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-        }
-      } catch {
-        // Haptics non-fatal
-      }
-    }
-
     Animated.spring(scaleAnim, {
       toValue: activeScale,
       damping: 18,

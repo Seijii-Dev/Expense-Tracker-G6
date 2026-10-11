@@ -6,7 +6,7 @@ import Animated, {
   withSpring,
 } from "react-native-reanimated";
 import { Ionicons } from "@expo/vector-icons";
-import * as Haptics from "expo-haptics";
+
 import { Expense } from "@/types/expense";
 import { useTheme } from "@/lib/theme-store";
 import { GlassSurface } from "@/components/ui/glass-surface";
@@ -48,7 +48,7 @@ const RhythmBarItem = React.memo(function RhythmBarItem({
   }, [pct]);
 
   const animatedStyle = useAnimatedStyle(() => ({
-    height: `${heightAnim.value}%`,
+    transform: [{ scaleY: Math.max(heightAnim.value / 100, 0.05) }],
   }));
 
   return (
@@ -141,9 +141,6 @@ export const DailyRhythm = React.memo(function DailyRhythm({ expenses }: DailyRh
   );
 
   const changeDay = (direction: -1 | 1) => {
-    try {
-      Haptics.selectionAsync();
-    } catch {}
     const nextDay = addCalendarDays(selectedDayKey, direction);
     if (direction < 0 || nextDay <= todayKey) setSelectedDayKey(nextDay);
   };
@@ -262,9 +259,6 @@ export const DailyRhythm = React.memo(function DailyRhythm({ expenses }: DailyRh
               colors={colors}
               dark={dark}
               onPress={() => {
-                try {
-                  Haptics.selectionAsync();
-                } catch {}
                 setSelectedDayKey(day.key);
               }}
             />
@@ -449,8 +443,9 @@ const styles = StyleSheet.create({
   },
   bar: {
     width: 20,
+    height: "100%",
     borderRadius: 8,
-    minHeight: 6,
+    transformOrigin: "center bottom",
   },
   barActiveShadow: {
     shadowColor: "#E84A3F",

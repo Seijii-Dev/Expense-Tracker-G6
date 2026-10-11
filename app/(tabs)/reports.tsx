@@ -13,7 +13,6 @@ import { ReportsSkeleton } from "@/components/ui/reports-skeleton";
 import { exportExpensesToCsv } from "@/utils/export-csv";
 import { ConfirmDialog } from "@/components/common/confirm-dialog";
 
-import * as Haptics from "expo-haptics";
 import { SpendingTrendChart } from "@/components/reports/spending-trend-chart";
 import { MotionEntrance, PressableScale } from "@/components/motion";
 import { getPhilippinesDate } from "@/utils/date";
@@ -68,19 +67,11 @@ export default function ReportsScreen() {
   const budgetLeft = Math.max(0, budget - periodTotal);
 
   const navigateDate = (direction: -1 | 1) => {
-    try {
-      Haptics.selectionAsync();
-    } catch {
-      // Non-fatal
-    }
     const nextDate = shiftTrajectoryAnchorDate(timeframe, selectedDate, direction);
     setSelectedDate(direction > 0 && nextDate > todayDate ? todayDate : nextDate);
   };
 
   const handleExportStatement = async () => {
-    try {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    } catch {}
     const res = await exportExpensesToCsv(periodExpenses.length ? periodExpenses : expenses, false);
     setExportNotice({
       title: res.title,
@@ -126,7 +117,6 @@ export default function ReportsScreen() {
                 },
               ]}
               onPress={handleExportStatement}
-              hapticFeedback="light"
               accessibilityRole="button"
               accessibilityLabel="Export Financial Statement"
             >
@@ -146,7 +136,6 @@ export default function ReportsScreen() {
                   onPress={() => {
                     setTimeframe(tab);
                   }}
-                  hapticFeedback="selection"
                   style={[
                     styles.timeframeTab,
                     isActive && [
@@ -229,7 +218,6 @@ export default function ReportsScreen() {
                 onPress={() => setSelectedDate(todayDate)}
                 accessibilityRole="button"
                 accessibilityLabel="Show today's report"
-                hapticFeedback="selection"
                 style={[
                   styles.todayAction,
                   {

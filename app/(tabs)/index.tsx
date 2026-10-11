@@ -24,7 +24,7 @@ import { SpendingInsight } from "@/components/overview/spending-insight";
 import { MotionEntrance, PressableScale } from "@/components/motion";
 import { Expense, NewExpenseData } from "@/types/expense";
 import { PulseDialog } from "@/components/common/pulse-dialog";
-import * as Haptics from "expo-haptics";
+
 import { useExpenses } from "@/lib/expense-store";
 import { useAuth } from "@/lib/auth-store";
 import { useTheme } from "@/lib/theme-store";
@@ -70,9 +70,6 @@ export default function OverviewScreen() {
   const recentExpenses = useMemo(() => sortedExpenses.slice(0, 5), [sortedExpenses]);
 
   const showPulseAlert = useCallback(() => {
-    try {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    } catch {}
     setShowPulseModal(true);
   }, []);
 
@@ -140,7 +137,6 @@ export default function OverviewScreen() {
               {/* Notification Bell */}
               <PressableScale
                 onPress={showPulseAlert}
-                hapticFeedback="light"
                 accessibilityRole="button"
                 accessibilityLabel="Notifications"
               >
@@ -161,7 +157,6 @@ export default function OverviewScreen() {
               {/* Profile Avatar Button */}
               <PressableScale
                 onPress={() => router.push("/(tabs)/account")}
-                hapticFeedback="selection"
                 accessibilityRole="button"
                 accessibilityLabel="Open Account Profile"
               >
@@ -196,7 +191,6 @@ export default function OverviewScreen() {
               <View style={styles.heroTopStrip}>
                 <PressableScale
                   onPress={toggleBalanceHidden}
-                  hapticFeedback="selection"
                   style={styles.heroBalanceLabelRow}
                   accessibilityRole="button"
                   accessibilityLabel="Toggle Balance Visibility"
@@ -344,7 +338,6 @@ export default function OverviewScreen() {
               </View>
               <PressableScale
                 onPress={() => router.push("/(tabs)/reports")}
-                hapticFeedback="selection"
                 style={styles.viewAllBtn}
               >
                 <Text style={[styles.viewAllText, { color: colors.primary }]}>View all</Text>
@@ -373,7 +366,6 @@ export default function OverviewScreen() {
               </View>
               <PressableScale
                 onPress={() => router.push("/(tabs)/transactions")}
-                hapticFeedback="selection"
                 style={styles.viewAllBtn}
               >
                 <Text style={[styles.viewAllText, { color: colors.primary }]}>See All</Text>

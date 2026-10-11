@@ -11,7 +11,7 @@ import {
   View,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import * as Haptics from "expo-haptics";
+
 import { useTheme } from "@/lib/theme-store";
 import { AmbientBackground } from "@/components/ui/ambient-background";
 
@@ -59,11 +59,6 @@ export function AuthForm({ mode, onModeChange, onBack, onSubmit, busy }: AuthFor
             pressed && styles.pressed,
           ]}
           onPress={() => {
-            try {
-              Haptics.selectionAsync();
-            } catch {
-              // Non-fatal
-            }
             onBack();
           }}
           accessibilityRole="button"
@@ -118,11 +113,6 @@ export function AuthForm({ mode, onModeChange, onBack, onSubmit, busy }: AuthFor
               ],
             ]}
             onPress={() => {
-              try {
-                Haptics.selectionAsync();
-              } catch {
-                // Non-fatal
-              }
               onModeChange("login");
             }}
             accessibilityRole="tab"
@@ -153,11 +143,6 @@ export function AuthForm({ mode, onModeChange, onBack, onSubmit, busy }: AuthFor
               ],
             ]}
             onPress={() => {
-              try {
-                Haptics.selectionAsync();
-              } catch {
-                // Non-fatal
-              }
               onModeChange("register");
             }}
             accessibilityRole="tab"
@@ -305,11 +290,6 @@ export function AuthForm({ mode, onModeChange, onBack, onSubmit, busy }: AuthFor
         <Pressable
           style={styles.switchMode}
           onPress={() => {
-            try {
-              Haptics.selectionAsync();
-            } catch {
-              // Non-fatal
-            }
             onModeChange(isRegister ? "login" : "register");
           }}
           accessibilityRole="button"

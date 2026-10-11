@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { router } from "expo-router";
-import * as Haptics from "expo-haptics";
+
 import { WelcomeHero } from "@/components/auth/welcome-hero";
 import { AuthForm } from "@/components/auth/auth-form";
 import { ConfirmDialog } from "@/components/common/confirm-dialog";
@@ -65,11 +65,7 @@ export default function AuthScreen() {
         return;
       }
 
-      try {
-        await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      } catch {
-        // Non-fatal if platform lacks haptic hardware
-      }
+
 
       router.replace("/(tabs)");
     } catch (err) {

@@ -1,7 +1,7 @@
 import React from "react";
 import { Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import * as Haptics from "expo-haptics";
+
 import { CategoryIcon } from "@/components/ui/category-icon";
 import { Expense } from "@/types/expense";
 import { getCategoryStyle } from "@/constants/categories";
@@ -89,7 +89,6 @@ export const ExpenseRow = React.memo(function ExpenseRow({
               <PressableScale
                 hitSlop={8}
                 onPress={onEdit}
-                hapticFeedback="selection"
                 accessibilityRole="button"
                 accessibilityLabel={`Edit ${expense.description}`}
                 style={[
@@ -104,7 +103,6 @@ export const ExpenseRow = React.memo(function ExpenseRow({
               <PressableScale
                 hitSlop={8}
                 onPress={handleDeletePress}
-                hapticFeedback="light"
                 accessibilityRole="button"
                 accessibilityLabel={`Delete ${expense.description}`}
                 style={[

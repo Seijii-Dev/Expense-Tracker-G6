@@ -1,6 +1,6 @@
 import React, { useMemo } from "react";
 import { Platform, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
-import * as Haptics from "expo-haptics";
+
 import { Category } from "@/types/expense";
 import { useExpenses } from "@/lib/expense-store";
 import { useTheme } from "@/lib/theme-store";
@@ -39,9 +39,6 @@ export function CategoryChips({ selected, onSelect, countMap }: CategoryChipsPro
           <Pressable
             key={item}
             onPress={() => {
-              try {
-                Haptics.selectionAsync();
-              } catch {}
               onSelect(item);
             }}
             accessibilityRole="button"

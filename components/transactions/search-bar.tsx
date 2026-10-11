@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Platform, Pressable, StyleSheet, TextInput, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import * as Haptics from "expo-haptics";
+
 import { useTheme } from "@/lib/theme-store";
 
 interface SearchBarProps {
@@ -51,9 +51,6 @@ export function SearchBar({
         <Pressable
           hitSlop={8}
           onPress={() => {
-            try {
-              Haptics.selectionAsync();
-            } catch {}
             onChangeText("");
           }}
           accessibilityRole="button"
@@ -68,9 +65,6 @@ export function SearchBar({
         <Pressable
           hitSlop={8}
           onPress={() => {
-            try {
-              Haptics.selectionAsync();
-            } catch {}
             onPressFilter();
           }}
           accessibilityRole="button"

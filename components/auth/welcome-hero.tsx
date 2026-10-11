@@ -11,7 +11,7 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
-import * as Haptics from "expo-haptics";
+
 import { useTheme } from "@/lib/theme-store";
 import { AmbientBackground } from "@/components/ui/ambient-background";
 
@@ -56,11 +56,6 @@ export function WelcomeHero({ onSignIn, onRegister }: WelcomeHeroProps) {
               pressed && styles.pressed,
             ]}
             onPress={() => {
-              try {
-                Haptics.selectionAsync();
-              } catch {
-                // Non-fatal
-              }
               onSignIn();
             }}
             accessibilityRole="button"
@@ -163,11 +158,6 @@ export function WelcomeHero({ onSignIn, onRegister }: WelcomeHeroProps) {
                 pressed && styles.pressed,
               ]}
               onPress={() => {
-                try {
-                  Haptics.selectionAsync();
-                } catch {
-                  // Non-fatal
-                }
                 onRegister();
               }}
               accessibilityRole="button"
@@ -186,11 +176,6 @@ export function WelcomeHero({ onSignIn, onRegister }: WelcomeHeroProps) {
                 pressed && styles.pressed,
               ]}
               onPress={() => {
-                try {
-                  Haptics.selectionAsync();
-                } catch {
-                  // Non-fatal
-                }
                 onSignIn();
               }}
               accessibilityRole="button"

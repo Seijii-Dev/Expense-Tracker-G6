@@ -9,7 +9,7 @@ import {
   View,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import * as Haptics from "expo-haptics";
+
 import { ScreenContainer } from "@/components/screen-container";
 import { ExpenseRow } from "@/components/ui/expense-row";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -92,9 +92,6 @@ export default function TransactionsScreen() {
   }, []);
 
   const handleExport = async () => {
-    try {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    } catch {}
     const res = await exportExpensesToCsv(sortedExpenses, false);
     setExportNotice({
       title: res.title,
@@ -160,7 +157,6 @@ export default function TransactionsScreen() {
                   borderColor: colors.border,
                 },
               ]}
-              hapticFeedback="selection"
               accessibilityRole="button"
             >
               <Ionicons name="calendar-outline" size={14} color={colors.primary} />
@@ -180,7 +176,6 @@ export default function TransactionsScreen() {
                   borderColor: colors.border,
                 },
               ]}
-              hapticFeedback="light"
               accessibilityRole="button"
               accessibilityLabel="Export Records to CSV"
             >
@@ -196,7 +191,6 @@ export default function TransactionsScreen() {
               onPress={() => {
                 setShowAddModal(true);
               }}
-              hapticFeedback="medium"
               accessibilityRole="button"
               accessibilityLabel="Add new expense"
             >

@@ -39,7 +39,7 @@ const CategoryProgressFill = React.memo(function CategoryProgressFill({
   }, [fillPct]);
 
   const animatedStyle = useAnimatedStyle(() => ({
-    width: `${widthAnim.value}%`,
+    transform: [{ scaleX: widthAnim.value / 100 }],
   }));
 
   return (
@@ -329,8 +329,10 @@ const styles = StyleSheet.create({
     overflow: "hidden",
   },
   miniFill: {
+    width: "100%",
     height: "100%",
     borderRadius: 2,
+    transformOrigin: "left center",
   },
   rightGroup: {
     alignItems: "flex-end",

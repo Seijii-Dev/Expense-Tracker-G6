@@ -14,7 +14,6 @@ import {
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
-import * as Haptics from "expo-haptics";
 import { LinearGradient } from "expo-linear-gradient";
 import { ScreenContainer } from "@/components/screen-container";
 import { CategoryIcon } from "@/components/ui/category-icon";
@@ -79,9 +78,6 @@ export default function SettingsScreen() {
   }, [account?.email]);
 
   const toggleBudgetNudges = (value: boolean) => {
-    try {
-      Haptics.selectionAsync();
-    } catch {}
     setBudgetNudges(value);
     if (account) {
       const nudgeKey = STORAGE_KEYS.budgetNudges(account.email);
@@ -90,9 +86,6 @@ export default function SettingsScreen() {
   };
 
   const toggleDarkMode = (value: boolean) => {
-    try {
-      Haptics.selectionAsync();
-    } catch {}
     setDark(value);
   };
 
@@ -106,15 +99,9 @@ export default function SettingsScreen() {
     const safe = Math.round(target);
     setBudgetText(String(safe));
     setBudget(safe);
-    try {
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    } catch {}
   };
 
   const handleExport = async () => {
-    try {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    } catch {}
     const res = await exportExpensesToCsv(expenses, false);
     setExportNotice({
       title: res.title,
@@ -165,7 +152,6 @@ export default function SettingsScreen() {
               },
             ]}
             onPress={() => router.push("/(tabs)/account")}
-            hapticFeedback="selection"
             accessibilityRole="button"
             accessibilityLabel="Open Account and Profile"
           >
@@ -317,9 +303,6 @@ export default function SettingsScreen() {
                 pressed && styles.pressed,
               ]}
               onPress={() => {
-                try {
-                  Haptics.selectionAsync();
-                } catch {}
                 setShowBudgetModal(true);
               }}
               accessibilityRole="button"
@@ -390,9 +373,6 @@ export default function SettingsScreen() {
                 pressed && styles.pressed,
               ]}
               onPress={() => {
-                try {
-                  Haptics.selectionAsync();
-                } catch {}
                 setShowBackupModal(true);
               }}
               accessibilityRole="button"
@@ -458,9 +438,6 @@ export default function SettingsScreen() {
             <Pressable
               style={({ pressed }) => [styles.settingRow, styles.lastRow, pressed && styles.pressed]}
               onPress={() => {
-                try {
-                  Haptics.selectionAsync();
-                } catch {}
                 setShowAboutModal(true);
               }}
               accessibilityRole="button"

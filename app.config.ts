@@ -15,6 +15,7 @@ const config: ExpoConfig = {
   },
   android: {
     package: "expense.tracker.group6",
+    blockedPermissions: ["android.permission.VIBRATE"],
     adaptiveIcon: {
       backgroundColor: "#16382B",
       foregroundImage: "./assets/images/icon.png",

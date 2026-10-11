@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import {
+  AccessibilityInfo,
   Animated,
   Easing,
   Image,
@@ -21,6 +22,7 @@ interface SplashScreenProps {
  */
 export function SplashScreen({ isReady, onFinish, dark = false }: SplashScreenProps) {
   const [visible, setVisible] = useState(true);
+  const [reduceMotion, setReduceMotion] = useState(false);
 
   // Animations
   const opacityAnim = useRef(new Animated.Value(0)).current;
@@ -28,10 +30,39 @@ export function SplashScreen({ isReady, onFinish, dark = false }: SplashScreenPr
   const glowAnim = useRef(new Animated.Value(0.4)).current;
   const exitOpacityAnim = useRef(new Animated.Value(1)).current;
   const exitScaleAnim = useRef(new Animated.Value(1)).current;
+  const onFinishRef = useRef(onFinish);
+
+  onFinishRef.current = onFinish;
 
   useEffect(() => {
+    let isMounted = true;
+    AccessibilityInfo.isReduceMotionEnabled()
+      .then((enabled) => {
+        if (isMounted) setReduceMotion(enabled);
+      })
+      .catch(() => undefined);
+
+    const subscription = AccessibilityInfo.addEventListener(
+      "reduceMotionChanged",
+      (enabled) => setReduceMotion(enabled)
+    );
+
+    return () => {
+      isMounted = false;
+      subscription?.remove?.();
+    };
+  }, []);
+
+  useEffect(() => {
+    if (reduceMotion) {
+      opacityAnim.setValue(1);
+      scaleAnim.setValue(1);
+      glowAnim.setValue(0.4);
+      return;
+    }
+
     // 1. Entrance animation (fade in & gentle scale up)
-    Animated.parallel([
+    const entrance = Animated.parallel([
       Animated.timing(opacityAnim, {
         toValue: 1,
         duration: 400,
@@ -44,7 +75,8 @@ export function SplashScreen({ isReady, onFinish, dark = false }: SplashScreenPr
         tension: 50,
         useNativeDriver: true,
       }),
-    ]).start();
+    ]);
+    entrance.start();
 
     // 2. Subtle ambient pulse loop
     const pulseLoop = Animated.loop(
@@ -67,16 +99,23 @@ export function SplashScreen({ isReady, onFinish, dark = false }: SplashScreenPr
 
     return () => {
       pulseLoop.stop();
+      entrance.stop();
     };
-  }, []);
+  }, [glowAnim, opacityAnim, reduceMotion, scaleAnim]);
 
   // Handle exit once the application is ready
   useEffect(() => {
     if (!isReady) return;
+    if (reduceMotion) {
+      setVisible(false);
+      onFinishRef.current?.();
+      return;
+    }
 
     // Minimum display time ensures the user sees the logo smoothly without abrupt flashing
+    let exitAnimation: Animated.CompositeAnimation | null = null;
     const timer = setTimeout(() => {
-      Animated.parallel([
+      exitAnimation = Animated.parallel([
         Animated.timing(exitOpacityAnim, {
           toValue: 0,
           duration: 380,
@@ -89,14 +128,18 @@ export function SplashScreen({ isReady, onFinish, dark = false }: SplashScreenPr
           easing: Easing.out(Easing.quad),
           useNativeDriver: true,
         }),
-      ]).start(() => {
+      ]);
+      exitAnimation.start(() => {
         setVisible(false);
-        onFinish?.();
+        onFinishRef.current?.();
       });
     }, 700);
 
-    return () => clearTimeout(timer);
-  }, [isReady]);
+    return () => {
+      clearTimeout(timer);
+      exitAnimation?.stop();
+    };
+  }, [isReady, reduceMotion]);
 
   if (!visible) return null;
 

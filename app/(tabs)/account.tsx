@@ -14,7 +14,6 @@ import {
 } from "react-native";
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
-import * as Haptics from "expo-haptics";
 import * as ImagePicker from "expo-image-picker";
 import type { ImagePickerAsset } from "expo-image-picker";
 import { LinearGradient } from "expo-linear-gradient";
@@ -91,9 +90,6 @@ export default function AccountScreen() {
   };
 
   const handleOpenInfo = (title: string, body: string) => {
-    try {
-      Haptics.selectionAsync();
-    } catch {}
     setInfoModalTitle(title);
     setInfoModalBody(body);
   };
@@ -295,7 +291,6 @@ export default function AccountScreen() {
                   setBannerError(null);
                   setShowBannerActions(true);
                 }}
-                hapticFeedback="selection"
                 accessibilityRole="button"
                 accessibilityLabel="Edit profile banner"
               >
@@ -309,7 +304,6 @@ export default function AccountScreen() {
                   { backgroundColor: dark ? "rgba(255,255,255,0.06)" : colors.surface },
                 ]}
                 onPress={() => router.push("/(tabs)/settings")}
-                hapticFeedback="selection"
                 accessibilityRole="button"
                 accessibilityLabel="Open settings"
               >
@@ -390,7 +384,6 @@ export default function AccountScreen() {
                     setPhotoError(null);
                     setShowPhotoActions(true);
                   }}
-                  hapticFeedback="light"
                   accessibilityRole="button"
                   accessibilityLabel="Edit profile picture"
                 >
@@ -596,7 +589,6 @@ export default function AccountScreen() {
               onPress={() => {
                 setShowSignOut(true);
               }}
-              hapticFeedback="medium"
               accessibilityRole="button"
               accessibilityLabel="Log Out of Ledgerly"
             >

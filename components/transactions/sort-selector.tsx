@@ -1,7 +1,7 @@
 import React from "react";
 import { Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import * as Haptics from "expo-haptics";
+
 import { useTheme } from "@/lib/theme-store";
 import { SortOption } from "@/hooks/useFilteredExpenses";
 
@@ -34,9 +34,6 @@ export function SortSelector({ selected, onSelect }: SortSelectorProps) {
             <Pressable
               key={opt.key}
               onPress={() => {
-                try {
-                  Haptics.selectionAsync();
-                } catch {}
                 onSelect(opt.key);
               }}
               style={({ pressed }) => [

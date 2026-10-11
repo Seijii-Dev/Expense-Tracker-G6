@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { ReactNode, useEffect, useRef, useState } from "react";
 import {
   AccessibilityInfo,
   Platform,
@@ -16,6 +16,7 @@ export interface AppLottieViewProps extends Partial<LottieViewProps> {
   speed?: number;
   style?: StyleProp<ViewStyle>;
   onAnimationFinish?: (isCancelled: boolean) => void;
+  fallback?: ReactNode;
 }
 
 export function AppLottieView({
@@ -25,6 +26,7 @@ export function AppLottieView({
   speed = 1,
   style,
   onAnimationFinish,
+  fallback,
   ...rest
 }: AppLottieViewProps) {
   const lottieRef = useRef<LottieView>(null);
@@ -48,8 +50,8 @@ export function AppLottieView({
     };
   }, []);
 
-  if (hasRenderError) {
-    return <View style={[styles.fallbackBox, style]} />;
+  if (hasRenderError || (reduceMotion && autoPlay)) {
+    return <View style={[styles.fallbackBox, style]}>{fallback}</View>;
   }
 
   return (
@@ -81,6 +83,8 @@ const styles = StyleSheet.create({
     height: "100%",
   },
   fallbackBox: {
+    alignItems: "center",
+    justifyContent: "center",
     opacity: 0.8,
   },
 });

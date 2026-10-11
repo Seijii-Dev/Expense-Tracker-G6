@@ -12,7 +12,7 @@ import {
   View,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import * as Haptics from "expo-haptics";
+
 import { GlassSurface } from "@/components/ui/glass-surface";
 import { PRESET_CATEGORY_COLORS, PRESET_CATEGORY_ICONS } from "@/constants/categories";
 import { useTheme } from "@/lib/theme-store";
@@ -55,11 +55,7 @@ export function CustomCategoryModal({
     const trimmed = name.trim();
     if (!trimmed) {
       setErrorMessage("Please enter a category name.");
-      try {
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-      } catch {
-        // Non-fatal
-      }
+
       return;
     }
 
@@ -69,11 +65,7 @@ export function CustomCategoryModal({
       )
     ) {
       setErrorMessage(`"${trimmed}" category already exists.`);
-      try {
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-      } catch {
-        // Non-fatal
-      }
+
       return;
     }
 
@@ -89,20 +81,10 @@ export function CustomCategoryModal({
       });
 
       if (success) {
-        try {
-          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-        } catch {
-          // Non-fatal
-        }
         resetForm();
         onClose();
       } else {
         setErrorMessage("Failed to add category. Name might already be taken.");
-        try {
-          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-        } catch {
-          // Non-fatal
-        }
       }
     } catch {
       setErrorMessage("An unexpected error occurred. Please try again.");
@@ -210,11 +192,6 @@ export function CustomCategoryModal({
                   <Pressable
                     key={preset.color}
                     onPress={() => {
-                      try {
-                        Haptics.selectionAsync();
-                      } catch {
-                        // Non-fatal
-                      }
                       setSelectedColor(preset);
                     }}
                     style={[
@@ -238,11 +215,6 @@ export function CustomCategoryModal({
                   <Pressable
                     key={iconName}
                     onPress={() => {
-                      try {
-                        Haptics.selectionAsync();
-                      } catch {
-                        // Non-fatal
-                      }
                       setSelectedIcon(iconName);
                     }}
                     style={[

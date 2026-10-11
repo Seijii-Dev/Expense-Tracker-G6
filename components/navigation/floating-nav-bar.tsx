@@ -15,7 +15,7 @@ import Animated, {
 } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
-import * as Haptics from "expo-haptics";
+
 import { useTheme } from "@/lib/theme-store";
 import { useExpenses } from "@/lib/expense-store";
 import { NavIcon, NavTabName } from "@/components/navigation/nav-icons";
@@ -194,11 +194,6 @@ export function FloatingTabBar({ state, descriptors, navigation }: FloatingTabBa
   const bottomInset = Math.max(insets.bottom + 10, Platform.OS === "ios" ? 20 : 14);
 
   const handleFabPress = () => {
-    try {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    } catch {
-      // Non-fatal
-    }
     openAddExpenseModal();
   };
 
@@ -228,12 +223,6 @@ export function FloatingTabBar({ state, descriptors, navigation }: FloatingTabBa
     }
 
     const handlePress = () => {
-      try {
-        Haptics.selectionAsync();
-      } catch {
-        // Non-fatal
-      }
-
       const event = navigation.emit({
         type: "tabPress",
         target: route.key,

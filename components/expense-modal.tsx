@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import {
   KeyboardAvoidingView,
   Modal,
@@ -12,7 +12,6 @@ import {
   useWindowDimensions,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import * as Haptics from "expo-haptics";
 import { LinearGradient } from "expo-linear-gradient";
 import { Category, Expense, NewExpenseData, Payment } from "@/types/expense";
 import { getCategoryStyle, PAYMENT_METHODS } from "@/constants/categories";
@@ -53,6 +52,27 @@ export function ExpenseModal({ visible, initialExpense, onClose, onSubmit }: Exp
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
 
+  const finishSuccess = useCallback(() => {
+    setShowSuccessModal(false);
+    setIsSubmitting(false);
+    setValidationError(null);
+    onClose();
+  }, [onClose]);
+
+  const handleSuccessAnimationFinish = useCallback(
+    (isCancelled: boolean) => {
+      if (!isCancelled) finishSuccess();
+    },
+    [finishSuccess]
+  );
+
+  useEffect(() => {
+    if (!showSuccessModal) return;
+    // Safety fallback for reduced-motion devices or a Lottie rendering failure.
+    const timer = setTimeout(finishSuccess, 2500);
+    return () => clearTimeout(timer);
+  }, [finishSuccess, showSuccessModal]);
+
   // Reset or initialize values when modal opens
   useEffect(() => {
     if (visible) {
@@ -76,9 +96,6 @@ export function ExpenseModal({ visible, initialExpense, onClose, onSubmit }: Exp
   }, [visible, initialExpense]);
 
   const handleReset = () => {
-    try {
-      Haptics.selectionAsync();
-    } catch {}
     setAmount("");
     setDescription("");
     setCategory("Food");
@@ -94,23 +111,17 @@ export function ExpenseModal({ visible, initialExpense, onClose, onSubmit }: Exp
     const numeric = parseFloat(amount);
     if (isNaN(numeric) || numeric <= 0) {
       setValidationError("Please enter an amount greater than ₱0.");
-      try {
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-      } catch {}
       return;
     }
     if (!description.trim()) {
       setValidationError("Please add a note or description for this expense.");
-      try {
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-      } catch {}
       return;
     }
 
     setIsSubmitting(true);
     const submittedDate =
       initialExpense && date === normalizeDate(initialExpense.date) ? initialExpense.date : date;
-    
+
     // Save operation executed first
     onSubmit({
       amount: Math.round(numeric * 100) / 100,
@@ -120,18 +131,8 @@ export function ExpenseModal({ visible, initialExpense, onClose, onSubmit }: Exp
       date: submittedDate,
     });
 
-    try {
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    } catch {}
-
     // Show Lottie success vector animation feedback
     setShowSuccessModal(true);
-    setTimeout(() => {
-      setShowSuccessModal(false);
-      setIsSubmitting(false);
-      setValidationError(null);
-      onClose();
-    }, 850);
   };
 
   const today = getPhilippinesDate();
@@ -294,9 +295,6 @@ export function ExpenseModal({ visible, initialExpense, onClose, onSubmit }: Exp
                   <Pressable
                     key={item}
                     onPress={() => {
-                      try {
-                        Haptics.selectionAsync();
-                      } catch {}
                       setCategory(item);
                     }}
                     style={({ pressed }) => [
@@ -360,9 +358,6 @@ export function ExpenseModal({ visible, initialExpense, onClose, onSubmit }: Exp
               {/* Add Custom Category Button */}
               <Pressable
                 onPress={() => {
-                  try {
-                    Haptics.selectionAsync();
-                  } catch {}
                   setShowAddCustomModal(true);
                 }}
                 style={({ pressed }) => [
@@ -548,9 +543,6 @@ export function ExpenseModal({ visible, initialExpense, onClose, onSubmit }: Exp
                   <Pressable
                     key={item}
                     onPress={() => {
-                      try {
-                        Haptics.selectionAsync();
-                      } catch {}
                       setPayment(item);
                     }}
                     style={({ pressed }) => [
@@ -596,7 +588,6 @@ export function ExpenseModal({ visible, initialExpense, onClose, onSubmit }: Exp
               style={[styles.saveBtnWrap, isSubmitting && { opacity: 0.6 }]}
               disabled={isSubmitting}
               onPress={handleSave}
-              hapticFeedback="medium"
               accessibilityRole="button"
             >
               <LinearGradient
@@ -631,6 +622,8 @@ export function ExpenseModal({ visible, initialExpense, onClose, onSubmit }: Exp
                 style={{ width: 100, height: 100 }}
                 loop={false}
                 autoPlay
+                onAnimationFinish={handleSuccessAnimationFinish}
+                fallback={<Ionicons name="checkmark-circle" size={78} color={colors.primary} />}
               />
               <Text style={[styles.successTitle, { color: colors.foreground }]}>
                 {isEditing ? "Changes Saved!" : "Record Logged!"}
