@@ -4,9 +4,9 @@ on:
   workflow_dispatch:
     inputs:
       profile:
-        description: EAS build profile
+        description: EAS profile (production creates a directly installable multi-ABI Android APK)
         required: true
-        default: preview
+        default: production
         type: choice
         options:
           - preview
@@ -29,9 +29,9 @@ on:
           - local
           - cloud
       architecture:
-        description: "Android target ABI (arm64-v8a: fast ~10m build for physical phones; all: universal)"
+        description: "Android target ABI (all: multi-ABI distribution; arm64-v8a: preview-only device-specific build)"
         required: true
-        default: arm64-v8a
+        default: all
         type: choice
         options:
           - arm64-v8a
@@ -55,6 +55,10 @@ jobs:
         run: |
           if [ "${{ inputs.build_mode }}" = "local" ] && [ "${{ inputs.platform }}" != "android" ]; then
             echo "::error::Local runner builds on ubuntu-latest only support the 'android' platform. For iOS builds, select 'cloud' mode."
+            exit 1
+          fi
+          if [ "${{ inputs.architecture }}" = "arm64-v8a" ] && { [ "${{ inputs.profile }}" != "preview" ] || [ "${{ inputs.build_mode }}" != "local" ]; }; then
+            echo "::error::arm64-v8a-only builds are limited to local preview builds. Use all architectures for release APKs and production builds."
             exit 1
           fi
 
@@ -134,10 +138,10 @@ jobs:
           org.gradle.caching=true
           EOF
 
-          if [ "${{ inputs.architecture }}" = "arm64-v8a" ] && [ "${{ inputs.profile }}" != "production" ]; then
+          if [ "${{ inputs.architecture }}" = "arm64-v8a" ]; then
             echo "reactNativeArchitectures=arm64-v8a" >> ~/.gradle/gradle.properties
             echo "GRADLE_OPTS=${GRADLE_OPTS} -Dorg.gradle.project.reactNativeArchitectures=arm64-v8a" >> "$GITHUB_ENV"
-            echo "Targeting arm64-v8a for fast preview build"
+            echo "Targeting arm64-v8a for fast preview build only"
           else
             echo "Building all architectures"
           fi
@@ -149,16 +153,12 @@ jobs:
         if: ${{ inputs.build_mode == 'local' }}
         run: |
           mkdir -p build-output
-          EXT="apk"
-          if [ "${{ inputs.profile }}" = "production" ]; then
-            EXT="aab"
-          fi
           eas build \
             --platform android \
             --profile "${{ inputs.profile }}" \
             --local \
             --non-interactive \
-            --output="./build-output/app-${{ inputs.profile }}.${EXT}"
+            --output="./build-output/app-${{ inputs.profile }}.apk"
 
       - name: Output failure diagnostics and logs
         if: ${{ failure() && inputs.build_mode == 'local' }}

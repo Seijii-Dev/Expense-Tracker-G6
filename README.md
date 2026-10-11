@@ -34,6 +34,8 @@ To create an Android or iOS build from GitHub Actions:
 
 1. Create an Expo/EAS account and install the EAS CLI locally with `pnpm dlx eas-cli@latest login`.
 2. Create an Expo access token and add it to the repository as an Actions secret named `EXPO_TOKEN` under **Settings → Secrets and variables → Actions**.
-3. Open the **Actions** tab, choose **Build Expo app**, click **Run workflow**, then select `preview` or `production` and the target platform.
+3. Open the **Actions** tab, choose **Build Expo app**, click **Run workflow**, then select `production` for the directly installable Android APK or `preview` for testing.
 
-Preview builds produce an Android APK and an iOS simulator build. Production builds use the EAS store distribution profile and require the appropriate Android/iOS signing credentials in EAS.
+The `production` profile creates a directly installable Android APK with all four common Android ABIs (`armeabi-v7a`, `arm64-v8a`, `x86`, and `x86_64`). Keep the workflow architecture set to `all` for release distribution; the arm64-only option is restricted to local preview builds. Before building, confirm the EAS Android keystore matches the certificate used for any installed release; do not create or replace it if the APK must update an existing installation.
+
+Preview builds produce an Android APK and an iOS simulator build. This project is configured for direct APK distribution; the Android production profile does not produce a Play Store App Bundle (AAB). The Expo SDK 54 baseline supports Android 7.0 (API 24) and newer; devices below that minimum are not supported.
