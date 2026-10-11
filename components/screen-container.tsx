@@ -1,12 +1,5 @@
-import { PropsWithChildren, useEffect, useRef } from "react";
-import {
-  Animated,
-  Easing,
-  Platform,
-  StyleSheet,
-  View,
-  useWindowDimensions,
-} from "react-native";
+import { PropsWithChildren } from "react";
+import { Platform, StyleSheet, View, useWindowDimensions } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { AmbientBackground } from "@/components/ui/ambient-background";
 
@@ -15,29 +8,8 @@ export function ScreenContainer({
   style,
   noBottomPadding = false,
 }: PropsWithChildren<{ style?: object; noBottomPadding?: boolean }>) {
-  const isWeb = Platform.OS === "web";
-  const progress = useRef(new Animated.Value(isWeb ? 0.3 : 0)).current;
   const insets = useSafeAreaInsets();
   const { width: windowWidth } = useWindowDimensions();
-
-  useEffect(() => {
-    if (isWeb) {
-      Animated.timing(progress, {
-        toValue: 1,
-        duration: 150,
-        easing: Easing.out(Easing.cubic),
-        useNativeDriver: true,
-      }).start();
-    } else {
-      Animated.spring(progress, {
-        toValue: 1,
-        damping: 24,
-        stiffness: 220,
-        mass: 0.8,
-        useNativeDriver: true,
-      }).start();
-    }
-  }, [progress, isWeb]);
 
   // Ensure ample clearance for the floating navigation bar + device safe area
   const bottomClearance = noBottomPadding ? 0 : Math.max(insets.bottom + 84, 108);
@@ -48,7 +20,7 @@ export function ScreenContainer({
       <AmbientBackground />
       <SafeAreaView edges={["top", "left", "right"]} style={styles.safe}>
         <View style={styles.centerWrapper}>
-          <Animated.View
+          <View
             style={[
               styles.content,
               {
@@ -56,21 +28,10 @@ export function ScreenContainer({
                 paddingBottom: bottomClearance,
               },
               style,
-              {
-                opacity: progress,
-                transform: [
-                  {
-                    translateY: progress.interpolate({
-                      inputRange: [0, 1],
-                      outputRange: [isWeb ? 6 : 12, 0],
-                    }),
-                  },
-                ],
-              },
             ]}
           >
             {children}
-          </Animated.View>
+          </View>
         </View>
       </SafeAreaView>
     </View>

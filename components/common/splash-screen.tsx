@@ -9,6 +9,7 @@ import {
   Text,
   View,
 } from "react-native";
+import { useReducedMotion } from "react-native-reanimated";
 
 interface SplashScreenProps {
   isReady: boolean;
@@ -22,7 +23,8 @@ interface SplashScreenProps {
  */
 export function SplashScreen({ isReady, onFinish, dark = false }: SplashScreenProps) {
   const [visible, setVisible] = useState(true);
-  const [reduceMotion, setReduceMotion] = useState(false);
+  const systemReduceMotion = useReducedMotion();
+  const [reduceMotion, setReduceMotion] = useState(systemReduceMotion);
 
   // Animations
   const opacityAnim = useRef(new Animated.Value(0)).current;
@@ -54,10 +56,12 @@ export function SplashScreen({ isReady, onFinish, dark = false }: SplashScreenPr
   }, []);
 
   useEffect(() => {
-    if (reduceMotion) {
-      opacityAnim.setValue(1);
-      scaleAnim.setValue(1);
-      glowAnim.setValue(0.4);
+    if (reduceMotion || isReady || !visible) {
+      if (reduceMotion) {
+        opacityAnim.setValue(1);
+        scaleAnim.setValue(1);
+        glowAnim.setValue(0.4);
+      }
       return;
     }
 
@@ -101,7 +105,7 @@ export function SplashScreen({ isReady, onFinish, dark = false }: SplashScreenPr
       pulseLoop.stop();
       entrance.stop();
     };
-  }, [glowAnim, opacityAnim, reduceMotion, scaleAnim]);
+  }, [glowAnim, isReady, opacityAnim, reduceMotion, scaleAnim, visible]);
 
   // Handle exit once the application is ready
   useEffect(() => {

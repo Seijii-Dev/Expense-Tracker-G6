@@ -7,6 +7,7 @@ import {
   ViewStyle,
 } from "react-native";
 import lottie, { AnimationItem } from "lottie-web";
+import { useReducedMotion } from "react-native-reanimated";
 
 export interface AppLottieViewProps {
   source: any;
@@ -31,7 +32,8 @@ export function AppLottieView({
   const containerRef = useRef<HTMLDivElement>(null);
   const animInstance = useRef<AnimationItem | null>(null);
   const onAnimationFinishRef = useRef(onAnimationFinish);
-  const [reduceMotion, setReduceMotion] = useState(false);
+  const systemReduceMotion = useReducedMotion();
+  const [reduceMotion, setReduceMotion] = useState(systemReduceMotion);
   const [hasRenderError, setHasRenderError] = useState(false);
 
   onAnimationFinishRef.current = onAnimationFinish;

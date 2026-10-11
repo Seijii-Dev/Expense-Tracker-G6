@@ -8,6 +8,7 @@ import {
   ViewStyle,
 } from "react-native";
 import LottieView, { LottieViewProps } from "lottie-react-native";
+import { useReducedMotion } from "react-native-reanimated";
 
 export interface AppLottieViewProps extends Partial<LottieViewProps> {
   source: any;
@@ -30,7 +31,8 @@ export function AppLottieView({
   ...rest
 }: AppLottieViewProps) {
   const lottieRef = useRef<LottieView>(null);
-  const [reduceMotion, setReduceMotion] = useState(false);
+  const systemReduceMotion = useReducedMotion();
+  const [reduceMotion, setReduceMotion] = useState(systemReduceMotion);
   const [hasRenderError, setHasRenderError] = useState(false);
 
   useEffect(() => {

@@ -7,6 +7,7 @@ import {
   StyleProp,
   ViewStyle,
 } from "react-native";
+import { useReducedMotion } from "react-native-reanimated";
 
 interface MotionEntranceProps {
   children: React.ReactNode;
@@ -27,8 +28,8 @@ export function MotionEntrance({
 }: MotionEntranceProps) {
   const isWeb = Platform.OS === "web";
   const animValue = useRef(new Animated.Value(0)).current;
-  const [reduceMotion, setReduceMotion] = useState(false);
-  const hasAnimated = useRef(false);
+  const systemReduceMotion = useReducedMotion();
+  const [reduceMotion, setReduceMotion] = useState(systemReduceMotion);
 
   useEffect(() => {
     let isMounted = true;
@@ -43,34 +44,36 @@ export function MotionEntrance({
   }, []);
 
   useEffect(() => {
-    if (hasAnimated.current) return;
-    hasAnimated.current = true;
-
     if (reduceMotion) {
       animValue.setValue(1);
       return;
     }
 
+    let animation: Animated.CompositeAnimation | null = null;
     const timer = setTimeout(() => {
       if (isWeb) {
-        Animated.timing(animValue, {
+        animation = Animated.timing(animValue, {
           toValue: 1,
           duration,
           easing: Easing.out(Easing.cubic),
           useNativeDriver: true,
-        }).start();
+        });
       } else {
-        Animated.spring(animValue, {
+        animation = Animated.spring(animValue, {
           toValue: 1,
           damping: 22,
           stiffness: 220,
           mass: 0.8,
           useNativeDriver: true,
-        }).start();
+        });
       }
+      animation.start();
     }, delay);
 
-    return () => clearTimeout(timer);
+    return () => {
+      clearTimeout(timer);
+      animation?.stop();
+    };
   }, [animValue, delay, duration, isWeb, reduceMotion]);
 
   if (reduceMotion) {
