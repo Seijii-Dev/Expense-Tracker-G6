@@ -1,14 +1,12 @@
-import React, { useEffect, useRef, useState } from "react";
-import {
-  AccessibilityInfo,
-  Animated,
-  Easing,
-  Platform,
-  StyleProp,
-  View,
-  ViewStyle,
-} from "react-native";
-import { useReducedMotion } from "react-native-reanimated";
+import React, { useMemo } from "react";
+import { Platform, StyleProp, View, ViewStyle } from "react-native";
+import Animated, {
+  FadeIn,
+  FadeInDown,
+  FadeInUp,
+  LinearTransition,
+  useReducedMotion,
+} from "react-native-reanimated";
 
 export interface MotionEntranceProps {
   children: React.ReactNode;
@@ -21,103 +19,78 @@ export interface MotionEntranceProps {
   style?: StyleProp<ViewStyle>;
 }
 
+/**
+ * MotionEntrance: Ultra-smooth, hardware-accelerated entering animation.
+ * Runs on the GPU compositor / UI thread at 60/120fps with zero JavaScript bottlenecks.
+ */
 export function MotionEntrance({
   children,
   delay = 0,
-  duration = 260,
-  translateY = 14,
-  scale = 0.97,
+  duration = 220,
+  translateY = 8,
   direction = "down",
+  enableLayoutTransition = false,
   style,
 }: MotionEntranceProps) {
+  const reduceMotion = useReducedMotion();
   const isWeb = Platform.OS === "web";
-  const animValue = useRef(new Animated.Value(0)).current;
-  const systemReduceMotion = useReducedMotion();
-  const [reduceMotion, setReduceMotion] = useState(Boolean(systemReduceMotion));
-  const hasAnimated = useRef(false);
 
-  useEffect(() => {
-    let isMounted = true;
-    AccessibilityInfo.isReduceMotionEnabled()
-      .then((enabled) => {
-        if (isMounted && enabled) {
-          setReduceMotion(true);
-          animValue.setValue(1);
-        }
-      })
-      .catch(() => undefined);
+  const enteringAnimation = useMemo(() => {
+    if (reduceMotion) return undefined;
 
-    return () => {
-      isMounted = false;
-    };
-  }, [animValue]);
+    // Compact delay so elements appear instantly during tab switching
+    const safeDelay = Math.min(Math.max(0, delay), 80);
+    const safeDistance = Math.min(Math.max(4, translateY), 10);
 
-  useEffect(() => {
-    if (reduceMotion) {
-      animValue.setValue(1);
-      hasAnimated.current = true;
-      return;
+    if (direction === "down") {
+      return FadeInDown.duration(duration)
+        .springify()
+        .damping(24)
+        .stiffness(300)
+        .mass(0.5)
+        .withInitialValues({
+          opacity: 0,
+          transform: [{ translateY: safeDistance }],
+        })
+        .delay(safeDelay);
     }
 
-    if (hasAnimated.current) {
-      // Keep rendered without restarting entrance on re-renders
-      animValue.setValue(1);
-      return;
+    if (direction === "up") {
+      return FadeInUp.duration(duration)
+        .springify()
+        .damping(24)
+        .stiffness(300)
+        .mass(0.5)
+        .withInitialValues({
+          opacity: 0,
+          transform: [{ translateY: -safeDistance }],
+        })
+        .delay(safeDelay);
     }
 
-    const timer = setTimeout(() => {
-      Animated.spring(animValue, {
-        toValue: 1,
-        damping: 22,
-        stiffness: 280,
-        mass: 0.6,
-        useNativeDriver: true,
-      }).start(() => {
-        hasAnimated.current = true;
-      });
-    }, Math.max(0, delay));
-
-    return () => {
-      clearTimeout(timer);
-    };
-  }, [animValue, delay, duration, reduceMotion]);
+    return FadeIn.duration(duration).delay(safeDelay);
+  }, [direction, delay, duration, translateY, reduceMotion]);
 
   if (reduceMotion) {
     return <View style={style}>{children}</View>;
   }
 
-  const opacity = animValue.interpolate({
-    inputRange: [0, 1],
-    outputRange: [0, 1],
-  });
-
-  const effectiveTranslateY = direction === "fade" ? 0 : direction === "up" ? -translateY : translateY;
-
-  const transformY = animValue.interpolate({
-    inputRange: [0, 1],
-    outputRange: [effectiveTranslateY, 0],
-  });
-
-  const transformScale = animValue.interpolate({
-    inputRange: [0, 1],
-    outputRange: [scale, 1],
-  });
-
   return (
     <Animated.View
+      entering={enteringAnimation}
+      layout={
+        enableLayoutTransition
+          ? LinearTransition.springify().damping(22).stiffness(280)
+          : undefined
+      }
       style={[
         style,
-        {
-          opacity,
-          transform: [
-            { translateY: transformY },
-            direction !== "fade" ? { scale: transformScale } : { scale: 1 },
-          ],
-        },
+        isWeb ? ({ willChange: "opacity, transform" } as any) : undefined,
       ]}
     >
       {children}
     </Animated.View>
   );
 }
+
 

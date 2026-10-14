@@ -85,7 +85,7 @@ export function PressableScale({
       damping: 18,
       stiffness: 320,
       mass: 0.6,
-      useNativeDriver: true,
+      useNativeDriver: Platform.OS !== "web",
     }).start();
 
     onPressIn?.(event);
@@ -98,7 +98,7 @@ export function PressableScale({
       damping: 14,
       stiffness: 260,
       mass: 0.7,
-      useNativeDriver: true,
+      useNativeDriver: Platform.OS !== "web",
     }).start();
 
     onPressOut?.(event);

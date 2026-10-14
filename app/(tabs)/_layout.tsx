@@ -29,7 +29,8 @@ export default function TabsLayout() {
         tabBar={(props) => <FloatingTabBar {...props} />}
         screenOptions={{
           headerShown: false,
-          lazy: true,
+          lazy: false,
+          animation: "fade",
         }}
       >
         <Tabs.Screen

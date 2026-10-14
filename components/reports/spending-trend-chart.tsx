@@ -46,8 +46,7 @@ export function SpendingTrendChart({ timeline }: SpendingTrendChartProps) {
       return;
     }
 
-    chartOpacity.value = 0.72;
-    chartOpacity.value = withTiming(1, { duration: 180 });
+    chartOpacity.value = withTiming(1, { duration: 200 });
   }, [chartOpacity, timeline?.interval, timeline?.startDate, timeline?.endDate]);
 
   const animatedContainerStyle = useAnimatedStyle(() => ({

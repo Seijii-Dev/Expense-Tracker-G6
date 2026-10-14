@@ -24,13 +24,19 @@ export const DonutChart = React.memo(function DonutChart({ total, expenses }: Do
   const { customCategories } = useExpenses();
   const progress = useSharedValue(0);
 
+  const isFirstRender = React.useRef(true);
+
   useEffect(() => {
-    progress.value = 0;
-    progress.value = withSpring(1, {
-      damping: 18,
-      stiffness: 220,
-      mass: 0.8,
-    });
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      progress.value = withSpring(1, {
+        damping: 18,
+        stiffness: 220,
+        mass: 0.8,
+      });
+    } else {
+      progress.value = 1;
+    }
   }, [total, progress]);
 
   const animatedStyle = useAnimatedStyle(() => ({

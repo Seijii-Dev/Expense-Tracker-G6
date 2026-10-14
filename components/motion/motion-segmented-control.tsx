@@ -70,18 +70,31 @@ export function MotionSegmentedControl<T extends string = string>({
 
   const handleItemLayout = (id: string, event: LayoutChangeEvent) => {
     const { x, width, height } = event.nativeEvent.layout;
-    setLayouts((prev) => ({
-      ...prev,
-      [id]: { x, width },
-    }));
+    setLayouts((prev) => {
+      if (prev[id]?.x === x && prev[id]?.width === width) return prev;
+      return {
+        ...prev,
+        [id]: { x, width },
+      };
+    });
     if (height > containerHeight) {
       setContainerHeight(height);
     }
   };
 
   useEffect(() => {
+    // Motion.dev signature spring parameters
+    const springConfig = {
+      damping: 22,
+      stiffness: 280,
+      mass: 0.6,
+    };
+
     const currentLayout = layouts[selectedId];
-    if (!currentLayout) return;
+    if (!selectedId || !currentLayout) {
+      pillOpacity.value = withSpring(0, springConfig);
+      return;
+    }
 
     if (reduceMotion || isInitialRender.current) {
       pillX.value = currentLayout.x;
@@ -90,13 +103,6 @@ export function MotionSegmentedControl<T extends string = string>({
       isInitialRender.current = false;
       return;
     }
-
-    // Motion.dev signature spring parameters
-    const springConfig = {
-      damping: 22,
-      stiffness: 280,
-      mass: 0.6,
-    };
 
     pillX.value = withSpring(currentLayout.x, springConfig);
     pillWidth.value = withSpring(currentLayout.width, springConfig);
