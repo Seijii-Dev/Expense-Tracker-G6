@@ -4,24 +4,48 @@ import { Skeleton, SkeletonCircle, SkeletonText } from "@/components/ui/skeleton
 import { useTheme } from "@/lib/theme-store";
 
 export function DashboardSkeleton() {
-  const { colors } = useTheme();
+  const { colors, dark } = useTheme();
 
   return (
     <View style={styles.container}>
-      {/* Header Skeleton */}
-      <View style={styles.header}>
-        <View style={styles.headerTextCol}>
-          <SkeletonText width={110} height={11} borderRadius={4} style={styles.mb8} />
-          <SkeletonText width={190} height={26} borderRadius={8} style={styles.mb8} />
-          <SkeletonText width={230} height={13} borderRadius={6} />
+      {/* Top Header Strip Skeleton */}
+      <View style={styles.topHeader}>
+        <View style={styles.brandRow}>
+          <Skeleton width={36} height={36} borderRadius={10} />
+          <View style={styles.brandTexts}>
+            <SkeletonText width={60} height={9} borderRadius={4} style={styles.mb4} />
+            <SkeletonText width={110} height={20} borderRadius={6} style={styles.mb4} />
+            <SkeletonText width={140} height={11} borderRadius={4} />
+          </View>
         </View>
-        <SkeletonCircle size={44} />
+        <View style={styles.headerRightActions}>
+          <SkeletonCircle size={38} />
+          <SkeletonCircle size={38} />
+        </View>
       </View>
 
-      {/* Action Row Skeleton */}
-      <View style={styles.actionRow}>
-        <Skeleton width={120} height={36} borderRadius={18} />
-        <Skeleton width={110} height={36} borderRadius={18} />
+      {/* Hero Available Balance Card Skeleton */}
+      <View
+        style={[
+          styles.heroCard,
+          {
+            backgroundColor: dark ? "rgba(255, 101, 84, 0.14)" : "rgba(255, 101, 84, 0.08)",
+            borderColor: dark ? "rgba(255, 101, 84, 0.28)" : "rgba(255, 101, 84, 0.18)",
+          },
+        ]}
+      >
+        <View style={styles.heroTopRow}>
+          <View style={styles.heroLabelRow}>
+            <SkeletonText width={110} height={10} borderRadius={4} />
+            <SkeletonCircle size={16} />
+          </View>
+          <Skeleton width={52} height={20} borderRadius={10} />
+        </View>
+        <Skeleton width={180} height={38} borderRadius={8} style={styles.my10} />
+        <View style={styles.heroPillRow}>
+          <Skeleton width={150} height={24} borderRadius={12} />
+          <Skeleton width={70} height={24} borderRadius={12} />
+        </View>
       </View>
 
       {/* Metrics Grid Skeleton */}
@@ -105,20 +129,45 @@ const styles = StyleSheet.create({
     paddingTop: 10,
     paddingBottom: 24,
   },
-  header: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    justifyContent: "space-between",
-    marginBottom: 20,
-  },
-  headerTextCol: {
-    flex: 1,
-  },
-  actionRow: {
+  topHeader: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    marginBottom: 18,
+    marginBottom: 16,
+  },
+  brandRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
+  brandTexts: {
+    justifyContent: "center",
+  },
+  headerRightActions: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+  },
+  heroCard: {
+    padding: 20,
+    borderRadius: 24,
+    borderWidth: 1,
+    marginBottom: 16,
+  },
+  heroTopRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  heroLabelRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  heroPillRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
   },
   metricsGrid: {
     flexDirection: "row",
@@ -176,6 +225,9 @@ const styles = StyleSheet.create({
   txBody: {
     flex: 1,
   },
+  mb4: {
+    marginBottom: 4,
+  },
   mb6: {
     marginBottom: 6,
   },
@@ -187,5 +239,8 @@ const styles = StyleSheet.create({
   },
   my6: {
     marginVertical: 6,
+  },
+  my10: {
+    marginVertical: 10,
   },
 });

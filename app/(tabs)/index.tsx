@@ -399,17 +399,22 @@ export default function OverviewScreen() {
             </View>
 
             {recentExpenses.length === 0 ? (
-              <View style={styles.emptyRecent}>
+              <PressableScale
+                style={styles.emptyRecent}
+                onPress={() => setShowAddModal(true)}
+                accessibilityRole="button"
+                accessibilityLabel="Record your first transaction"
+              >
                 <View style={[styles.emptyIconCircle, { backgroundColor: colors.surfaceSubtle }]}>
                   <Ionicons name="receipt-outline" size={24} color={colors.subtle} />
                 </View>
                 <Text style={[styles.emptyRecentText, { color: colors.foreground }]}>
                   No recent expenses
                 </Text>
-                <Text style={[styles.emptyRecentSub, { color: colors.muted }]}>
-                  Tap '+' below to record your first transaction.
+                <Text style={[styles.emptyRecentSub, { color: colors.primary, fontWeight: "600" }]}>
+                  Tap here or '+' to record your first transaction.
                 </Text>
-              </View>
+              </PressableScale>
             ) : (
               recentExpenses.map((expense) => (
                 <ExpenseRow

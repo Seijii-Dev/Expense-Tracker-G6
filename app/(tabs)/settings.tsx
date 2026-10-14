@@ -33,6 +33,7 @@ import { ProfileAvatar } from "@/components/account/profile-avatar";
 import { AppLottieView } from "@/components/ui/app-lottie-view";
 import { MotionEntrance, PressableScale } from "@/components/motion";
 import { GlassSurface } from "@/components/ui/glass-surface";
+import { DayNightSwitch } from "@/components/ui/day-night-switch";
 import { radii, spacing, typography } from "@/constants/design-tokens";
 
 const BUDGET_PRESETS = [3000, 5000, 10000, 15000, 20000] as const;
@@ -300,15 +301,9 @@ export default function SettingsScreen() {
                   {dark ? "Dark mode active" : "Light mode active"}
                 </Text>
               </View>
-              <Switch
+              <DayNightSwitch
                 value={dark}
                 onValueChange={toggleDarkMode}
-                trackColor={{
-                  false: colors.border,
-                  true: colors.primary,
-                }}
-                thumbColor="#FFFFFF"
-                accessibilityLabel="Dark theme"
               />
             </Pressable>
 

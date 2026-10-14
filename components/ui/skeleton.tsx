@@ -8,11 +8,11 @@ import {
   ViewStyle,
 } from "react-native";
 import Animated, {
+  Easing,
   interpolate,
   useAnimatedStyle,
   useSharedValue,
   withRepeat,
-  withSequence,
   withTiming,
 } from "react-native-reanimated";
 import { useTheme } from "@/lib/theme-store";
@@ -59,10 +59,7 @@ export function Skeleton({
       return;
     }
     pulse.value = withRepeat(
-      withSequence(
-        withTiming(1, { duration: 900 }),
-        withTiming(0, { duration: 900 })
-      ),
+      withTiming(1, { duration: 800, easing: Easing.inOut(Easing.ease) }),
       -1,
       true
     );

@@ -26,6 +26,8 @@ export function SplashScreen({ isReady, onFinish, dark = false }: SplashScreenPr
   const systemReduceMotion = useReducedMotion();
   const [reduceMotion, setReduceMotion] = useState(systemReduceMotion);
 
+  const [minTimeElapsed, setMinTimeElapsed] = useState(false);
+
   // Animations
   const opacityAnim = useRef(new Animated.Value(0)).current;
   const scaleAnim = useRef(new Animated.Value(0.88)).current;
@@ -55,13 +57,21 @@ export function SplashScreen({ isReady, onFinish, dark = false }: SplashScreenPr
     };
   }, []);
 
+  // Guarantee minimum visible display duration so users see the branded intro
   useEffect(() => {
-    if (reduceMotion || isReady || !visible) {
-      if (reduceMotion) {
-        opacityAnim.setValue(1);
-        scaleAnim.setValue(1);
-        glowAnim.setValue(0.4);
-      }
+    const timer = setTimeout(() => {
+      setMinTimeElapsed(true);
+    }, 1100);
+
+    return () => clearTimeout(timer);
+  }, []);
+
+  // Entrance and ambient glow loop animation starts on mount
+  useEffect(() => {
+    if (reduceMotion) {
+      opacityAnim.setValue(1);
+      scaleAnim.setValue(1);
+      glowAnim.setValue(0.4);
       return;
     }
 
@@ -69,7 +79,7 @@ export function SplashScreen({ isReady, onFinish, dark = false }: SplashScreenPr
     const entrance = Animated.parallel([
       Animated.timing(opacityAnim, {
         toValue: 1,
-        duration: 400,
+        duration: 420,
         easing: Easing.out(Easing.cubic),
         useNativeDriver: true,
       }),
@@ -105,45 +115,42 @@ export function SplashScreen({ isReady, onFinish, dark = false }: SplashScreenPr
       pulseLoop.stop();
       entrance.stop();
     };
-  }, [glowAnim, isReady, opacityAnim, reduceMotion, scaleAnim, visible]);
+  }, [glowAnim, opacityAnim, reduceMotion, scaleAnim]);
 
-  // Handle exit once the application is ready
+  // Handle exit once both the application is ready and minimum display time elapsed
   useEffect(() => {
-    if (!isReady) return;
+    if (!isReady || !minTimeElapsed) return;
+
     if (reduceMotion) {
       setVisible(false);
       onFinishRef.current?.();
       return;
     }
 
-    // Minimum display time ensures the user sees the logo smoothly without abrupt flashing
-    let exitAnimation: Animated.CompositeAnimation | null = null;
-    const timer = setTimeout(() => {
-      exitAnimation = Animated.parallel([
-        Animated.timing(exitOpacityAnim, {
-          toValue: 0,
-          duration: 380,
-          easing: Easing.inOut(Easing.ease),
-          useNativeDriver: true,
-        }),
-        Animated.timing(exitScaleAnim, {
-          toValue: 1.05,
-          duration: 380,
-          easing: Easing.out(Easing.quad),
-          useNativeDriver: true,
-        }),
-      ]);
-      exitAnimation.start(() => {
-        setVisible(false);
-        onFinishRef.current?.();
-      });
-    }, 700);
+    const exitAnimation = Animated.parallel([
+      Animated.timing(exitOpacityAnim, {
+        toValue: 0,
+        duration: 380,
+        easing: Easing.inOut(Easing.ease),
+        useNativeDriver: true,
+      }),
+      Animated.timing(exitScaleAnim, {
+        toValue: 1.05,
+        duration: 380,
+        easing: Easing.out(Easing.quad),
+        useNativeDriver: true,
+      }),
+    ]);
+
+    exitAnimation.start(() => {
+      setVisible(false);
+      onFinishRef.current?.();
+    });
 
     return () => {
-      clearTimeout(timer);
-      exitAnimation?.stop();
+      exitAnimation.stop();
     };
-  }, [isReady, reduceMotion]);
+  }, [exitOpacityAnim, exitScaleAnim, isReady, minTimeElapsed, reduceMotion]);
 
   if (!visible) return null;
 

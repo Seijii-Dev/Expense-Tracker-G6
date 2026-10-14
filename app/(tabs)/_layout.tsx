@@ -14,23 +14,10 @@ const fluidEase = Easing.bezier(0.16, 1, 0.3, 1);
 const fluidTabTransitionSpec = {
   animation: "timing" as const,
   config: {
-    duration: 260,
+    duration: 200,
     easing: fluidEase,
   },
 };
-
-const fluidTabSceneInterpolator = ({
-  current,
-}: {
-  current: { progress: any };
-}) => ({
-  sceneStyle: {
-    opacity: current.progress.interpolate({
-      inputRange: [-1, 0, 1],
-      outputRange: [0, 1, 0],
-    }),
-  },
-});
 
 export default function TabsLayout() {
   const { account, loading } = useAuth();
@@ -57,7 +44,6 @@ export default function TabsLayout() {
           lazy: false,
           animation: "fade",
           transitionSpec: fluidTabTransitionSpec,
-          sceneStyleInterpolator: fluidTabSceneInterpolator,
         }}
       >
         <Tabs.Screen

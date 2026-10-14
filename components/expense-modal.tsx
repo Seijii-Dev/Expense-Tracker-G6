@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useState } from "react";
 import {
+  Keyboard,
   KeyboardAvoidingView,
   Modal,
   Platform,
@@ -56,6 +57,31 @@ export function ExpenseModal({ visible, initialExpense, onClose, onSubmit }: Exp
   const [validationError, setValidationError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
+
+  useEffect(() => {
+    if (Platform.OS === "web") return;
+    const showSub = Keyboard.addListener(
+      Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow",
+      () => setIsKeyboardVisible(true)
+    );
+    const hideSub = Keyboard.addListener(
+      Platform.OS === "ios" ? "keyboardWillHide" : "keyboardDidHide",
+      () => setIsKeyboardVisible(false)
+    );
+    return () => {
+      showSub.remove();
+      hideSub.remove();
+    };
+  }, []);
+
+  const handleRequestClose = useCallback(() => {
+    if (isKeyboardVisible) {
+      Keyboard.dismiss();
+      return;
+    }
+    onClose();
+  }, [isKeyboardVisible, onClose]);
 
   const finishSuccess = useCallback(() => {
     setShowSuccessModal(false);
@@ -159,10 +185,10 @@ export function ExpenseModal({ visible, initialExpense, onClose, onSubmit }: Exp
       visible={visible}
       transparent
       animationType={reduceMotion ? "none" : "slide"}
-      onRequestClose={onClose}
+      onRequestClose={handleRequestClose}
     >
       <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
         style={styles.backdrop}
       >
         {/* Full-screen backdrop overlay for dismissing */}
@@ -172,12 +198,25 @@ export function ExpenseModal({ visible, initialExpense, onClose, onSubmit }: Exp
           accessibilityLabel="Dismiss modal"
         />
 
+        {/* Upper transparent dismiss tap area above sheet */}
+        <Pressable
+          style={styles.dismissAreaTop}
+          onPress={onClose}
+          accessibilityLabel="Dismiss modal"
+        />
+
         {/* Tactile Bottom Sheet Card */}
         <View
+          onStartShouldSetResponder={() => true}
+          onTouchEnd={(e) => {
+            if (Platform.OS === "web") {
+              (e as any).stopPropagation?.();
+            }
+          }}
           style={[
             styles.card,
             {
-              maxHeight: Math.min(windowHeight * 0.9, 820),
+              maxHeight: Platform.OS === "android" ? "92%" : Math.min(windowHeight * 0.9, 820),
               paddingBottom: Math.max(insets.bottom + 16, 20),
               paddingHorizontal: windowWidth < 360 ? 14 : spacing.lg,
             },
@@ -295,15 +334,14 @@ export function ExpenseModal({ visible, initialExpense, onClose, onSubmit }: Exp
 
               <View style={styles.presetsRow}>
                 {[50, 100, 500, 1000].map((preset) => (
-                  <Pressable
+                  <PressableScale
                     key={preset}
                     onPress={() => handleAddPreset(preset)}
-                    style={({ pressed }) => [
+                    style={[
                       styles.amountPresetChip,
                       {
                         backgroundColor: dark ? "rgba(255, 255, 255, 0.08)" : "#FFFFFF",
                         borderColor: colors.border,
-                        opacity: pressed ? 0.75 : 1,
                       },
                     ]}
                     accessibilityRole="button"
@@ -312,7 +350,7 @@ export function ExpenseModal({ visible, initialExpense, onClose, onSubmit }: Exp
                     <Text style={[styles.amountPresetChipText, { color: colors.foreground }]}>
                       +₱{preset}
                     </Text>
-                  </Pressable>
+                  </PressableScale>
                 ))}
               </View>
 
@@ -665,7 +703,12 @@ export function ExpenseModal({ visible, initialExpense, onClose, onSubmit }: Exp
 
         {/* Lottie Vector Success Feedback Overlay */}
         {showSuccessModal && (
-          <View style={styles.successOverlay} pointerEvents="none">
+          <Pressable
+            style={styles.successOverlay}
+            onPress={finishSuccess}
+            accessibilityRole="button"
+            accessibilityLabel="Dismiss success notification"
+          >
             <GlassSurface
               variant="sheet"
               radius={24}
@@ -687,10 +730,10 @@ export function ExpenseModal({ visible, initialExpense, onClose, onSubmit }: Exp
                 {isEditing ? "Changes Saved!" : "Record Logged!"}
               </Text>
               <Text style={[styles.successSubtitle, { color: colors.muted }]}>
-                Encrypted ledger updated
+                Tap anywhere to continue
               </Text>
             </GlassSurface>
-          </View>
+          </Pressable>
         )}
       </KeyboardAvoidingView>
 
@@ -729,6 +772,10 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "flex-end",
     backgroundColor: "rgba(15, 23, 42, 0.6)",
+  },
+  dismissAreaTop: {
+    flex: 1,
+    width: "100%",
   },
   card: {
     width: "100%",

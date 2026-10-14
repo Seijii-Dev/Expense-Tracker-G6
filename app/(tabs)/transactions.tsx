@@ -528,7 +528,7 @@ export default function TransactionsScreen() {
               : "You haven't logged any transactions yet."
           }
         />
-        {hasActiveFilters && (
+        {hasActiveFilters ? (
           <Pressable
             onPress={resetFilters}
             style={({ pressed }) => [
@@ -542,10 +542,29 @@ export default function TransactionsScreen() {
           >
             <Text style={[styles.resetBtnText, { color: colors.primary }]}>Clear all filters</Text>
           </Pressable>
+        ) : (
+          <PressableScale
+            onPress={() => setShowAddModal(true)}
+            style={[
+              styles.resetBtn,
+              {
+                backgroundColor: colors.primary,
+                borderColor: colors.primary,
+                flexDirection: "row",
+                alignItems: "center",
+                gap: 6,
+              },
+            ]}
+          >
+            <Ionicons name="add" size={16} color="#FFFFFF" />
+            <Text style={[styles.resetBtnText, { color: "#FFFFFF", fontWeight: "700" }]}>
+              Add First Expense
+            </Text>
+          </PressableScale>
         )}
       </GlassSurface>
     ),
-    [colors.primary, colors.primarySoft, hasActiveFilters, hasTransactionsForSelectedDate, resetFilters, selectedDate]
+    [colors.primary, colors.primarySoft, hasActiveFilters, hasTransactionsForSelectedDate, resetFilters, selectedDate, setShowAddModal]
   );
 
 

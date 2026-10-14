@@ -1,7 +1,7 @@
 import type { ExpoConfig } from "expo/config";
 
 const config: ExpoConfig = {
-  name: "Smart Spending and Savings Tracker",
+  name: "Ledgerly",
   icon: "./assets/images/icon.png",
   slug: "expense-tracker-group6",
   version: "1.0.0",
@@ -9,6 +9,11 @@ const config: ExpoConfig = {
   scheme: "expense-tracker",
   userInterfaceStyle: "automatic",
   newArchEnabled: true,
+  splash: {
+    image: "./assets/images/icon.png",
+    resizeMode: "contain",
+    backgroundColor: "#0A1714",
+  },
   ios: {
     bundleIdentifier: "expense.tracker.group6",
     supportsTablet: true,
