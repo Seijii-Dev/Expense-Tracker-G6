@@ -1,6 +1,7 @@
 import React, { useMemo } from "react";
 import { Platform, StyleProp, View, ViewStyle } from "react-native";
 import Animated, {
+  Easing,
   FadeIn,
   FadeInDown,
   FadeInUp,
@@ -19,14 +20,17 @@ export interface MotionEntranceProps {
   style?: StyleProp<ViewStyle>;
 }
 
+// Apple iOS & Motion.dev signature fluid deceleration curve [0.16, 1, 0.3, 1]
+const fluidEase = Easing.bezier(0.16, 1, 0.3, 1);
+
 /**
- * MotionEntrance: Ultra-smooth, hardware-accelerated entering animation.
- * Runs on the GPU compositor / UI thread at 60/120fps with zero JavaScript bottlenecks.
+ * MotionEntrance: Buttery-smooth, hardware-accelerated entering animation.
+ * Features an organic fluid ease curve [0.16, 1, 0.3, 1] with zero jitter.
  */
 export function MotionEntrance({
   children,
   delay = 0,
-  duration = 220,
+  duration = 280,
   translateY = 8,
   direction = "down",
   enableLayoutTransition = false,
@@ -38,38 +42,23 @@ export function MotionEntrance({
   const enteringAnimation = useMemo(() => {
     if (reduceMotion) return undefined;
 
-    // Compact delay so elements appear instantly during tab switching
-    const safeDelay = Math.min(Math.max(0, delay), 80);
-    const safeDistance = Math.min(Math.max(4, translateY), 10);
+    // Gentle micro-stagger so elements glide in seamlessly without lag
+    const safeDelay = Math.min(Math.max(0, delay), 60);
 
     if (direction === "down") {
       return FadeInDown.duration(duration)
-        .springify()
-        .damping(24)
-        .stiffness(300)
-        .mass(0.5)
-        .withInitialValues({
-          opacity: 0,
-          transform: [{ translateY: safeDistance }],
-        })
+        .easing(fluidEase)
         .delay(safeDelay);
     }
 
     if (direction === "up") {
       return FadeInUp.duration(duration)
-        .springify()
-        .damping(24)
-        .stiffness(300)
-        .mass(0.5)
-        .withInitialValues({
-          opacity: 0,
-          transform: [{ translateY: -safeDistance }],
-        })
+        .easing(fluidEase)
         .delay(safeDelay);
     }
 
-    return FadeIn.duration(duration).delay(safeDelay);
-  }, [direction, delay, duration, translateY, reduceMotion]);
+    return FadeIn.duration(duration).easing(fluidEase).delay(safeDelay);
+  }, [direction, delay, duration, reduceMotion]);
 
   if (reduceMotion) {
     return <View style={style}>{children}</View>;

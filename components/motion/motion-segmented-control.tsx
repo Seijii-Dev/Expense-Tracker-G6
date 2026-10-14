@@ -83,11 +83,11 @@ export function MotionSegmentedControl<T extends string = string>({
   };
 
   useEffect(() => {
-    // Motion.dev signature spring parameters
+    // Smooth liquid glide spring parameters
     const springConfig = {
-      damping: 22,
-      stiffness: 280,
-      mass: 0.6,
+      damping: 26,
+      stiffness: 220,
+      mass: 0.7,
     };
 
     const currentLayout = layouts[selectedId];

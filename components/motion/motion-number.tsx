@@ -56,8 +56,8 @@ export function MotionNumber({
       const elapsed = now - startTime;
       const progress = Math.min(elapsed / duration, 1);
 
-      // Motion.dev custom spring ease-out polynomial
-      const eased = 1 - Math.pow(1 - progress, 3);
+      // Motion.dev custom fluid ease-out polynomial
+      const eased = 1 - Math.pow(1 - progress, 4);
       const nextVal = startVal + (endVal - startVal) * eased;
       currentValRef.current = nextVal;
 

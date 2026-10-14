@@ -82,9 +82,9 @@ export function PressableScale({
     if (disabled) return;
     Animated.spring(scaleAnim, {
       toValue: activeScale,
-      damping: 18,
-      stiffness: 320,
-      mass: 0.6,
+      damping: 24,
+      stiffness: 240,
+      mass: 0.7,
       useNativeDriver: Platform.OS !== "web",
     }).start();
 
@@ -95,9 +95,9 @@ export function PressableScale({
     if (disabled) return;
     Animated.spring(scaleAnim, {
       toValue: 1,
-      damping: 14,
-      stiffness: 260,
-      mass: 0.7,
+      damping: 22,
+      stiffness: 180,
+      mass: 0.8,
       useNativeDriver: Platform.OS !== "web",
     }).start();
 
