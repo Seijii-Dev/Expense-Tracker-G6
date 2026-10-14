@@ -276,7 +276,7 @@ export default function ReportsScreen() {
                   </View>
                 </View>
                 <Text style={[styles.metricValue, { color: colors.success }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.72}>
-                  {periodExpenses.length} {periodExpenses.length === 1 ? "Txn" : "Txns"}
+                  {periodExpenses.length} {periodExpenses.length === 1 ? "Transaction" : "Transactions"}
                 </Text>
                 <Text style={[styles.metricSub, { color: colors.muted }]} numberOfLines={1}>
                   Avg: {averageExpenseSize}

@@ -438,7 +438,7 @@ export default function TransactionsScreen() {
                     style={[styles.ribbonAmount, { color: colors.foreground }]}
                   />
                   <Text style={[styles.ribbonTxCount, { color: colors.muted }]}>
-                    • {filtered.length} {filtered.length === 1 ? "txn" : "txns"}
+                    • {filtered.length} {filtered.length === 1 ? "transaction" : "transactions"}
                   </Text>
                 </View>
               </View>
