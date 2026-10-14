@@ -1,6 +1,5 @@
-import React, { useRef } from "react";
+import React from "react";
 import {
-  Animated,
   GestureResponderEvent,
   Platform,
   Pressable,
@@ -9,6 +8,14 @@ import {
   StyleSheet,
   ViewStyle,
 } from "react-native";
+import Animated, {
+  useAnimatedStyle,
+  useReducedMotion,
+  useSharedValue,
+  withSpring,
+} from "react-native-reanimated";
+
+const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 export interface PressableScaleProps extends Omit<PressableProps, "style"> {
   children: React.ReactNode;
@@ -27,106 +34,53 @@ export function PressableScale({
   disabled,
   ...rest
 }: PressableScaleProps) {
-  const scaleAnim = useRef(new Animated.Value(1)).current;
+  const scale = useSharedValue(1);
+  const reduceMotion = useReducedMotion();
 
-  // Split layout properties for the outer Pressable vs inner Animated.View
-  const flatStyle = (StyleSheet.flatten(style) || {}) as ViewStyle;
-  const {
-    flex,
-    flexGrow,
-    flexShrink,
-    flexBasis,
-    alignSelf,
-    margin,
-    marginTop,
-    marginBottom,
-    marginLeft,
-    marginRight,
-    marginHorizontal,
-    marginVertical,
-    position,
-    top,
-    bottom,
-    left,
-    right,
-    zIndex,
-    width,
-    height,
-    ...visualStyle
-  } = flatStyle;
-
-  const outerLayoutStyle: ViewStyle = {
-    flex,
-    flexGrow,
-    flexShrink,
-    flexBasis,
-    alignSelf,
-    margin,
-    marginTop,
-    marginBottom,
-    marginLeft,
-    marginRight,
-    marginHorizontal,
-    marginVertical,
-    position,
-    top,
-    bottom,
-    left,
-    right,
-    zIndex,
-    width,
-    height,
-  };
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+  }));
 
   const handlePressIn = (event: GestureResponderEvent) => {
     if (disabled) return;
-    Animated.spring(scaleAnim, {
-      toValue: activeScale,
-      damping: 24,
-      stiffness: 240,
-      mass: 0.7,
-      useNativeDriver: Platform.OS !== "web",
-    }).start();
+    if (!reduceMotion) {
+      scale.value = withSpring(activeScale, {
+        damping: 20,
+        stiffness: 280,
+        mass: 0.65,
+      });
+    }
 
     onPressIn?.(event);
   };
 
   const handlePressOut = (event: GestureResponderEvent) => {
     if (disabled) return;
-    Animated.spring(scaleAnim, {
-      toValue: 1,
-      damping: 22,
-      stiffness: 180,
-      mass: 0.8,
-      useNativeDriver: Platform.OS !== "web",
-    }).start();
+    if (!reduceMotion) {
+      scale.value = withSpring(1, {
+        damping: 18,
+        stiffness: 200,
+        mass: 0.7,
+      });
+    }
 
     onPressOut?.(event);
   };
 
   return (
-    <Pressable
+    <AnimatedPressable
       disabled={disabled}
       onPressIn={handlePressIn}
       onPressOut={handlePressOut}
       style={[
-        outerLayoutStyle,
+        style,
         containerStyle,
         Platform.OS === "web" ? ({ cursor: disabled ? "default" : "pointer" } as any) : {},
+        !reduceMotion ? animatedStyle : null,
       ]}
       {...rest}
     >
-      <Animated.View
-        style={[
-          visualStyle,
-          flex !== undefined ? { width: "100%" } : null,
-          {
-            transform: [{ scale: scaleAnim }],
-          },
-        ]}
-      >
-        {children}
-      </Animated.View>
-    </Pressable>
+      {children}
+    </AnimatedPressable>
   );
 }

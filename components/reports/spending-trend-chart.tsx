@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Platform, Pressable, StyleSheet, Text, View, useWindowDimensions } from "react-native";
 import Animated, {
+  Easing,
   useAnimatedStyle,
   useSharedValue,
   withTiming,
@@ -46,7 +47,11 @@ export function SpendingTrendChart({ timeline }: SpendingTrendChartProps) {
       return;
     }
 
-    chartOpacity.value = withTiming(1, { duration: 200 });
+    chartOpacity.value = 0.5;
+    chartOpacity.value = withTiming(1, {
+      duration: 240,
+      easing: Easing.bezier(0.16, 1, 0.3, 1),
+    });
   }, [chartOpacity, timeline?.interval, timeline?.startDate, timeline?.endDate]);
 
   const animatedContainerStyle = useAnimatedStyle(() => ({

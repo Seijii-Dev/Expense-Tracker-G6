@@ -30,6 +30,7 @@ import { CustomCategoryModal } from "@/components/settings/custom-category-modal
 import { ConfirmDialog } from "@/components/common/confirm-dialog";
 import { AboutDialog } from "@/components/common/about-dialog";
 import { ProfileAvatar } from "@/components/account/profile-avatar";
+import { AppLottieView } from "@/components/ui/app-lottie-view";
 import { MotionEntrance, PressableScale } from "@/components/motion";
 import { GlassSurface } from "@/components/ui/glass-surface";
 import { radii, spacing, typography } from "@/constants/design-tokens";
@@ -226,7 +227,7 @@ export default function SettingsScreen() {
                     fontSize={20}
                   />
                   <View style={styles.verifiedCheck}>
-                    <Ionicons name="checkmark" size={10} color="#FFFFFF" />
+                    <Ionicons name="camera" size={9} color="#FFFFFF" />
                   </View>
                 </View>
 
@@ -234,12 +235,17 @@ export default function SettingsScreen() {
                   <Text style={[styles.profileHeroName, { color: colors.foreground }]} numberOfLines={1}>
                     {account?.name || "Alex Johnson"}
                   </Text>
-                  <Text style={[styles.profileHeroEmail, { color: colors.muted }]} numberOfLines={1}>
-                    {account?.email || "alex.johnson@example.com"}
-                  </Text>
-                  <View style={styles.profileBadge}>
-                    <Ionicons name="shield-checkmark" size={11} color="#10B981" />
-                    <Text style={styles.profileBadgeText}>Philippine Ed. · Verified</Text>
+                  <View style={styles.profileHeroEmailRow}>
+                    <Text style={[styles.profileHeroEmail, { color: colors.muted }]} numberOfLines={1}>
+                      {account?.email || "alex.johnson@example.com"}
+                    </Text>
+                    <AppLottieView
+                      source={require("@/assets/lottie/verified-badge.json")}
+                      style={styles.verifiedLottieIcon}
+                      autoPlay
+                      loop
+                      fallback={<Ionicons name="checkmark-circle" size={13} color="#3D66F3" />}
+                    />
                   </View>
                 </View>
               </View>
@@ -1043,7 +1049,7 @@ const styles = StyleSheet.create({
     width: 18,
     height: 18,
     borderRadius: 9,
-    backgroundColor: "#10B981",
+    backgroundColor: "#E84A3F",
     alignItems: "center",
     justifyContent: "center",
     borderWidth: 1.5,
@@ -1058,21 +1064,19 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     letterSpacing: -0.2,
   },
-  profileHeroEmail: {
-    fontSize: 12,
-    fontWeight: "500",
-    marginTop: 1,
-  },
-  profileBadge: {
+  profileHeroEmailRow: {
     flexDirection: "row",
     alignItems: "center",
     gap: 4,
-    marginTop: 4,
+    marginTop: 2,
   },
-  profileBadgeText: {
-    color: "#10B981",
-    fontSize: 10.5,
-    fontWeight: "600",
+  profileHeroEmail: {
+    fontSize: 12,
+    fontWeight: "500",
+  },
+  verifiedLottieIcon: {
+    width: 17,
+    height: 17,
   },
   profileHeroRight: {
     marginLeft: 10,
@@ -1283,6 +1287,7 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
   saveButton: {
+    width: "100%",
     borderRadius: 16,
     overflow: "hidden",
     marginTop: 10,
@@ -1293,6 +1298,7 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
   saveGradient: {
+    width: "100%",
     height: 52,
     alignItems: "center",
     justifyContent: "center",
@@ -1332,6 +1338,7 @@ const styles = StyleSheet.create({
     lineHeight: 17,
   },
   secondaryModalBtn: {
+    width: "100%",
     height: 48,
     borderRadius: 14,
     borderWidth: 1,

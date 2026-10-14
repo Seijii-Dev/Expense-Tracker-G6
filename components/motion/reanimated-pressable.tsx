@@ -1,19 +1,20 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 import {
-  AccessibilityInfo,
   GestureResponderEvent,
   Platform,
   Pressable,
   PressableProps,
   StyleProp,
-  StyleSheet,
   ViewStyle,
 } from "react-native";
 import Animated, {
   useAnimatedStyle,
+  useReducedMotion,
   useSharedValue,
   withSpring,
 } from "react-native-reanimated";
+
+const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 export interface ReanimatedPressableProps extends Omit<PressableProps, "style"> {
   children: React.ReactNode;
@@ -33,63 +34,11 @@ export function ReanimatedPressable({
   ...rest
 }: ReanimatedPressableProps) {
   const scale = useSharedValue(1);
-  const [reduceMotion, setReduceMotion] = useState(false);
+  const reduceMotion = useReducedMotion();
 
-  useEffect(() => {
-    let isMounted = true;
-    AccessibilityInfo.isReduceMotionEnabled().then((enabled) => {
-      if (isMounted) setReduceMotion(enabled);
-    });
-
-    const subscription = AccessibilityInfo.addEventListener(
-      "reduceMotionChanged",
-      (enabled) => setReduceMotion(enabled)
-    );
-
-    return () => {
-      isMounted = false;
-      subscription?.remove?.();
-    };
-  }, []);
-
-  const animatedStyle = useAnimatedStyle(() => {
-    return {
-      transform: [{ scale: scale.value }],
-    };
-  });
-
-  // Extract layout properties for outer Pressable
-  const flatStyle = (StyleSheet.flatten(style) || {}) as ViewStyle;
-  const {
-    flex,
-    flexGrow,
-    flexShrink,
-    flexBasis,
-    alignSelf,
-    margin,
-    marginTop,
-    marginBottom,
-    marginLeft,
-    marginRight,
-    marginHorizontal,
-    marginVertical,
-    ...visualStyle
-  } = flatStyle;
-
-  const outerLayoutStyle: ViewStyle = {
-    flex,
-    flexGrow,
-    flexShrink,
-    flexBasis,
-    alignSelf,
-    margin,
-    marginTop,
-    marginBottom,
-    marginLeft,
-    marginRight,
-    marginHorizontal,
-    marginVertical,
-  };
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+  }));
 
   const handlePressIn = (event: GestureResponderEvent) => {
     if (disabled) return;
@@ -118,26 +67,19 @@ export function ReanimatedPressable({
   };
 
   return (
-    <Pressable
+    <AnimatedPressable
       disabled={disabled}
       onPressIn={handlePressIn}
       onPressOut={handlePressOut}
       style={[
-        outerLayoutStyle,
+        style,
         containerStyle,
         Platform.OS === "web" ? ({ cursor: disabled ? "default" : "pointer" } as any) : {},
+        !reduceMotion ? animatedStyle : null,
       ]}
       {...rest}
     >
-      <Animated.View
-        style={[
-          visualStyle,
-          flex !== undefined ? { width: "100%" } : null,
-          !reduceMotion ? animatedStyle : null,
-        ]}
-      >
-        {children}
-      </Animated.View>
-    </Pressable>
+      {children}
+    </AnimatedPressable>
   );
 }

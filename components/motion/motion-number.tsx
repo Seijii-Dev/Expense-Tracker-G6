@@ -20,25 +20,16 @@ export function MotionNumber({
   formatter,
   prefix = "",
   suffix = "",
-  duration = 240,
+  duration = 320,
   style,
   ...textProps
 }: MotionNumberProps) {
   const reduceMotion = useReducedMotion();
-  const [displayValue, setDisplayValue] = useState<number>(value);
-  const currentValRef = useRef<number>(value);
-  const isInitialMount = useRef(true);
+  const [displayValue, setDisplayValue] = useState<number>(() => (reduceMotion ? value : 0));
+  const currentValRef = useRef<number>(reduceMotion ? value : 0);
   const rafId = useRef<number | null>(null);
 
   useEffect(() => {
-    // If it's the very first mount, display value instantly with zero RAF overhead
-    if (isInitialMount.current) {
-      isInitialMount.current = false;
-      setDisplayValue(value);
-      currentValRef.current = value;
-      return;
-    }
-
     if (reduceMotion) {
       setDisplayValue(value);
       currentValRef.current = value;
@@ -56,13 +47,13 @@ export function MotionNumber({
       const elapsed = now - startTime;
       const progress = Math.min(elapsed / duration, 1);
 
-      // Motion.dev custom fluid ease-out polynomial
+      // Motion fluid ease-out polynomial [1 - (1 - p)^4]
       const eased = 1 - Math.pow(1 - progress, 4);
       const nextVal = startVal + (endVal - startVal) * eased;
       currentValRef.current = nextVal;
 
-      // Throttle text node state updates to ~30fps (every 32ms) to eliminate React reconciliation jank
-      if (now - lastRender >= 32 || progress >= 1) {
+      // Smooth frame updates synced to display refresh rate (16ms = 60/120fps)
+      if (now - lastRender >= 16 || progress >= 1) {
         setDisplayValue(nextVal);
         lastRender = now;
       }

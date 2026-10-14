@@ -8,6 +8,7 @@ import {
   View,
 } from "react-native";
 import Animated, {
+  Easing,
   useAnimatedStyle,
   useSharedValue,
   withSpring,
@@ -47,10 +48,14 @@ export function PulseDialog({
 
   useEffect(() => {
     if (visible) {
-      fade.value = withTiming(1, { duration: 200 });
+      fade.value = withTiming(1, {
+        duration: 220,
+        easing: Easing.bezier(0.16, 1, 0.3, 1),
+      });
       scale.value = withSpring(1, {
-        damping: 18,
-        stiffness: 260,
+        damping: 20,
+        stiffness: 280,
+        mass: 0.65,
       });
     } else {
       fade.value = 0;
@@ -340,6 +345,7 @@ const styles = StyleSheet.create({
     lineHeight: 16.5,
   },
   dismissBtn: {
+    width: "100%",
     height: 44,
     borderRadius: 14,
     alignItems: "center",

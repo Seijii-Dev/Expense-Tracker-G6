@@ -1,4 +1,5 @@
 import React from "react";
+import { Easing } from "react-native";
 import { Redirect, Tabs } from "expo-router";
 import { useAuth } from "@/lib/auth-store";
 import { useExpenses } from "@/lib/expense-store";
@@ -6,6 +7,30 @@ import { ScreenContainer } from "@/components/screen-container";
 import { DashboardSkeleton } from "@/components/ui/dashboard-skeleton";
 import { FloatingTabBar } from "@/components/navigation/floating-nav-bar";
 import { ExpenseModal } from "@/components/expense-modal";
+
+// Apple fluid deceleration curve [0.16, 1, 0.3, 1] for buttery-smooth tab transitions
+const fluidEase = Easing.bezier(0.16, 1, 0.3, 1);
+
+const fluidTabTransitionSpec = {
+  animation: "timing" as const,
+  config: {
+    duration: 260,
+    easing: fluidEase,
+  },
+};
+
+const fluidTabSceneInterpolator = ({
+  current,
+}: {
+  current: { progress: any };
+}) => ({
+  sceneStyle: {
+    opacity: current.progress.interpolate({
+      inputRange: [-1, 0, 1],
+      outputRange: [0, 1, 0],
+    }),
+  },
+});
 
 export default function TabsLayout() {
   const { account, loading } = useAuth();
@@ -31,6 +56,8 @@ export default function TabsLayout() {
           headerShown: false,
           lazy: false,
           animation: "fade",
+          transitionSpec: fluidTabTransitionSpec,
+          sceneStyleInterpolator: fluidTabSceneInterpolator,
         }}
       >
         <Tabs.Screen

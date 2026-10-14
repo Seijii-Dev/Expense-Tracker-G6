@@ -1,10 +1,11 @@
-import React, { useEffect, useState } from "react";
-import { AccessibilityInfo, StyleProp, ViewStyle } from "react-native";
+import React from "react";
+import { StyleProp, ViewStyle } from "react-native";
 import Animated, {
   FadeIn,
   FadeInDown,
   FadeInUp,
   LinearTransition,
+  useReducedMotion,
 } from "react-native-reanimated";
 
 export interface ReanimatedEntranceProps {
@@ -24,24 +25,7 @@ export function ReanimatedEntrance({
   enableLayoutTransition = false,
   style,
 }: ReanimatedEntranceProps) {
-  const [reduceMotion, setReduceMotion] = useState(false);
-
-  useEffect(() => {
-    let isMounted = true;
-    AccessibilityInfo.isReduceMotionEnabled().then((enabled) => {
-      if (isMounted) setReduceMotion(enabled);
-    });
-
-    const subscription = AccessibilityInfo.addEventListener(
-      "reduceMotionChanged",
-      (enabled) => setReduceMotion(enabled)
-    );
-
-    return () => {
-      isMounted = false;
-      subscription?.remove?.();
-    };
-  }, []);
+  const reduceMotion = useReducedMotion();
 
   if (reduceMotion) {
     return (
@@ -55,14 +39,14 @@ export function ReanimatedEntrance({
   if (direction === "down") {
     enteringAnimation = FadeInDown.springify()
       .damping(22)
-      .stiffness(280)
-      .mass(0.6)
+      .stiffness(260)
+      .mass(0.65)
       .delay(delay);
   } else if (direction === "up") {
     enteringAnimation = FadeInUp.springify()
       .damping(22)
-      .stiffness(280)
-      .mass(0.6)
+      .stiffness(260)
+      .mass(0.65)
       .delay(delay);
   } else {
     enteringAnimation = FadeIn.duration(duration).delay(delay);

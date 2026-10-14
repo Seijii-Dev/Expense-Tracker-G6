@@ -28,6 +28,7 @@ import { useTheme } from "@/lib/theme-store";
 import { formatMoney } from "@/utils/formatters";
 import { ProfileAvatar } from "@/components/account/profile-avatar";
 import { ProfileBannerLayer } from "@/components/account/profile-banner-layer";
+import { AppLottieView } from "@/components/ui/app-lottie-view";
 import { radii, spacing, typography } from "@/constants/design-tokens";
 import { MotionEntrance, MotionNumber, PressableScale } from "@/components/motion";
 import {
@@ -364,12 +365,6 @@ export default function AccountScreen() {
                   style={StyleSheet.absoluteFillObject}
                 />
               ) : null}
-
-              {/* Region Badge */}
-              <View style={styles.bannerBadge}>
-                <Ionicons name="shield-checkmark" size={12} color={colors.primary} />
-                <Text style={styles.bannerBadgeText}>PHILIPPINES ED.</Text>
-              </View>
             </View>
 
             {/* Floating Avatar */}
@@ -382,14 +377,17 @@ export default function AccountScreen() {
                   textColor="#FFFFFF"
                   fontSize={28}
                 />
-                {/* Verified check badge */}
-                <View style={styles.verifiedCheckBadge}>
-                  <Ionicons name="checkmark" size={12} color="#FFFFFF" />
-                </View>
 
-                {/* Camera edit button on avatar */}
+                {/* Camera edit button on avatar (replaces check icon) */}
                 <Pressable
-                  style={({ pressed }) => [styles.avatarEditBtn, pressed && { opacity: 0.85, transform: [{ scale: 0.95 }] }]}
+                  style={({ pressed }) => [
+                    styles.avatarEditBtn,
+                    {
+                      backgroundColor: dark ? "#1E293B" : "#FFFFFF",
+                      borderColor: dark ? "#334155" : "#FED7D2",
+                    },
+                    pressed && { opacity: 0.85, transform: [{ scale: 0.95 }] },
+                  ]}
                   onPress={() => {
                     setPhotoError(null);
                     setShowPhotoActions(true);
@@ -397,7 +395,7 @@ export default function AccountScreen() {
                   accessibilityRole="button"
                   accessibilityLabel="Edit profile picture"
                 >
-                  <Ionicons name="camera" size={13} color={colors.primary} />
+                  <Ionicons name="camera" size={14} color={colors.primary} />
                 </Pressable>
               </View>
 
@@ -406,9 +404,18 @@ export default function AccountScreen() {
                 <Text style={[styles.userName, { color: colors.foreground }]} numberOfLines={1}>
                   {account?.name || "Alex Johnson"}
                 </Text>
-                <Text style={[styles.userHandle, { color: colors.muted }]} numberOfLines={1}>
-                  {account?.email || "alex.johnson@example.com"}
-                </Text>
+                <View style={styles.userHandleRow}>
+                  <Text style={[styles.userHandle, { color: colors.muted }]} numberOfLines={1}>
+                    {account?.email || "alex.johnson@example.com"}
+                  </Text>
+                  <AppLottieView
+                    source={require("@/assets/lottie/verified-badge.json")}
+                    style={styles.verifiedLottieHandle}
+                    autoPlay
+                    loop
+                    fallback={<Ionicons name="checkmark-circle" size={16} color="#3D66F3" />}
+                  />
+                </View>
 
                 {bannerNotice ? (
                   <Text style={styles.bannerNoticeText}>{bannerNotice}</Text>
@@ -568,10 +575,13 @@ export default function AccountScreen() {
                 <View style={styles.detailsLeft}>
                   <View style={styles.labelWithBadge}>
                     <Text style={[styles.detailsLabel, { color: colors.muted }]}>Email Address</Text>
-                    <View style={styles.verifiedBadge}>
-                      <Ionicons name="checkmark" size={9} color="#10B981" />
-                      <Text style={styles.verifiedBadgeText}>VERIFIED</Text>
-                    </View>
+                    <AppLottieView
+                      source={require("@/assets/lottie/verified-badge.json")}
+                      style={styles.verifiedLottieIcon}
+                      autoPlay
+                      loop
+                      fallback={<Ionicons name="checkmark-circle" size={14} color="#3D66F3" />}
+                    />
                   </View>
                   <Text style={[styles.detailsValue, { color: colors.foreground }]}>
                     {account?.email || "alex.johnson@example.com"}
@@ -1141,38 +1151,22 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 4 },
     elevation: 4,
   },
-  verifiedCheckBadge: {
+  avatarEditBtn: {
     position: "absolute",
-    bottom: 2,
-    right: 2,
-    width: 22,
-    height: 22,
-    borderRadius: 11,
-    backgroundColor: "#10B981",
+    bottom: 0,
+    right: 0,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
     alignItems: "center",
     justifyContent: "center",
     borderWidth: 2,
-    borderColor: "#FFFFFF",
-    zIndex: 5,
-  },
-  avatarEditBtn: {
-    position: "absolute",
-    top: 2,
-    right: 2,
-    width: 26,
-    height: 26,
-    borderRadius: 13,
-    backgroundColor: "#FFFFFF",
-    alignItems: "center",
-    justifyContent: "center",
-    borderWidth: 1.5,
-    borderColor: "#FED7D2",
     shadowColor: "#000",
-    shadowOpacity: 0.12,
+    shadowOpacity: 0.16,
     shadowRadius: 4,
     shadowOffset: { width: 0, height: 1 },
-    elevation: 3,
-    zIndex: 5,
+    elevation: 4,
+    zIndex: 10,
     ...(Platform.OS === "web" ? ({ cursor: "pointer" } as any) : {}),
   },
   identityDetails: {
@@ -1187,11 +1181,21 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     letterSpacing: -0.3,
   },
+  userHandleRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 5,
+    marginTop: 3,
+  },
   userHandle: {
     fontFamily: "DMSans_500Medium",
     fontSize: 13,
     fontWeight: "500",
-    marginTop: 3,
+  },
+  verifiedLottieHandle: {
+    width: 20,
+    height: 20,
   },
   bannerNoticeText: {
     color: "#10B981",
@@ -1330,26 +1334,16 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     letterSpacing: -0.1,
   },
-  verifiedBadge: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 2,
-    paddingHorizontal: 5,
-    paddingVertical: 1.5,
-    borderRadius: 4,
-    backgroundColor: "rgba(16, 185, 129, 0.12)",
-  },
-  verifiedBadgeText: {
-    color: "#10B981",
-    fontSize: 8.5,
-    fontWeight: "800",
-    letterSpacing: 0.5,
+  verifiedLottieIcon: {
+    width: 20,
+    height: 20,
   },
   logoutSection: {
     paddingHorizontal: 16,
     marginTop: 4,
   },
   logoutButton: {
+    width: "100%",
     height: 50,
     borderRadius: 16,
     borderWidth: 1,
@@ -1422,6 +1416,7 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   modalPrimaryBtn: {
+    width: "100%",
     borderRadius: 14,
     overflow: "hidden",
     marginTop: 8,
@@ -1432,6 +1427,7 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   modalBtnGradient: {
+    width: "100%",
     height: 48,
     flexDirection: "row",
     alignItems: "center",
@@ -1444,6 +1440,7 @@ const styles = StyleSheet.create({
     fontWeight: "700",
   },
   modalSecondaryBtn: {
+    width: "100%",
     height: 46,
     borderRadius: 14,
     flexDirection: "row",
@@ -1457,6 +1454,7 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
   modalDestructiveBtn: {
+    width: "100%",
     height: 44,
     borderRadius: 14,
     flexDirection: "row",

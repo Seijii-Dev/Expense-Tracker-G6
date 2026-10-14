@@ -30,8 +30,8 @@ const fluidEase = Easing.bezier(0.16, 1, 0.3, 1);
 export function MotionEntrance({
   children,
   delay = 0,
-  duration = 280,
-  translateY = 8,
+  duration = 300,
+  translateY = 10,
   direction = "down",
   enableLayoutTransition = false,
   style,
@@ -42,23 +42,32 @@ export function MotionEntrance({
   const enteringAnimation = useMemo(() => {
     if (reduceMotion) return undefined;
 
-    // Gentle micro-stagger so elements glide in seamlessly without lag
-    const safeDelay = Math.min(Math.max(0, delay), 60);
+    // Organic micro-stagger: maintains natural sequencing without excessive lag
+    const safeDelay = Math.min(Math.max(0, delay), 320);
+    const distance = Math.max(0, translateY);
 
     if (direction === "down") {
       return FadeInDown.duration(duration)
         .easing(fluidEase)
+        .withInitialValues({
+          opacity: 0,
+          transform: [{ translateY: -distance }],
+        })
         .delay(safeDelay);
     }
 
     if (direction === "up") {
       return FadeInUp.duration(duration)
         .easing(fluidEase)
+        .withInitialValues({
+          opacity: 0,
+          transform: [{ translateY: distance }],
+        })
         .delay(safeDelay);
     }
 
     return FadeIn.duration(duration).easing(fluidEase).delay(safeDelay);
-  }, [direction, delay, duration, reduceMotion]);
+  }, [direction, delay, duration, translateY, reduceMotion]);
 
   if (reduceMotion) {
     return <View style={style}>{children}</View>;

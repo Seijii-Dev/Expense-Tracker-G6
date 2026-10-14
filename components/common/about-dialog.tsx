@@ -11,6 +11,7 @@ import {
   View,
 } from "react-native";
 import Animated, {
+  Easing,
   useAnimatedStyle,
   useSharedValue,
   withSpring,
@@ -37,10 +38,14 @@ export function AboutDialog({ visible, onClose }: AboutDialogProps) {
 
   useEffect(() => {
     if (visible) {
-      fade.value = withTiming(1, { duration: 220 });
+      fade.value = withTiming(1, {
+        duration: 220,
+        easing: Easing.bezier(0.16, 1, 0.3, 1),
+      });
       scale.value = withSpring(1, {
-        damping: 18,
-        stiffness: 240,
+        damping: 20,
+        stiffness: 280,
+        mass: 0.65,
       });
     } else {
       fade.value = 0;
@@ -296,6 +301,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     gap: 8,
+    width: "100%",
     height: 42,
     borderRadius: 14,
     shadowColor: "#FF6554",
@@ -312,6 +318,7 @@ const styles = StyleSheet.create({
     letterSpacing: -0.2,
   },
   closeBtn: {
+    width: "100%",
     height: 42,
     borderRadius: 14,
     borderWidth: 1,

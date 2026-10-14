@@ -385,6 +385,7 @@ const styles = StyleSheet.create({
     ...(Platform.OS === "web" ? ({ cursor: "pointer" } as any) : {}),
   },
   saveButton: {
+    width: "100%",
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",

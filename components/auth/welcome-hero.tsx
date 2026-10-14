@@ -391,6 +391,7 @@ const styles = StyleSheet.create({
     marginTop: 24,
   },
   primaryCta: {
+    width: "100%",
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
@@ -411,6 +412,7 @@ const styles = StyleSheet.create({
     letterSpacing: 0.2,
   },
   secondaryCta: {
+    width: "100%",
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",

@@ -30,12 +30,17 @@ export const DonutChart = React.memo(function DonutChart({ total, expenses }: Do
     if (isFirstRender.current) {
       isFirstRender.current = false;
       progress.value = withSpring(1, {
-        damping: 18,
+        damping: 20,
         stiffness: 220,
-        mass: 0.8,
+        mass: 0.7,
       });
     } else {
-      progress.value = 1;
+      progress.value = 0.92;
+      progress.value = withSpring(1, {
+        damping: 18,
+        stiffness: 260,
+        mass: 0.6,
+      });
     }
   }, [total, progress]);
 

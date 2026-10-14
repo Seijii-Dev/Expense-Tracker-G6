@@ -66,9 +66,9 @@ function TabButton({ name, isFocused, onPress, onLongPress, isCompact }: TabButt
     active.value = reduceMotion
       ? isFocused ? 1 : 0
       : withSpring(isFocused ? 1 : 0, {
-          damping: 24,
-          stiffness: 200,
-          mass: 0.7,
+          damping: 22,
+          stiffness: 220,
+          mass: 0.65,
         });
   }, [active, isFocused, reduceMotion]);
 
@@ -83,9 +83,10 @@ function TabButton({ name, isFocused, onPress, onLongPress, isCompact }: TabButt
 
   const handlePressIn = () => {
     if (!reduceMotion) {
-      scale.value = withSpring(0.94, {
-        damping: 22,
-        stiffness: 240,
+      scale.value = withSpring(0.92, {
+        damping: 20,
+        stiffness: 280,
+        mass: 0.6,
       });
     }
   };
@@ -93,8 +94,9 @@ function TabButton({ name, isFocused, onPress, onLongPress, isCompact }: TabButt
   const handlePressOut = () => {
     if (!reduceMotion) {
       scale.value = withSpring(1, {
-        damping: 20,
-        stiffness: 180,
+        damping: 18,
+        stiffness: 200,
+        mass: 0.7,
       });
     }
   };
@@ -207,9 +209,10 @@ export function FloatingTabBar({ state, descriptors, navigation }: FloatingTabBa
 
   const handleFabPressIn = () => {
     if (!reduceMotion) {
-      fabScale.value = withSpring(0.92, {
-        damping: 18,
-        stiffness: 320,
+      fabScale.value = withSpring(0.90, {
+        damping: 20,
+        stiffness: 300,
+        mass: 0.6,
       });
     }
   };
@@ -217,8 +220,9 @@ export function FloatingTabBar({ state, descriptors, navigation }: FloatingTabBa
   const handleFabPressOut = () => {
     if (!reduceMotion) {
       fabScale.value = withSpring(1, {
-        damping: 15,
-        stiffness: 240,
+        damping: 16,
+        stiffness: 220,
+        mass: 0.7,
       });
     }
   };

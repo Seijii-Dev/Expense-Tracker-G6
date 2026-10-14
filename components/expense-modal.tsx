@@ -1022,6 +1022,7 @@ const styles = StyleSheet.create({
     fontSize: 11.5,
   },
   saveBtnWrap: {
+    width: "100%",
     marginTop: 20,
     borderRadius: 16,
     overflow: "hidden",
@@ -1033,6 +1034,7 @@ const styles = StyleSheet.create({
     ...(Platform.OS === "web" ? ({ cursor: "pointer" } as any) : {}),
   },
   saveBtnGradient: {
+    width: "100%",
     minHeight: 52,
     flexDirection: "row",
     alignItems: "center",
