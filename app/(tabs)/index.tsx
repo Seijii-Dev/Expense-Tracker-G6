@@ -21,9 +21,10 @@ import { DonutChart } from "@/components/overview/donut-chart";
 import { CategoryLegend } from "@/components/overview/category-legend";
 import { DailyRhythm } from "@/components/overview/daily-rhythm";
 import { SpendingInsight } from "@/components/overview/spending-insight";
-import { MotionEntrance, PressableScale } from "@/components/motion";
+import { MotionEntrance, MotionNumber, PressableScale } from "@/components/motion";
 import { Expense, NewExpenseData } from "@/types/expense";
 import { PulseDialog } from "@/components/common/pulse-dialog";
+import { TypewriterText } from "@/components/ui/typewriter-text";
 
 import { useExpenses } from "@/lib/expense-store";
 import { useAuth } from "@/lib/auth-store";
@@ -130,6 +131,13 @@ export default function OverviewScreen() {
                 <View>
                   <Text style={[styles.brandSuperText, { color: colors.muted }]}>LEDGERLY</Text>
                   <Text style={[styles.brandTitle, { color: colors.foreground }]}>Overview</Text>
+                  <TypewriterText
+                    text={`Welcome back, ${firstName}`}
+                    speed={28}
+                    delay={160}
+                    style={[styles.welcomeSubtext, { color: colors.muted }]}
+                    accessibilityLabel={`Welcome back, ${firstName}`}
+                  />
                 </View>
               </View>
             </View>
@@ -155,11 +163,11 @@ export default function OverviewScreen() {
                 </View>
               </PressableScale>
 
-              {/* Profile Avatar Button */}
+              {/* Profile Avatar Button -> routes to Account */}
               <PressableScale
                 onPress={() => router.push("/(tabs)/account")}
                 accessibilityRole="button"
-                accessibilityLabel="Open Account Profile"
+                accessibilityLabel="Open Account and Profile"
               >
                 <View style={[styles.avatarCircle, { borderColor: colors.primary }]}>
                   <ProfileAvatar
@@ -175,7 +183,7 @@ export default function OverviewScreen() {
           </View>
         </MotionEntrance>
 
-        {/* 1. HERO FINANCIAL CARD: Warm Architectural Coral-Terracotta Mesh */}
+        {/* Main Balance Card */}
         <MotionEntrance delay={50}>
           <View style={styles.heroCardContainer}>
             <LinearGradient
@@ -184,11 +192,11 @@ export default function OverviewScreen() {
               end={{ x: 1, y: 1 }}
               style={styles.heroCardGradient}
             >
-              {/* Ambient Aura Blobs */}
+              {/* Subtle ambient lighting */}
               <View pointerEvents="none" style={styles.heroAuraOne} />
               <View pointerEvents="none" style={styles.heroAuraTwo} />
 
-              {/* Top Action Strip */}
+              {/* Top balance actions */}
               <View style={styles.heroTopStrip}>
                 <PressableScale
                   onPress={toggleBalanceHidden}
@@ -196,7 +204,7 @@ export default function OverviewScreen() {
                   accessibilityRole="button"
                   accessibilityLabel="Toggle Balance Visibility"
                 >
-                  <Text style={styles.heroBalanceLabel}>TOTAL BALANCE</Text>
+                  <Text style={styles.heroBalanceLabel}>AVAILABLE BALANCE</Text>
                   <Ionicons
                     name={isBalanceHidden ? "eye-off-outline" : "eye-outline"}
                     size={15}
@@ -211,12 +219,23 @@ export default function OverviewScreen() {
                 </View>
               </View>
 
-              {/* Prominent Monetary Display */}
-              <Text style={styles.heroAmount} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.78}>
-                {isBalanceHidden ? "••••••••" : formatMoney(displayBalance)}
-              </Text>
+              {/* Balance Amount with Motion.dev Spring Counter */}
+              {isBalanceHidden ? (
+                <Text style={styles.heroAmount} numberOfLines={1}>
+                  ••••••••
+                </Text>
+              ) : (
+                <MotionNumber
+                  value={displayBalance}
+                  formatter={formatMoney}
+                  style={styles.heroAmount}
+                  numberOfLines={1}
+                  adjustsFontSizeToFit
+                  minimumFontScale={0.78}
+                />
+              )}
 
-              {/* Sub-indicator Growth Metric Pill */}
+              {/* Budget Progress Indicator */}
               <View style={styles.heroPillRow}>
                 <View style={styles.heroSubPill}>
                   <Ionicons
@@ -226,14 +245,14 @@ export default function OverviewScreen() {
                   />
                   <Text style={styles.heroSubPillText}>
                     {budgetPercent < 100
-                      ? `${100 - budgetPercent}% remaining budget`
-                      : `${budgetPercent - 100}% over monthly limit`}
+                      ? `${100 - budgetPercent}% budget remaining`
+                      : `${budgetPercent - 100}% over monthly budget`}
                   </Text>
                 </View>
 
                 <View style={styles.heroTagPill}>
                   <Text style={styles.heroTagText}>
-                    {budgetPercent < 100 ? "On Track" : "Ceiling"}
+                    {budgetPercent < 100 ? "Healthy" : "Attention"}
                   </Text>
                 </View>
               </View>
@@ -241,19 +260,15 @@ export default function OverviewScreen() {
           </View>
         </MotionEntrance>
 
-        {/* 2. QUICK FINANCIAL METRIC TILES (Income / Expenses / Remaining Budget) */}
+        {/* Quick Financial Metrics */}
         <MotionEntrance delay={100}>
           <View style={[styles.metricsGrid, isNarrowMobile && styles.metricsGridNarrow]}>
             {/* Monthly Budget Target */}
-            <View
-              style={[
-                styles.metricTile,
-                isNarrowMobile && styles.metricTileNarrow,
-                {
-                  backgroundColor: colors.card,
-                  borderColor: colors.border,
-                },
-              ]}
+            <GlassSurface
+              variant="card"
+              radius={18}
+              style={[styles.metricTileWrap, isNarrowMobile && styles.metricTileNarrow]}
+              contentStyle={styles.metricTileContent}
             >
               <View style={styles.metricTileTop}>
                 <Text style={[styles.metricTileLabel, { color: colors.muted }]}>BUDGET</Text>
@@ -261,22 +276,23 @@ export default function OverviewScreen() {
                   <Ionicons name="arrow-down" size={13} color={colors.success} />
                 </View>
               </View>
-              <Text style={[styles.metricTileValue, { color: colors.foreground }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75}>
-                {formatMoney(budget)}
-              </Text>
+              <MotionNumber
+                value={budget}
+                formatter={formatMoney}
+                style={[styles.metricTileValue, { color: colors.foreground }]}
+                numberOfLines={1}
+                adjustsFontSizeToFit
+                minimumFontScale={0.75}
+              />
               <Text style={[styles.metricTileSub, { color: colors.success }]}>Monthly Target</Text>
-            </View>
+            </GlassSurface>
 
-            {/* Month Expenses */}
-            <View
-              style={[
-                styles.metricTile,
-                isNarrowMobile && styles.metricTileNarrow,
-                {
-                  backgroundColor: colors.card,
-                  borderColor: colors.border,
-                },
-              ]}
+            {/* Total Spending */}
+            <GlassSurface
+              variant="card"
+              radius={18}
+              style={[styles.metricTileWrap, isNarrowMobile && styles.metricTileNarrow]}
+              contentStyle={styles.metricTileContent}
             >
               <View style={styles.metricTileTop}>
                 <Text style={[styles.metricTileLabel, { color: colors.muted }]}>SPENDING</Text>
@@ -284,24 +300,25 @@ export default function OverviewScreen() {
                   <Ionicons name="arrow-up" size={13} color={colors.primary} />
                 </View>
               </View>
-              <Text style={[styles.metricTileValue, { color: colors.primary }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75}>
-                {formatMoney(monthTotal)}
-              </Text>
+              <MotionNumber
+                value={monthTotal}
+                formatter={formatMoney}
+                style={[styles.metricTileValue, { color: colors.primary }]}
+                numberOfLines={1}
+                adjustsFontSizeToFit
+                minimumFontScale={0.75}
+              />
               <Text style={[styles.metricTileSub, { color: colors.primary }]}>
                 {monthExpenses.length} transactions
               </Text>
-            </View>
+            </GlassSurface>
 
-            {/* Savings / Remaining */}
-            <View
-              style={[
-                styles.metricTile,
-                isNarrowMobile && styles.metricTileWide,
-                {
-                  backgroundColor: colors.card,
-                  borderColor: colors.border,
-                },
-              ]}
+            {/* Remaining Savings */}
+            <GlassSurface
+              variant="card"
+              radius={18}
+              style={[styles.metricTileWrap, isNarrowMobile && styles.metricTileWide]}
+              contentStyle={styles.metricTileContent}
             >
               <View style={styles.metricTileTop}>
                 <Text style={[styles.metricTileLabel, { color: colors.muted }]}>REMAINING</Text>
@@ -309,11 +326,15 @@ export default function OverviewScreen() {
                   <Ionicons name="wallet-outline" size={13} color={colors.warning} />
                 </View>
               </View>
-              <Text style={[styles.metricTileValue, { color: colors.foreground }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75}>
-                {formatMoney(remaining)}
-              </Text>
-              {/* Progress Bar */}
-              <View style={[styles.tileProgressTrack, { backgroundColor: colors.surfaceSubtle }]}>
+              <MotionNumber
+                value={remaining}
+                formatter={formatMoney}
+                style={[styles.metricTileValue, { color: colors.foreground }]}
+                numberOfLines={1}
+                adjustsFontSizeToFit
+                minimumFontScale={0.75}
+              />
+              <View style={[styles.tileProgressTrack, { backgroundColor: dark ? "rgba(255,255,255,0.08)" : colors.surfaceSubtle }]}>
                 <View
                   style={[
                     styles.tileProgressFill,
@@ -324,27 +345,27 @@ export default function OverviewScreen() {
                   ]}
                 />
               </View>
-            </View>
+            </GlassSurface>
           </View>
         </MotionEntrance>
 
-        {/* 3. SPENDING BY CATEGORY PANEL */}
+        {/* Spending Breakdown */}
         <MotionEntrance delay={150}>
-          <GlassSurface style={styles.panel} contentStyle={[styles.panelInner, { borderColor: colors.border, backgroundColor: colors.card }]}>
+          <GlassSurface variant="card" radius={24} style={styles.panel} contentStyle={styles.panelInner}>
             <View style={styles.panelHeader}>
               <View>
                 <Text style={[styles.panelSectionTitle, { color: colors.foreground }]}>
                   Spending by Category
                 </Text>
                 <Text style={[styles.panelSubText, { color: colors.muted }]}>
-                  Current calendar month allocation
+                  Current month distribution
                 </Text>
               </View>
               <PressableScale
                 onPress={() => router.push("/(tabs)/reports")}
                 style={styles.viewAllBtn}
               >
-                <Text style={[styles.viewAllText, { color: colors.primary }]}>View all</Text>
+                <Text style={[styles.viewAllText, { color: colors.primary }]}>Details</Text>
                 <Ionicons name="chevron-forward" size={14} color={colors.primary} />
               </PressableScale>
             </View>
@@ -356,23 +377,23 @@ export default function OverviewScreen() {
           </GlassSurface>
         </MotionEntrance>
 
-        {/* 4. RECENT EXPENSES PANEL */}
+        {/* Recent Transactions */}
         <MotionEntrance delay={200}>
-          <GlassSurface style={styles.panel} contentStyle={[styles.panelInner, { borderColor: colors.border, backgroundColor: colors.card }]}>
+          <GlassSurface variant="card" radius={24} style={styles.panel} contentStyle={styles.panelInner}>
             <View style={styles.panelHeader}>
               <View>
                 <Text style={[styles.panelSectionTitle, { color: colors.foreground }]}>
-                  Recent Expenses
+                  Recent Activity
                 </Text>
                 <Text style={[styles.panelSubText, { color: colors.muted }]}>
-                  Last recorded transactions
+                  Latest logged expenses
                 </Text>
               </View>
               <PressableScale
                 onPress={() => router.push("/(tabs)/transactions")}
                 style={styles.viewAllBtn}
               >
-                <Text style={[styles.viewAllText, { color: colors.primary }]}>See All</Text>
+                <Text style={[styles.viewAllText, { color: colors.primary }]}>View all</Text>
                 <Ionicons name="chevron-forward" size={14} color={colors.primary} />
               </PressableScale>
             </View>
@@ -383,10 +404,10 @@ export default function OverviewScreen() {
                   <Ionicons name="receipt-outline" size={24} color={colors.subtle} />
                 </View>
                 <Text style={[styles.emptyRecentText, { color: colors.foreground }]}>
-                  No transactions yet
+                  No recent expenses
                 </Text>
                 <Text style={[styles.emptyRecentSub, { color: colors.muted }]}>
-                  Tap the "+" button below to record your first transaction.
+                  Tap '+' below to record your first transaction.
                 </Text>
               </View>
             ) : (
@@ -402,15 +423,16 @@ export default function OverviewScreen() {
           </GlassSurface>
         </MotionEntrance>
 
-        {/* 5. 7-DAY VELOCITY DAILY RHYTHM BAR CHART */}
+        {/* Daily Expense Chart */}
         <MotionEntrance delay={250}>
           <DailyRhythm expenses={sortedExpenses} />
         </MotionEntrance>
 
-        {/* 6. WARM MOTIVATIONAL NOTE / DELIGHT TOUCH */}
+        {/* Financial Insight */}
         <MotionEntrance delay={300}>
           <SpendingInsight expenses={monthExpenses} />
         </MotionEntrance>
+
       </ScrollView>
 
       {/* Unified Add/Edit Expense Modal */}
@@ -436,7 +458,7 @@ export default function OverviewScreen() {
 
 const styles = StyleSheet.create({
   scroll: {
-    paddingBottom: 96,
+    paddingBottom: 104,
   },
   topHeader: {
     flexDirection: "row",
@@ -470,6 +492,12 @@ const styles = StyleSheet.create({
     fontSize: 22,
     lineHeight: 27,
     letterSpacing: -0.4,
+    marginTop: 1,
+  },
+  welcomeSubtext: {
+    fontSize: 11.5,
+    fontWeight: "500",
+    letterSpacing: -0.1,
     marginTop: 1,
   },
   headerRightActions: {
@@ -634,6 +662,13 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 4 },
     elevation: 2,
   },
+  metricTileWrap: {
+    flex: 1,
+    minWidth: 0,
+  },
+  metricTileContent: {
+    padding: spacing.md,
+  },
   metricTileNarrow: {
     flexBasis: "48%",
   },
@@ -687,14 +722,8 @@ const styles = StyleSheet.create({
   },
   panelInner: {
     padding: spacing.lg,
-    borderRadius: radii.panel,
-    borderWidth: 1,
-    shadowColor: "#1A1D20",
-    shadowOpacity: 0.04,
-    shadowRadius: 16,
-    shadowOffset: { width: 0, height: 6 },
-    elevation: 2,
   },
+
   panelHeader: {
     flexDirection: "row",
     alignItems: "flex-start",

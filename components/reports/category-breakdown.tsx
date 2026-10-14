@@ -6,6 +6,7 @@ import Animated, {
   withSpring,
 } from "react-native-reanimated";
 import { Ionicons } from "@expo/vector-icons";
+import { GlassSurface } from "@/components/ui/glass-surface";
 import { EmptyState } from "@/components/ui/empty-state";
 import { CategoryIcon } from "@/components/ui/category-icon";
 import { getCategoryStyle } from "@/constants/categories";
@@ -32,14 +33,14 @@ const CategoryProgressFill = React.memo(function CategoryProgressFill({
   const widthAnim = useSharedValue(0);
 
   useEffect(() => {
-    widthAnim.value = withSpring(fillPct, {
+    widthAnim.value = withSpring(Math.min(100, Math.max(0, fillPct)), {
       damping: 22,
       stiffness: 200,
     });
-  }, [fillPct]);
+  }, [fillPct, widthAnim]);
 
   const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ scaleX: widthAnim.value / 100 }],
+    width: `${widthAnim.value}%`,
   }));
 
   return (
@@ -63,21 +64,14 @@ export function CategoryBreakdown({
   const { colors, dark } = useTheme();
 
   return (
-    <View
-      style={[
-        styles.panel,
-        {
-          backgroundColor: colors.surface,
-          borderColor: colors.border,
-          shadowColor: dark ? "#000000" : "#1A1D20",
-          shadowOffset: { width: 0, height: 4 },
-          shadowOpacity: dark ? 0.35 : 0.04,
-          shadowRadius: 12,
-          elevation: 2,
-        },
-      ]}
+    <GlassSurface
+      variant="card"
+      radius={24}
+      style={styles.panel}
+      contentStyle={styles.panelContent}
     >
       <View style={styles.panelHeader}>
+
         <View>
           <Text style={[styles.kicker, { color: colors.muted }]}>BREAKDOWN</Text>
           <Text style={[styles.panelTitle, { color: colors.foreground }]}>Category Distribution</Text>
@@ -106,7 +100,7 @@ export function CategoryBreakdown({
         />
       ) : (
         <View>
-          {/* Multi-segmented Progress Bar representation matching Stitch */}
+          {/* Multi-segmented Category Bar */}
           <View
             style={[
               styles.segmentedBar,
@@ -219,18 +213,19 @@ export function CategoryBreakdown({
           </View>
         </View>
       )}
-    </View>
+    </GlassSurface>
   );
 }
 
 const styles = StyleSheet.create({
   panel: {
-    padding: 18,
     marginBottom: 16,
-    borderRadius: 20,
-    borderWidth: 1,
+  },
+  panelContent: {
+    padding: 18,
   },
   panelHeader: {
+
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "flex-start",

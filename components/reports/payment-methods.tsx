@@ -1,6 +1,7 @@
 import React from "react";
 import { StyleSheet, Text, View, useWindowDimensions } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { GlassSurface } from "@/components/ui/glass-surface";
 import { PaymentIcon } from "@/components/ui/payment-icon";
 import { PaymentTotal } from "@/hooks/useReportMetrics";
 import { useTheme } from "@/lib/theme-store";
@@ -20,21 +21,14 @@ export function PaymentMethods({ paymentTotals, periodTotal }: PaymentMethodsPro
   if (paymentTotals.length === 0) return null;
 
   return (
-    <View
-      style={[
-        styles.panel,
-        {
-          backgroundColor: colors.surface,
-          borderColor: colors.border,
-          shadowColor: dark ? "#000000" : "#1A1D20",
-          shadowOffset: { width: 0, height: 4 },
-          shadowOpacity: dark ? 0.35 : 0.04,
-          shadowRadius: 12,
-          elevation: 2,
-        },
-      ]}
+    <GlassSurface
+      variant="card"
+      radius={24}
+      style={styles.panel}
+      contentStyle={styles.panelContent}
     >
       <View style={styles.panelHeader}>
+
         <View>
           <Text style={[styles.kicker, { color: colors.muted }]}>PAYMENT CHANNELS</Text>
           <Text style={[styles.panelTitle, { color: colors.foreground }]}>How you paid</Text>
@@ -128,17 +122,18 @@ export function PaymentMethods({ paymentTotals, periodTotal }: PaymentMethodsPro
           );
         })}
       </View>
-    </View>
+    </GlassSurface>
   );
 }
 
 const styles = StyleSheet.create({
   panel: {
-    padding: 18,
     marginBottom: 16,
-    borderRadius: 20,
-    borderWidth: 1,
   },
+  panelContent: {
+    padding: 18,
+  },
+
   panelHeader: {
     flexDirection: "row",
     justifyContent: "space-between",

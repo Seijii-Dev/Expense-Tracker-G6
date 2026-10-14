@@ -40,15 +40,15 @@ const RhythmBarItem = React.memo(function RhythmBarItem({
   const heightAnim = useSharedValue(0);
 
   useEffect(() => {
-    heightAnim.value = withSpring(pct, {
-      damping: 20,
+    heightAnim.value = withSpring(Math.max((pct / 100) * 100, 6), {
+      damping: 18,
       stiffness: 220,
       mass: 0.8,
     });
-  }, [pct]);
+  }, [heightAnim, pct]);
 
   const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ scaleY: Math.max(heightAnim.value / 100, 0.05) }],
+    height: `${heightAnim.value}%`,
   }));
 
   return (
@@ -87,6 +87,7 @@ const RhythmBarItem = React.memo(function RhythmBarItem({
     </Pressable>
   );
 });
+
 
 export const DailyRhythm = React.memo(function DailyRhythm({ expenses }: DailyRhythmProps) {
   const { colors, dark } = useTheme();
@@ -150,8 +151,8 @@ export const DailyRhythm = React.memo(function DailyRhythm({ expenses }: DailyRh
       {/* Header */}
       <View style={styles.panelHeader}>
         <View>
-          <Text style={[styles.kicker, { color: colors.muted }]}>DAILY RHYTHM</Text>
-          <Text style={[styles.panelTitle, { color: colors.foreground }]}>7-Day Velocity</Text>
+          <Text style={[styles.kicker, { color: colors.muted }]}>DAILY EXPENSE</Text>
+          <Text style={[styles.panelTitle, { color: colors.foreground }]}>7-Day</Text>
         </View>
 
         <Pressable
@@ -164,7 +165,7 @@ export const DailyRhythm = React.memo(function DailyRhythm({ expenses }: DailyRh
           ]}
           onPress={() => setShowDatePicker(true)}
           accessibilityRole="button"
-          accessibilityLabel={`Choose Daily Rhythm date. Currently ${formatDate(selectedDayKey)}`}
+          accessibilityLabel={`Choose Daily Expense date. Currently ${formatDate(selectedDayKey)}`}
         >
           <Ionicons name="calendar-outline" size={14} color={colors.primary} />
           <Text style={[styles.smallMuted, { color: colors.foreground }]} numberOfLines={1}>
@@ -215,13 +216,9 @@ export const DailyRhythm = React.memo(function DailyRhythm({ expenses }: DailyRh
         )}
       </View>
 
-      {/* Week Total & Selected Day Readout */}
-      <View style={styles.amountRow}>
-        <View>
-          <Text style={[styles.amountLabel, { color: colors.muted }]}>7-DAY TOTAL</Text>
-          <Text style={[styles.weekTotal, { color: colors.foreground }]}>{formatMoney(weekTotal)}</Text>
-        </View>
-        {activeDay && (
+      {/* Selected Day Readout */}
+      {activeDay && (
+        <View style={styles.amountRow}>
           <View
             style={[
               styles.selectedDayBadge,
@@ -238,8 +235,8 @@ export const DailyRhythm = React.memo(function DailyRhythm({ expenses }: DailyRh
               {formatMoney(activeDay.total)}
             </Text>
           </View>
-        )}
-      </View>
+        </View>
+      )}
 
       {/* Bars Chart */}
       <View style={[styles.bars, { borderBottomColor: colors.border }, isNarrow && { gap: 4 }]}>
@@ -308,7 +305,7 @@ export const DailyRhythm = React.memo(function DailyRhythm({ expenses }: DailyRh
         visible={showDatePicker}
         selectedDate={selectedDayKey}
         maxDate={todayKey}
-        title="Choose a Daily Rhythm date"
+        title="Choose a Daily Expense date"
         onClose={() => setShowDatePicker(false)}
         onSelect={(date) => {
           setSelectedDayKey(date);
@@ -388,7 +385,7 @@ const styles = StyleSheet.create({
   amountRow: {
     flexDirection: "row",
     alignItems: "flex-end",
-    justifyContent: "space-between",
+    justifyContent: "flex-end",
     marginTop: 14,
     marginBottom: 8,
   },
@@ -443,10 +440,10 @@ const styles = StyleSheet.create({
   },
   bar: {
     width: 20,
-    height: "100%",
+    minHeight: 4,
     borderRadius: 8,
-    transformOrigin: "center bottom",
   },
+
   barActiveShadow: {
     shadowColor: "#E84A3F",
     shadowOpacity: 0.35,

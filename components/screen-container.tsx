@@ -6,12 +6,13 @@ import { AmbientBackground } from "@/components/ui/ambient-background";
 export function ScreenContainer({
   children,
   style,
-  noBottomPadding = false,
+  noBottomPadding = true,
 }: PropsWithChildren<{ style?: object; noBottomPadding?: boolean }>) {
   const insets = useSafeAreaInsets();
   const { width: windowWidth } = useWindowDimensions();
 
-  // Ensure ample clearance for the floating navigation bar + device safe area
+  // ScreenContainer lets scrollable children fill full height so content scrolls under the floating dock.
+  // bottomClearance is only applied when noBottomPadding is explicitly passed as false.
   const bottomClearance = noBottomPadding ? 0 : Math.max(insets.bottom + 84, 108);
   const horizontalPadding = windowWidth < 360 ? 12 : windowWidth < 480 ? 16 : 24;
 

@@ -45,7 +45,6 @@ const TAB_NAME_MAP: Record<string, { tab: NavTabName; label: string }> = {
   transactions: { tab: "records", label: "Records" },
   reports: { tab: "reports", label: "Reports" },
   settings: { tab: "settings", label: "Settings" },
-  account: { tab: "account", label: "Account" },
 };
 
 interface TabButtonProps {
@@ -225,13 +224,14 @@ export function FloatingTabBar({ state, descriptors, navigation }: FloatingTabBa
   };
 
   const renderTab = (routeName: string) => {
+    if (routeName === "account") return null;
     const routeIndex = state.routes.findIndex((r) => r.name === routeName);
     if (routeIndex === -1) return null;
     const route = state.routes[routeIndex];
     const isFocused = state.index === routeIndex;
     const { options } = descriptors[route.key] || {};
 
-    if (options?.tabBarButton === (() => null)) {
+    if (options?.tabBarButton === (() => null) || options?.href === null) {
       return null;
     }
 
@@ -293,40 +293,59 @@ export function FloatingTabBar({ state, descriptors, navigation }: FloatingTabBa
         ]}
         contentStyle={styles.dockContent}
       >
-        {/* Keep the original tab order around the add action. */}
+        {/* 1. Overview */}
         {renderTab("index")}
+
+        {/* 2. Records */}
         {renderTab("transactions")}
 
-        {/* Center Floating Action Button (+) */}
+        {/* 3. Center Add Expense Action Button */}
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel="Add New Expense"
+          accessibilityLabel="Add Expense"
           onPress={handleFabPress}
           onPressIn={handleFabPressIn}
           onPressOut={handleFabPressOut}
           style={[
-            styles.fabContainer,
+            styles.tabBtn,
             Platform.OS === "web" ? ({ cursor: "pointer", userSelect: "none" } as any) : {},
           ]}
         >
-          <Animated.View
-            style={[
-              styles.fabButton,
-              {
-                backgroundColor: colors.primary,
-                shadowColor: colors.primary,
-              },
-              fabAnimatedStyle,
-            ]}
-          >
-            <Ionicons name="add" size={26} color="#FFFFFF" />
+          <Animated.View style={[styles.tabContent, fabAnimatedStyle]}>
+            <View
+              style={[
+                styles.fabCircle,
+                {
+                  backgroundColor: colors.primary,
+                  shadowColor: colors.primary,
+                },
+              ]}
+            >
+              <Ionicons name="add" size={17} color="#FFFFFF" />
+            </View>
+            <Text
+              style={[
+                styles.label,
+                styles.fabLabel,
+                {
+                  color: colors.primary,
+                  fontSize: isSmallScreen ? 8.5 : 9.5,
+                  fontWeight: "700",
+                },
+              ]}
+              numberOfLines={1}
+            >
+              Add Expense
+            </Text>
+            <View style={styles.fabSpacerDot} />
           </Animated.View>
         </Pressable>
 
-        {/* Remaining destinations, including Account. */}
+        {/* 4. Reports */}
         {renderTab("reports")}
+
+        {/* 5. Settings */}
         {renderTab("settings")}
-        {renderTab("account")}
       </GlassSurface>
     </View>
   );
@@ -386,21 +405,25 @@ const styles = StyleSheet.create({
     lineHeight: 13,
     textAlign: "center",
   },
-  fabContainer: {
-    width: 48,
+  fabCircle: {
+    width: 26,
+    height: 26,
+    borderRadius: 13,
     alignItems: "center",
     justifyContent: "center",
-    height: "100%",
+    shadowOpacity: 0.35,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 3 },
+    elevation: 4,
   },
-  fabButton: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
-    alignItems: "center",
-    justifyContent: "center",
-    shadowOpacity: 0.38,
-    shadowRadius: 14,
-    shadowOffset: { width: 0, height: 6 },
-    elevation: 8,
+  fabLabel: {
+    letterSpacing: -0.2,
+  },
+  fabSpacerDot: {
+    width: 4,
+    height: 4,
+    borderRadius: 2,
+    marginTop: 2,
+    opacity: 0,
   },
 });

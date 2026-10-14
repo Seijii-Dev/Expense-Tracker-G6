@@ -70,7 +70,7 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   statValue: {
-    fontFamily: "Fraunces_700Bold",
+    fontFamily: "DMSans_700Bold",
     fontSize: 16,
   },
   statLabel: {

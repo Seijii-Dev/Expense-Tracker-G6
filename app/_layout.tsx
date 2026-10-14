@@ -4,7 +4,6 @@ import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { useFonts } from "expo-font";
 import { DMSans_400Regular, DMSans_500Medium, DMSans_700Bold } from "@expo-google-fonts/dm-sans";
-import { Fraunces_600SemiBold, Fraunces_700Bold } from "@expo-google-fonts/fraunces";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { Platform, View, StyleSheet } from "react-native";
 import { ExpenseProvider } from "@/lib/expense-store";
@@ -29,8 +28,6 @@ export default function RootLayout() {
     DMSans_400Regular,
     DMSans_500Medium,
     DMSans_700Bold,
-    Fraunces_600SemiBold,
-    Fraunces_700Bold,
     // Load Ionicons under both casing keys so Font.isLoaded('ionicons') resolves on web
     ...Ionicons.font,
     Ionicons: require("@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/Ionicons.ttf"),

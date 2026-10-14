@@ -44,6 +44,14 @@ export function PressableScale({
     marginRight,
     marginHorizontal,
     marginVertical,
+    position,
+    top,
+    bottom,
+    left,
+    right,
+    zIndex,
+    width,
+    height,
     ...visualStyle
   } = flatStyle;
 
@@ -60,6 +68,14 @@ export function PressableScale({
     marginRight,
     marginHorizontal,
     marginVertical,
+    position,
+    top,
+    bottom,
+    left,
+    right,
+    zIndex,
+    width,
+    height,
   };
 
   const handlePressIn = (event: GestureResponderEvent) => {

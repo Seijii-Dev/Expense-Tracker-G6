@@ -1,20 +1,47 @@
 import { useCallback, useMemo, useState } from "react";
 import { Category, Expense } from "@/types/expense";
-import { getExpenseDateKey } from "@/utils/date";
+import { addCalendarDays, getExpenseDateKey, getPhilippinesDate, getPhilippinesMonth } from "@/utils/date";
 
 export type SortOption = "newest" | "oldest" | "highest" | "lowest";
+export type DateRangePreset = "all" | "today" | "week" | "month" | "last_month";
 
-export function useFilteredExpenses(expenses: Expense[], selectedDate: string | null = null) {
+export function useFilteredExpenses(
+  expenses: Expense[],
+  selectedDate: string | null = null,
+  initialRangePreset: DateRangePreset = "all"
+) {
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState<"All" | Category>("All");
   const [sortBy, setSortBy] = useState<SortOption>("newest");
+  const [rangePreset, setRangePreset] = useState<DateRangePreset>(initialRangePreset);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
+    const today = getPhilippinesDate();
+    const currentMonth = getPhilippinesMonth();
+    const sevenDaysAgo = addCalendarDays(today, -6);
+
+    // Compute previous month prefix: YYYY-MM
+    const [currY, currM] = currentMonth.split("-").map(Number);
+    const prevDate = new Date(Date.UTC(currY, currM - 2, 1));
+    const prevMonthPrefix = `${prevDate.getUTCFullYear()}-${String(prevDate.getUTCMonth() + 1).padStart(2, "0")}`;
+
     const result = expenses.filter((expense) => {
       const matchCategory = category === "All" || expense.category === category;
       if (!matchCategory) return false;
-      if (selectedDate && getExpenseDateKey(expense.date) !== selectedDate) return false;
+
+      const dateKey = getExpenseDateKey(expense.date);
+
+      // If a specific date is selected, it takes precedence over range preset
+      if (selectedDate) {
+        if (dateKey !== selectedDate) return false;
+      } else if (rangePreset !== "all") {
+        if (rangePreset === "today" && dateKey !== today) return false;
+        if (rangePreset === "week" && (dateKey < sevenDaysAgo || dateKey > today)) return false;
+        if (rangePreset === "month" && !dateKey.startsWith(currentMonth)) return false;
+        if (rangePreset === "last_month" && !dateKey.startsWith(prevMonthPrefix)) return false;
+      }
+
       if (!q) return true;
 
       return (
@@ -38,7 +65,7 @@ export function useFilteredExpenses(expenses: Expense[], selectedDate: string | 
           return (b.date || "").localeCompare(a.date || "") || (b.id || "").localeCompare(a.id || "");
       }
     });
-  }, [expenses, query, category, sortBy, selectedDate]);
+  }, [expenses, query, category, sortBy, selectedDate, rangePreset]);
 
   const total = useMemo(
     () => filtered.reduce((sum, expense) => sum + (expense.amount || 0), 0),
@@ -48,9 +75,11 @@ export function useFilteredExpenses(expenses: Expense[], selectedDate: string | 
   const resetFilters = useCallback(() => {
     setQuery("");
     setCategory("All");
+    setRangePreset("all");
   }, []);
 
-  const hasActiveFilters = query.length > 0 || category !== "All" || selectedDate !== null;
+  const hasActiveFilters =
+    query.length > 0 || category !== "All" || selectedDate !== null || rangePreset !== "all";
 
   return {
     query,
@@ -59,6 +88,8 @@ export function useFilteredExpenses(expenses: Expense[], selectedDate: string | 
     setCategory,
     sortBy,
     setSortBy,
+    rangePreset,
+    setRangePreset,
     filtered,
     total,
     resetFilters,

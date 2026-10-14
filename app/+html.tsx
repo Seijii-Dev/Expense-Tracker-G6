@@ -23,11 +23,11 @@ export default function RootHtml({ children }: PropsWithChildren) {
         {/* Reset styles */}
         <ScrollViewStyleReset />
 
-        {/* Plus Jakarta Sans (Stitch Ledgerly Primary Typography) */}
+        {/* Primary Typography */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link
-          href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300..800;1,300..800&display=swap"
+          href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&display=swap"
           rel="stylesheet"
         />
 
@@ -51,7 +51,7 @@ export default function RootHtml({ children }: PropsWithChildren) {
                 -webkit-font-smoothing: antialiased;
                 -moz-osx-font-smoothing: grayscale;
                 background-color: #F8F9FD;
-                font-family: 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+                font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
               }
               #root {
                 display: flex;
@@ -61,7 +61,7 @@ export default function RootHtml({ children }: PropsWithChildren) {
 
               /* Default font-family for all text and form inputs */
               *, input, button, textarea, select {
-                font-family: 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+                font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
               }
 
               /* Global @font-face declarations for Ionicons (both lowercase and uppercase keys) */

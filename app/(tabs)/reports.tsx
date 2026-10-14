@@ -12,9 +12,10 @@ import { useReportMetrics } from "@/hooks/useReportMetrics";
 import { ReportsSkeleton } from "@/components/ui/reports-skeleton";
 import { exportExpensesToCsv } from "@/utils/export-csv";
 import { ConfirmDialog } from "@/components/common/confirm-dialog";
+import { GlassSurface } from "@/components/ui/glass-surface";
 
 import { SpendingTrendChart } from "@/components/reports/spending-trend-chart";
-import { MotionEntrance, PressableScale } from "@/components/motion";
+import { MotionEntrance, MotionSegmentedControl, PressableScale } from "@/components/motion";
 import { getPhilippinesDate } from "@/utils/date";
 import { DatePickerModal } from "@/components/common/date-picker-modal";
 import { radii, spacing, typography } from "@/constants/design-tokens";
@@ -102,7 +103,7 @@ export default function ReportsScreen() {
           />
         }
       >
-        {/* Stitch Header with Export Action */}
+        {/* Header with Export Action */}
         <MotionEntrance delay={0}>
           <View style={styles.headerRow}>
             <View>
@@ -125,45 +126,18 @@ export default function ReportsScreen() {
             </PressableScale>
           </View>
 
-          {/* Timeframe Segmented Control matching Stitch */}
-          <View style={[styles.timeframeRow, { backgroundColor: dark ? "rgba(255,255,255,0.06)" : colors.surfaceSubtle }]}>
-            {(["Day", "Weekly", "Monthly", "Yearly"] as const).map((tab) => {
-              const isActive = timeframe === tab;
-              return (
-                <PressableScale
-                  key={tab}
-                  accessibilityRole="tab"
-                  accessibilityState={{ selected: isActive }}
-                  accessibilityLabel={`${tab} report timeframe`}
-                  onPress={() => {
-                    setTimeframe(tab);
-                  }}
-                  style={[
-                    styles.timeframeTab,
-                    isActive && [
-                      styles.timeframeTabActive,
-                      {
-                        backgroundColor: colors.primary,
-                        shadowColor: colors.primary,
-                      },
-                    ],
-                  ]}
-                >
-                  <Text
-                    style={[
-                      styles.timeframeText,
-                      {
-                        color: isActive ? "#FFFFFF" : colors.muted,
-                        fontWeight: isActive ? "700" : "500",
-                      },
-                    ]}
-                  >
-                    {tab}
-                  </Text>
-                </PressableScale>
-              );
-            })}
-          </View>
+          {/* Timeframe Segmented Control with Motion.dev Morphing Pill */}
+          <MotionSegmentedControl<TrajectoryInterval>
+            options={[
+              { id: "Day", label: "Day" },
+              { id: "Weekly", label: "Weekly" },
+              { id: "Monthly", label: "Monthly" },
+              { id: "Yearly", label: "Yearly" },
+            ]}
+            selectedId={timeframe}
+            onSelect={(newTimeframe) => setTimeframe(newTimeframe)}
+            style={{ marginBottom: 12 }}
+          />
         </MotionEntrance>
 
         {/* Selected Period Navigator Sub-selector */}
@@ -240,20 +214,12 @@ export default function ReportsScreen() {
           <SpendingTrendChart timeline={timeline} />
         </MotionEntrance>
 
-        {/* 2x2 Compact Metric Grid matching Stitch */}
+        {/* 2x2 Performance Metric Grid */}
         <MotionEntrance delay={120}>
           <View style={styles.metricsGrid}>
             <View style={styles.metricsRow}>
               {/* Daily Average */}
-              <View
-                style={[
-                  styles.metricCard,
-                  {
-                    backgroundColor: colors.surface,
-                    borderColor: colors.border,
-                  },
-                ]}
-              >
+              <GlassSurface variant="card" radius={16} style={styles.metricCard}>
                 <View style={styles.metricTop}>
                   <Text style={[styles.metricKicker, { color: colors.muted }]}>DAILY AVG</Text>
                   <View
@@ -271,18 +237,10 @@ export default function ReportsScreen() {
                 <Text style={[styles.metricSub, { color: "#10B981" }]} numberOfLines={1}>
                   Pacing calculated
                 </Text>
-              </View>
+              </GlassSurface>
 
               {/* Top Expense */}
-              <View
-                style={[
-                  styles.metricCard,
-                  {
-                    backgroundColor: colors.surface,
-                    borderColor: colors.border,
-                  },
-                ]}
-              >
+              <GlassSurface variant="card" radius={16} style={styles.metricCard}>
                 <View style={styles.metricTop}>
                   <Text style={[styles.metricKicker, { color: colors.muted }]}>TOP EXPENSE</Text>
                   <View
@@ -300,20 +258,12 @@ export default function ReportsScreen() {
                 <Text style={[styles.metricSub, { color: colors.muted }]} numberOfLines={1}>
                   {topExpense ? topExpense.category : "No spend logged"}
                 </Text>
-              </View>
+              </GlassSurface>
             </View>
 
             <View style={styles.metricsRow}>
               {/* Activity / Transactions */}
-              <View
-                style={[
-                  styles.metricCard,
-                  {
-                    backgroundColor: colors.surface,
-                    borderColor: colors.border,
-                  },
-                ]}
-              >
+              <GlassSurface variant="card" radius={16} style={styles.metricCard}>
                 <View style={styles.metricTop}>
                   <Text style={[styles.metricKicker, { color: colors.muted }]}>RECORDS</Text>
                   <View
@@ -331,18 +281,10 @@ export default function ReportsScreen() {
                 <Text style={[styles.metricSub, { color: colors.muted }]} numberOfLines={1}>
                   Avg: {averageExpenseSize}
                 </Text>
-              </View>
+              </GlassSurface>
 
               {/* Budget Left */}
-              <View
-                style={[
-                  styles.metricCard,
-                  {
-                    backgroundColor: colors.surface,
-                    borderColor: colors.border,
-                  },
-                ]}
-              >
+              <GlassSurface variant="card" radius={16} style={styles.metricCard}>
                 <View style={styles.metricTop}>
                   <Text style={[styles.metricKicker, { color: colors.muted }]}>BUDGET LEFT</Text>
                   <View
@@ -360,7 +302,7 @@ export default function ReportsScreen() {
                 <Text style={[styles.metricSub, { color: colors.muted }]} numberOfLines={1}>
                   of {formatMoney(budget)} target
                 </Text>
-              </View>
+              </GlassSurface>
             </View>
           </View>
         </MotionEntrance>
@@ -381,14 +323,16 @@ export default function ReportsScreen() {
           <PaymentMethods paymentTotals={paymentTotals} periodTotal={timeline.total} />
         </MotionEntrance>
 
-        {/* Smart Financial Health Insight Banner matching Stitch */}
+        {/* Spending Health Insight Banner */}
         <MotionEntrance delay={240}>
-          <View
+          <GlassSurface
+            variant="card"
+            radius={18}
             style={[
               styles.delightCard,
               {
-                backgroundColor: dark ? "rgba(16, 185, 129, 0.08)" : "#EAF7EE",
-                borderColor: dark ? "rgba(16, 185, 129, 0.2)" : "#CEEBD5",
+                backgroundColor: dark ? "rgba(16, 185, 129, 0.08)" : "rgba(16, 185, 129, 0.06)",
+                borderColor: dark ? "rgba(16, 185, 129, 0.25)" : "rgba(16, 185, 129, 0.2)",
               },
             ]}
           >
@@ -408,22 +352,13 @@ export default function ReportsScreen() {
                   : "Keep logging records regularly to discover deep category patterns."}
               </Text>
             </View>
-          </View>
+          </GlassSurface>
 
           {/* Observations Panel */}
-          <View
-            style={[
-              styles.panel,
-              {
-                backgroundColor: colors.surface,
-                borderColor: colors.border,
-                shadowColor: dark ? "#000000" : "#1A1D20",
-                shadowOffset: { width: 0, height: 4 },
-                shadowOpacity: dark ? 0.35 : 0.04,
-                shadowRadius: 12,
-                elevation: 2,
-              },
-            ]}
+          <GlassSurface
+            variant="card"
+            radius={radii.panel}
+            style={styles.panel}
           >
             <View style={styles.panelHeader}>
               <View>
@@ -474,7 +409,7 @@ export default function ReportsScreen() {
               }
               last
             />
-          </View>
+          </GlassSurface>
         </MotionEntrance>
       </ScrollView>
 
@@ -508,7 +443,7 @@ export default function ReportsScreen() {
 const styles = StyleSheet.create({
   scroll: {
     paddingTop: spacing.md,
-    paddingBottom: 28,
+    paddingBottom: 104,
   },
   headerRow: {
     flexDirection: "row",
@@ -632,13 +567,6 @@ const styles = StyleSheet.create({
     flex: 1,
     minWidth: 0,
     padding: 14,
-    borderRadius: radii.card,
-    borderWidth: 1,
-    shadowColor: "#1A1D20",
-    shadowOpacity: 0.03,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 1,
   },
   metricTop: {
     flexDirection: "row",
@@ -675,8 +603,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     padding: 14,
-    borderRadius: 18,
-    borderWidth: 1,
     gap: 12,
     marginBottom: 16,
   },
@@ -705,8 +631,6 @@ const styles = StyleSheet.create({
   panel: {
     padding: spacing.lg,
     marginBottom: spacing.lg,
-    borderRadius: radii.panel,
-    borderWidth: 1,
   },
   panelHeader: {
     flexDirection: "row",

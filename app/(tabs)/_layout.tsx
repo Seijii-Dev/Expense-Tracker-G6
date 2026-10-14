@@ -60,6 +60,7 @@ export default function TabsLayout() {
           name="account"
           options={{
             title: "Account",
+            href: null,
           }}
         />
       </Tabs>

@@ -20,7 +20,7 @@ export const NavIcon = React.memo(function NavIcon({
 
   switch (name) {
     case "overview":
-      // Stitch 'grid_view': 4 rounded architectural tiles
+      // Overview: 4 rounded dashboard tiles
       return (
         <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
           <Rect
@@ -71,7 +71,7 @@ export const NavIcon = React.memo(function NavIcon({
       );
 
     case "records":
-      // Stitch 'receipt_long': clean modern ledger paper
+      // Records: clean ledger receipt icon
       return (
         <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
           <Path
@@ -92,7 +92,7 @@ export const NavIcon = React.memo(function NavIcon({
       );
 
     case "reports":
-      // Stitch 'insights': upward dynamic trend analytics
+      // Reports: upward dynamic trend analytics
       return (
         <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
           <Path
@@ -121,7 +121,7 @@ export const NavIcon = React.memo(function NavIcon({
       );
 
     case "settings":
-      // Stitch 'tune': architectural slider controls
+      // Settings: slider tuning controls
       return (
         <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
           <Path d="M3.5 6.5h8M15.5 6.5h5" stroke={color} strokeWidth={strokeW} strokeLinecap="round" />

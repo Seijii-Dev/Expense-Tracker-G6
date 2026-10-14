@@ -76,7 +76,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   initials: {
-    fontFamily: "Fraunces_700Bold",
+    fontFamily: "DMSans_700Bold",
     fontWeight: "700",
   },
 });

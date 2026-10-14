@@ -23,7 +23,7 @@ import { PaymentIcon } from "@/components/ui/payment-icon";
 import { CustomCategoryModal } from "@/components/settings/custom-category-modal";
 import { DatePickerModal } from "@/components/common/date-picker-modal";
 import { PressableScale } from "@/components/motion";
-import { formatDate } from "@/utils/formatters";
+import { formatDate, formatMoney } from "@/utils/formatters";
 import { AppLottieView } from "@/components/ui/app-lottie-view";
 import { GlassSurface } from "@/components/ui/glass-surface";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -39,7 +39,7 @@ interface ExpenseModalProps {
 
 export function ExpenseModal({ visible, initialExpense, onClose, onSubmit }: ExpenseModalProps) {
   const { colors, dark } = useTheme();
-  const { allCategories, customCategories, addCustomCategory } = useExpenses();
+  const { allCategories, customCategories, addCustomCategory, monthTotal, budget } = useExpenses();
   const { width: windowWidth, height: windowHeight } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const reduceMotion = useReducedMotion();
@@ -111,6 +111,20 @@ export function ExpenseModal({ visible, initialExpense, onClose, onSubmit }: Exp
     setShowSuccessModal(false);
   };
 
+  const numericAmount = parseFloat(amount) || 0;
+  const originalAmount = initialExpense?.amount || 0;
+  const netAddedAmount = isEditing ? numericAmount - originalAmount : numericAmount;
+  const projectedMonthTotal = monthTotal + netAddedAmount;
+  const isOverBudget = budget > 0 && numericAmount > 0 && projectedMonthTotal > budget;
+  const overBudgetAmount = projectedMonthTotal - budget;
+
+  const handleAddPreset = (preset: number) => {
+    const current = parseFloat(amount) || 0;
+    const next = current + preset;
+    setAmount(String(Math.round(next * 100) / 100));
+    if (validationError) setValidationError(null);
+  };
+
   const handleSave = () => {
     if (isSubmitting) return; // Prevent duplicate submissions caused by repeated taps
     const numeric = parseFloat(amount);
@@ -118,19 +132,16 @@ export function ExpenseModal({ visible, initialExpense, onClose, onSubmit }: Exp
       setValidationError("Please enter an amount greater than ₱0.");
       return;
     }
-    if (!description.trim()) {
-      setValidationError("Please add a note or description for this expense.");
-      return;
-    }
 
     setIsSubmitting(true);
     const submittedDate =
       initialExpense && date === normalizeDate(initialExpense.date) ? initialExpense.date : date;
+    const finalDescription = description.trim() || category;
 
     // Save operation executed first
     onSubmit({
       amount: Math.round(numeric * 100) / 100,
-      description: description.trim(),
+      description: finalDescription,
       category,
       payment,
       date: submittedDate,
@@ -282,12 +293,45 @@ export function ExpenseModal({ visible, initialExpense, onClose, onSubmit }: Exp
                 />
               </View>
 
-              <View style={styles.tapEditRow}>
-                <Ionicons name="create-outline" size={13} color={colors.primary} />
-                <Text style={[styles.tapEditText, { color: colors.primary }]}>
-                  Tap to edit monetary amount
-                </Text>
+              <View style={styles.presetsRow}>
+                {[50, 100, 500, 1000].map((preset) => (
+                  <Pressable
+                    key={preset}
+                    onPress={() => handleAddPreset(preset)}
+                    style={({ pressed }) => [
+                      styles.amountPresetChip,
+                      {
+                        backgroundColor: dark ? "rgba(255, 255, 255, 0.08)" : "#FFFFFF",
+                        borderColor: colors.border,
+                        opacity: pressed ? 0.75 : 1,
+                      },
+                    ]}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Add ${preset} pesos`}
+                  >
+                    <Text style={[styles.amountPresetChipText, { color: colors.foreground }]}>
+                      +₱{preset}
+                    </Text>
+                  </Pressable>
+                ))}
               </View>
+
+              {isOverBudget && (
+                <View
+                  style={[
+                    styles.overBudgetPill,
+                    {
+                      backgroundColor: dark ? "rgba(232, 74, 63, 0.16)" : "#FEECEB",
+                      borderColor: colors.primary,
+                    },
+                  ]}
+                >
+                  <Ionicons name="warning-outline" size={13} color={colors.primary} />
+                  <Text style={[styles.overBudgetText, { color: colors.primary }]} numberOfLines={1}>
+                    Exceeds monthly budget by {formatMoney(overBudgetAmount)}
+                  </Text>
+                </View>
+              )}
             </View>
 
             {/* Category Selection Section */}
@@ -426,7 +470,7 @@ export function ExpenseModal({ visible, initialExpense, onClose, onSubmit }: Exp
                   setDescription(val);
                   if (validationError) setValidationError(null);
                 }}
-                placeholder="What was this expense for? (Store, tags, notes)"
+                placeholder="e.g. Starbucks, Groceries (Optional, defaults to category)"
                 placeholderTextColor={colors.subtle}
                 style={[styles.fieldInput, { color: colors.foreground }]}
               />
@@ -813,17 +857,45 @@ const styles = StyleSheet.create({
     margin: 0,
     ...(Platform.OS === "web" ? ({ outlineStyle: "none" } as any) : {}),
   },
-  tapEditRow: {
+  presetsRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 4,
-    marginTop: 6,
+    justifyContent: "center",
+    gap: 8,
+    marginTop: 10,
+    width: "100%",
   },
-  tapEditText: {
+  amountPresetChip: {
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 12,
+    borderWidth: 1,
+    shadowColor: "#000",
+    shadowOpacity: 0.03,
+    shadowRadius: 3,
+    elevation: 1,
+    ...(Platform.OS === "web" ? ({ cursor: "pointer" } as any) : {}),
+  },
+  amountPresetChipText: {
+    fontSize: 11,
+    fontWeight: "700",
+    letterSpacing: -0.2,
+  },
+  overBudgetPill: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 10,
+    borderWidth: 1,
+    marginTop: 10,
+    maxWidth: "100%",
+  },
+  overBudgetText: {
     fontSize: 10.5,
-    fontWeight: "600",
-    textTransform: "uppercase",
-    letterSpacing: 0.5,
+    fontWeight: "700",
+    letterSpacing: -0.2,
   },
   sectionHeaderRow: {
     flexDirection: "row",

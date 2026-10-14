@@ -350,9 +350,10 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   formTitle: {
-    fontFamily: "Fraunces_700Bold",
-    fontSize: 32,
-    letterSpacing: -1.2,
+    fontFamily: "DMSans_700Bold",
+    fontSize: 30,
+    fontWeight: "700",
+    letterSpacing: -0.8,
   },
   formSubtitle: {
     fontSize: 13,

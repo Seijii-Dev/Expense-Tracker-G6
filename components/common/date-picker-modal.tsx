@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Ionicons } from "@expo/vector-icons";
-import { Modal, Pressable, StyleSheet, Text, View, useWindowDimensions } from "react-native";
+import { Modal, Platform, Pressable, StyleSheet, Text, View, useWindowDimensions } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTheme } from "@/lib/theme-store";
 import { getPhilippinesDate, shiftCalendarMonth } from "@/utils/date";
@@ -198,20 +198,39 @@ const styles = StyleSheet.create({
   },
   headerText: { flex: 1 },
   eyebrow: { fontSize: 9, fontWeight: "800", letterSpacing: 1.1 },
-  title: { fontFamily: "Fraunces_700Bold", fontSize: 22, marginTop: 3 },
-  closeButton: { width: 38, height: 38, alignItems: "center", justifyContent: "center" },
+  title: { fontFamily: "DMSans_700Bold", fontSize: 22, fontWeight: "700", marginTop: 3 },
+  closeButton: {
+    width: 38,
+    height: 38,
+    alignItems: "center",
+    justifyContent: "center",
+    ...(Platform.OS === "web" ? ({ cursor: "pointer" } as any) : {}),
+  },
   monthHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
     marginBottom: 10,
   },
-  monthArrow: { width: 38, height: 38, alignItems: "center", justifyContent: "center", borderWidth: 1, borderRadius: 13 },
+  monthArrow: {
+    width: 38,
+    height: 38,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+    borderRadius: 13,
+    ...(Platform.OS === "web" ? ({ cursor: "pointer" } as any) : {}),
+  },
   monthLabel: { fontSize: 15, fontWeight: "700" },
   grid: { flexDirection: "row", flexWrap: "wrap" },
   dayCell: { width: "14.2857%", alignItems: "center", justifyContent: "center" },
   weekday: { fontSize: 11, fontWeight: "700" },
-  dayButton: { borderRadius: 24, alignItems: "center", justifyContent: "center" },
+  dayButton: {
+    borderRadius: 24,
+    alignItems: "center",
+    justifyContent: "center",
+    ...(Platform.OS === "web" ? ({ cursor: "pointer" } as any) : {}),
+  },
   dayText: { fontSize: 13, fontWeight: "600" },
   footer: {
     flexDirection: "row",
@@ -223,6 +242,14 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   selectedLabel: { fontSize: 12, fontWeight: "600", flex: 1, marginRight: 12 },
-  todayButton: { minHeight: 40, borderRadius: 12, paddingHorizontal: 14, flexDirection: "row", alignItems: "center", gap: 6 },
+  todayButton: {
+    minHeight: 40,
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    ...(Platform.OS === "web" ? ({ cursor: "pointer" } as any) : {}),
+  },
   todayText: { fontSize: 12, fontWeight: "800" },
 });

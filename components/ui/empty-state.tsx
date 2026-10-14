@@ -106,8 +106,9 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   title: {
-    fontFamily: "Fraunces_700Bold",
+    fontFamily: "DMSans_700Bold",
     fontSize: 18,
+    fontWeight: "700",
     textAlign: "center",
     letterSpacing: -0.3,
   },

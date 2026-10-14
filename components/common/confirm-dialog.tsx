@@ -142,6 +142,12 @@ export function ConfirmDialog({
       onRequestClose={handleCancel}
     >
       <View style={[styles.backdrop, { backgroundColor: colors.dialogBackdrop }]}>
+        <Pressable
+          style={StyleSheet.absoluteFill}
+          onPress={handleCancel}
+          accessibilityLabel="Dismiss dialog"
+          accessibilityRole="button"
+        />
         <Animated.View style={[styles.cardWrap, dialogAnimatedStyle]}>
           <GlassSurface
             variant="sheet"

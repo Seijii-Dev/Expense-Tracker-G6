@@ -107,14 +107,8 @@ const styles = StyleSheet.create({
   card: {
     minHeight: 112,
     padding: spacing.lg,
-    borderRadius: radii.card,
-    borderWidth: 1,
-    shadowColor: "#1A1D20",
-    shadowOpacity: 0.04,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 2,
   },
+
   topRow: {
     flexDirection: "row",
     alignItems: "center",

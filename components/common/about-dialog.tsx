@@ -74,6 +74,12 @@ export function AboutDialog({ visible, onClose }: AboutDialogProps) {
       onRequestClose={onClose}
     >
       <View style={[styles.backdrop, { backgroundColor: colors.dialogBackdrop }]}>
+        <Pressable
+          style={StyleSheet.absoluteFill}
+          onPress={onClose}
+          accessibilityLabel="Dismiss dialog"
+          accessibilityRole="button"
+        />
         <Animated.View style={[styles.cardWrap, dialogAnimatedStyle]}>
           <GlassSurface
             variant="sheet"
@@ -231,8 +237,9 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   appName: {
-    fontFamily: "Fraunces_700Bold",
+    fontFamily: "DMSans_700Bold",
     fontSize: 22,
+    fontWeight: "700",
     letterSpacing: -0.3,
   },
   kicker: {

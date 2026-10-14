@@ -51,8 +51,9 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   headingTitle: {
-    fontFamily: "Fraunces_700Bold",
+    fontFamily: "DMSans_700Bold",
     fontSize: 17,
+    fontWeight: "700",
     letterSpacing: -0.2,
   },
   headingCopy: {

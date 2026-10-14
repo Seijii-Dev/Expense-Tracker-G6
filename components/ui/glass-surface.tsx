@@ -1,11 +1,18 @@
 import { BlurView, type BlurTint } from "expo-blur";
 import { LinearGradient } from "expo-linear-gradient";
 import React from "react";
-import { Platform, StyleProp, StyleSheet, View, ViewStyle } from "react-native";
+import { LayoutChangeEvent, Platform, StyleProp, StyleSheet, View, ViewStyle } from "react-native";
 import { useTheme } from "@/lib/theme-store";
 
-export type GlassVariant = "card" | "pill" | "sheet" | "nav";
-const INTENSITY: Record<GlassVariant, number> = { pill: 0, card: 0, sheet: 0, nav: 24 };
+export type GlassVariant = "card" | "pill" | "sheet" | "nav" | "subtle";
+
+const BLUR_INTENSITY: Record<GlassVariant, number> = {
+  card: 16,
+  pill: 12,
+  sheet: 24,
+  nav: 26,
+  subtle: 10,
+};
 
 type GlassSurfaceProps = {
   children?: React.ReactNode;
@@ -14,80 +21,104 @@ type GlassSurfaceProps = {
   radius?: number;
   variant?: GlassVariant;
   intensity?: number;
+  noBorder?: boolean;
+  onLayout?: (event: LayoutChangeEvent) => void;
 };
 
 export function GlassSurface({
   children,
   style,
   contentStyle,
-  radius = 24,
+  radius = 20,
   variant = "card",
   intensity,
+  noBorder = false,
+  onLayout,
 }: GlassSurfaceProps) {
   const { dark, colors } = useTheme();
   const tint: BlurTint = dark ? "dark" : "light";
   const isWeb = Platform.OS === "web";
-  const usesGlass = variant === "nav";
+  const blurVal = intensity ?? BLUR_INTENSITY[variant];
 
-  // On web, BlurView causes severe rendering lag because it triggers
-  // expensive compositing. Instead we use CSS backdrop-filter (GPU-accelerated).
-  const webBlurStyle: ViewStyle | undefined = isWeb && usesGlass
+  // Dynamic frosted backgrounds for clean glass look
+  const glassBackground = dark
+    ? variant === "nav"
+      ? "rgba(18, 22, 28, 0.86)"
+      : variant === "sheet"
+      ? "rgba(22, 27, 34, 0.92)"
+      : "rgba(22, 27, 34, 0.72)"
+    : variant === "nav"
+    ? "rgba(255, 255, 255, 0.88)"
+    : variant === "sheet"
+    ? "rgba(255, 255, 255, 0.94)"
+    : "rgba(255, 255, 255, 0.78)";
+
+  const glassBorderColor = dark
+    ? "rgba(255, 255, 255, 0.08)"
+    : "rgba(255, 255, 255, 0.55)";
+
+  const webBlurStyle: ViewStyle | undefined = isWeb
     ? ({
-        backdropFilter: `blur(${(intensity ?? INTENSITY[variant]) * 0.4}px) saturate(1.6)`,
-        WebkitBackdropFilter: `blur(${(intensity ?? INTENSITY[variant]) * 0.4}px) saturate(1.6)`,
+        backdropFilter: `blur(${Math.round(blurVal * 0.75)}px) saturate(180%)`,
+        WebkitBackdropFilter: `blur(${Math.round(blurVal * 0.75)}px) saturate(180%)`,
       } as ViewStyle)
     : undefined;
 
   return (
     <View
+      onLayout={onLayout}
       style={[
         styles.base,
         {
           borderRadius: radius,
-          borderColor: usesGlass ? colors.glassBorder : colors.border,
-          backgroundColor: usesGlass ? colors.glassFill : colors.card,
-          shadowColor: dark ? "#000000" : "#1A332C",
-          shadowOpacity: usesGlass ? (dark ? 0.34 : 0.07) : dark ? 0.16 : 0.035,
-          shadowRadius: variant === "pill" ? 8 : usesGlass ? 18 : 12,
+          borderColor: noBorder ? "transparent" : glassBorderColor,
+          backgroundColor: isWeb ? glassBackground : undefined,
+          shadowColor: dark ? "#000000" : "#1A2530",
+          shadowOpacity: dark ? 0.35 : 0.05,
+          shadowRadius: variant === "pill" ? 6 : variant === "nav" ? 22 : 14,
           shadowOffset: {
             width: 0,
-            height: variant === "pill" ? 2 : usesGlass ? 7 : 3,
+            height: variant === "pill" ? 2 : variant === "nav" ? 8 : 4,
           },
-          elevation: variant === "pill" ? 1 : usesGlass ? 6 : 2,
+          elevation: variant === "pill" ? 1 : variant === "nav" ? 8 : 3,
         },
         style,
       ]}
     >
-      {usesGlass && isWeb ? (
-        // CSS backdrop-filter: smooth, GPU-accelerated blur on web
-        <View style={[StyleSheet.absoluteFill, webBlurStyle]} />
-      ) : usesGlass ? (
-        // Native BlurView (iOS / Android)
-        <BlurView
-          intensity={intensity ?? INTENSITY[variant]}
-          tint={tint}
-          style={StyleSheet.absoluteFill}
+      {isWeb ? (
+        // Web CSS backdrop-filter with GPU hardware acceleration
+        <View
+          pointerEvents="none"
+          style={[StyleSheet.absoluteFill, { backgroundColor: glassBackground }, webBlurStyle]}
         />
-      ) : null}
-      {usesGlass ? (
+      ) : (
+        // Native BlurView for iOS and Android
         <>
+          <BlurView
+            intensity={blurVal}
+            tint={tint}
+            style={StyleSheet.absoluteFill}
+          />
           <View
             pointerEvents="none"
-            style={[StyleSheet.absoluteFill, { backgroundColor: colors.glassFill }]}
-          />
-          <LinearGradient
-            pointerEvents="none"
-            colors={
-              dark
-                ? ["rgba(255,255,255,0.12)", "rgba(255,255,255,0.01)"]
-                : ["rgba(255,255,255,0.55)", "rgba(255,255,255,0.0)"]
-            }
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 0 }}
-            style={styles.rim}
+            style={[StyleSheet.absoluteFill, { backgroundColor: glassBackground }]}
           />
         </>
-      ) : null}
+      )}
+
+      {/* Subtle specular top-edge reflection for depth */}
+      <LinearGradient
+        pointerEvents="none"
+        colors={
+          dark
+            ? ["rgba(255, 255, 255, 0.12)", "rgba(255, 255, 255, 0.01)"]
+            : ["rgba(255, 255, 255, 0.75)", "rgba(255, 255, 255, 0.05)"]
+        }
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 0 }}
+        style={styles.rim}
+      />
+
       <View style={[styles.content, contentStyle]}>{children}</View>
     </View>
   );
@@ -97,6 +128,7 @@ const styles = StyleSheet.create({
   base: {
     overflow: "hidden",
     borderWidth: 1,
+    position: "relative",
   },
   rim: {
     position: "absolute",
@@ -104,10 +136,12 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     height: 1.5,
+    zIndex: 2,
   },
   content: {
     position: "relative",
-    zIndex: 1,
+    zIndex: 3,
   },
 });
+
 

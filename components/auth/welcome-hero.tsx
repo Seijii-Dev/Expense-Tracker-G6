@@ -217,8 +217,9 @@ const styles = StyleSheet.create({
     borderRadius: 12,
   },
   brandTitle: {
-    fontFamily: "Fraunces_700Bold",
+    fontFamily: "DMSans_700Bold",
     fontSize: 20,
+    fontWeight: "700",
     letterSpacing: -0.5,
   },
   brandBadge: {
@@ -258,10 +259,11 @@ const styles = StyleSheet.create({
     letterSpacing: 1.2,
   },
   heroTitle: {
-    fontFamily: "Fraunces_700Bold",
-    fontSize: 38,
-    letterSpacing: -1.6,
-    lineHeight: 44,
+    fontFamily: "DMSans_700Bold",
+    fontSize: 36,
+    fontWeight: "700",
+    letterSpacing: -1.2,
+    lineHeight: 42,
     textAlign: "center",
   },
   heroSubtitle: {
@@ -305,9 +307,10 @@ const styles = StyleSheet.create({
     borderRadius: 7,
   },
   mockBrandName: {
-    fontFamily: "Fraunces_700Bold",
+    fontFamily: "DMSans_700Bold",
     color: "#FFFFFF",
     fontSize: 14,
+    fontWeight: "700",
   },
   mockStatusChip: {
     flexDirection: "row",
@@ -339,9 +342,10 @@ const styles = StyleSheet.create({
     letterSpacing: 1.1,
   },
   mockBalanceAmount: {
-    fontFamily: "Fraunces_700Bold",
+    fontFamily: "DMSans_700Bold",
     color: "#FFFFFF",
     fontSize: 32,
+    fontWeight: "700",
     letterSpacing: -1,
     marginTop: 4,
   },
@@ -361,9 +365,10 @@ const styles = StyleSheet.create({
     letterSpacing: 0.8,
   },
   mockStatVal: {
-    fontFamily: "Fraunces_700Bold",
+    fontFamily: "DMSans_700Bold",
     color: "#FFFFFF",
     fontSize: 13,
+    fontWeight: "700",
     marginTop: 2,
   },
   mockChipGrowth: {

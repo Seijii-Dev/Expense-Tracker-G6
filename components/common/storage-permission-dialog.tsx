@@ -273,8 +273,9 @@ const styles = StyleSheet.create({
     letterSpacing: 0.6,
   },
   title: {
-    fontFamily: "Fraunces_700Bold",
+    fontFamily: "DMSans_700Bold",
     fontSize: 22,
+    fontWeight: "700",
     letterSpacing: -0.4,
   },
   subtitle: {

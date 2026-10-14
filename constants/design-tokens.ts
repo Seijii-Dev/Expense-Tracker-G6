@@ -20,9 +20,9 @@ export const radii = {
 
 export const typography: Record<string, TextStyle> = {
   screenTitle: {
-    fontFamily: "Fraunces_600SemiBold",
+    fontFamily: "DMSans_700Bold",
     fontSize: 28,
-    fontWeight: "600",
+    fontWeight: "700",
     lineHeight: 34,
     letterSpacing: -0.6,
   },

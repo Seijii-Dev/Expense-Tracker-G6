@@ -105,6 +105,12 @@ export function PulseDialog({
       onRequestClose={onClose}
     >
       <View style={[styles.backdrop, { backgroundColor: colors.dialogBackdrop }]}>
+        <Pressable
+          style={StyleSheet.absoluteFill}
+          onPress={onClose}
+          accessibilityLabel="Dismiss dialog"
+          accessibilityRole="button"
+        />
         <Animated.View style={[styles.cardWrap, dialogAnimatedStyle]}>
           <GlassSurface
             variant="sheet"
@@ -127,7 +133,7 @@ export function PulseDialog({
 
           <Text style={[styles.title, { color: colors.foreground }]}>Spending Pulse</Text>
           <Text style={[styles.subtitle, { color: colors.muted }]}>
-            Real-time financial velocity and budget health assessment.
+            Real-time financial pace and budget health assessment.
           </Text>
 
           {/* Gauge / Progress Bar */}
@@ -252,8 +258,9 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
   },
   title: {
-    fontFamily: "Fraunces_700Bold",
+    fontFamily: "DMSans_700Bold",
     fontSize: 22,
+    fontWeight: "700",
     letterSpacing: -0.4,
   },
   subtitle: {
@@ -281,7 +288,8 @@ const styles = StyleSheet.create({
   },
   gaugePercent: {
     fontSize: 14,
-    fontFamily: "Fraunces_700Bold",
+    fontFamily: "DMSans_700Bold",
+    fontWeight: "700",
   },
   progressBarTrack: {
     height: 8,

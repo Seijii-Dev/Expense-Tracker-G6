@@ -24,12 +24,14 @@ import { useTheme } from "@/lib/theme-store";
 import { useAuth } from "@/lib/auth-store";
 import { formatMoney } from "@/utils/formatters";
 import { exportExpensesToCsv } from "@/utils/export-csv";
+import { parseExpenseCsv } from "@/utils/import-csv";
 import { StoragePermissionDialog } from "@/components/common/storage-permission-dialog";
 import { CustomCategoryModal } from "@/components/settings/custom-category-modal";
 import { ConfirmDialog } from "@/components/common/confirm-dialog";
 import { AboutDialog } from "@/components/common/about-dialog";
 import { ProfileAvatar } from "@/components/account/profile-avatar";
 import { MotionEntrance, PressableScale } from "@/components/motion";
+import { GlassSurface } from "@/components/ui/glass-surface";
 import { radii, spacing, typography } from "@/constants/design-tokens";
 
 const BUDGET_PRESETS = [3000, 5000, 10000, 15000, 20000] as const;
@@ -39,6 +41,7 @@ export default function SettingsScreen() {
     budget,
     setBudget,
     expenses,
+    addExpense,
     syncing,
     syncError,
     refreshExpenses,
@@ -57,11 +60,18 @@ export default function SettingsScreen() {
   const [showBudgetModal, setShowBudgetModal] = useState(false);
   const [showBackupModal, setShowBackupModal] = useState(false);
   const [showAboutModal, setShowAboutModal] = useState(false);
+  const [showImportModal, setShowImportModal] = useState(false);
+  const [importCsvText, setImportCsvText] = useState("");
   const [categoryToDelete, setCategoryToDelete] = useState<string | null>(null);
   const [budgetNotice, setBudgetNotice] = useState<string | null>(null);
   const [exportNotice, setExportNotice] = useState<{
     title: string;
     message: string;
+  } | null>(null);
+  const [importNotice, setImportNotice] = useState<{
+    title: string;
+    message: string;
+    variant?: "success" | "danger";
   } | null>(null);
 
   useEffect(() => {
@@ -110,6 +120,54 @@ export default function SettingsScreen() {
     });
   };
 
+  const handleExecuteImport = () => {
+    if (!importCsvText.trim()) {
+      setImportNotice({
+        title: "No Data Provided",
+        message: "Please paste your CSV text or upload a CSV file before importing.",
+        variant: "danger",
+      });
+      return;
+    }
+
+    const result = parseExpenseCsv(importCsvText);
+    if (!result.success || result.expenses.length === 0) {
+      setImportNotice({
+        title: "Import Failed",
+        message: result.errors[0] || "No valid expense records could be parsed from the provided CSV.",
+        variant: "danger",
+      });
+      return;
+    }
+
+    result.expenses.forEach((expense) => {
+      addExpense(expense);
+    });
+
+    setShowImportModal(false);
+    setImportCsvText("");
+    setImportNotice({
+      title: "Import Completed",
+      message: `Successfully imported ${result.importedCount} transaction ${
+        result.importedCount === 1 ? "record" : "records"
+      } into your ledger.`,
+      variant: "success",
+    });
+  };
+
+  const handleWebFileUpload = (e: any) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const text = event.target?.result as string;
+      if (text) {
+        setImportCsvText(text);
+      }
+    };
+    reader.readAsText(file);
+  };
+
   return (
     <ScreenContainer>
       <ScrollView
@@ -124,7 +182,7 @@ export default function SettingsScreen() {
           />
         }
       >
-        {/* Header matching Stitch */}
+        {/* Header */}
         <MotionEntrance delay={0}>
           <View style={styles.header}>
             <Text style={[styles.kicker, { color: colors.muted }]}>PREFERENCES</Text>
@@ -142,59 +200,62 @@ export default function SettingsScreen() {
           </View>
         )}
 
-        {/* Profile Shortcut Hero Card matching Stitch */}
+        {/* Profile Shortcut Card */}
         <MotionEntrance delay={50}>
           <PressableScale
-            style={[
-              styles.profileHeroCard,
-              {
-                backgroundColor: colors.surface,
-                borderColor: colors.border,
-              },
-            ]}
             onPress={() => router.push("/(tabs)/account")}
             accessibilityRole="button"
             accessibilityLabel="Open Account and Profile"
+            style={{ marginBottom: 20 }}
           >
-            {/* Subtle warm glow circle */}
-            <View style={styles.glowCircle} pointerEvents="none" />
-
-            <View style={styles.profileHeroLeft}>
-              <View style={styles.avatarWrap}>
-                <ProfileAvatar
-                  account={account}
-                  size={54}
-                  backgroundColor="#E84A3F"
-                  textColor="#FFFFFF"
-                  fontSize={20}
-                />
-                <View style={styles.verifiedCheck}>
-                  <Ionicons name="checkmark" size={10} color="#FFFFFF" />
-                </View>
-              </View>
-
-              <View style={styles.profileHeroInfo}>
-                <Text style={[styles.profileHeroName, { color: colors.foreground }]} numberOfLines={1}>
-                  {account?.name || "Alex Johnson"}
-                </Text>
-                <Text style={[styles.profileHeroEmail, { color: colors.muted }]} numberOfLines={1}>
-                  {account?.email || "alex.johnson@example.com"}
-                </Text>
-                <View style={styles.profileBadge}>
-                  <Ionicons name="shield-checkmark" size={11} color="#10B981" />
-                  <Text style={styles.profileBadgeText}>Philippine Ed. · Verified</Text>
-                </View>
-              </View>
-            </View>
-
-            <View
-              style={[
-                styles.chevronCircle,
-                { backgroundColor: dark ? "rgba(255,255,255,0.06)" : colors.surfaceSubtle },
-              ]}
+            <GlassSurface
+              variant="card"
+              radius={radii.panel}
+              contentStyle={styles.profileHeroCard}
             >
-              <Ionicons name="chevron-forward" size={18} color={colors.muted} />
-            </View>
+              {/* Subtle warm glow circle */}
+              <View style={styles.glowCircle} pointerEvents="none" />
+
+              <View style={styles.profileHeroLeft}>
+                <View style={styles.avatarWrap}>
+                  <ProfileAvatar
+                    account={account}
+                    size={54}
+                    backgroundColor="#E84A3F"
+                    textColor="#FFFFFF"
+                    fontSize={20}
+                  />
+                  <View style={styles.verifiedCheck}>
+                    <Ionicons name="checkmark" size={10} color="#FFFFFF" />
+                  </View>
+                </View>
+
+                <View style={styles.profileHeroInfo}>
+                  <Text style={[styles.profileHeroName, { color: colors.foreground }]} numberOfLines={1}>
+                    {account?.name || "Alex Johnson"}
+                  </Text>
+                  <Text style={[styles.profileHeroEmail, { color: colors.muted }]} numberOfLines={1}>
+                    {account?.email || "alex.johnson@example.com"}
+                  </Text>
+                  <View style={styles.profileBadge}>
+                    <Ionicons name="shield-checkmark" size={11} color="#10B981" />
+                    <Text style={styles.profileBadgeText}>Philippine Ed. · Verified</Text>
+                  </View>
+                </View>
+              </View>
+
+              <View style={styles.profileHeroRight}>
+                <View
+                  style={[
+                    styles.viewProfilePill,
+                    { backgroundColor: dark ? "rgba(255,255,255,0.06)" : colors.surfaceSubtle },
+                  ]}
+                >
+                  <Text style={[styles.viewProfileText, { color: colors.foreground }]}>View</Text>
+                  <Ionicons name="chevron-forward" size={14} color={colors.primary} />
+                </View>
+              </View>
+            </GlassSurface>
           </PressableScale>
         </MotionEntrance>
 
@@ -204,83 +265,79 @@ export default function SettingsScreen() {
             <Text style={[styles.sectionTitle, { color: colors.muted }]}>PREFERENCES & DISPLAY</Text>
           </View>
 
-          <View
-            style={[
-              styles.groupedCard,
-              {
-                backgroundColor: colors.surface,
-                borderColor: colors.border,
-              },
-            ]}
+          <GlassSurface
+            variant="card"
+            radius={radii.panel}
+            style={styles.groupedCard}
           >
-          {/* 1. Appearance */}
-          <Pressable
-            style={({ pressed }) => [
-              styles.settingRow,
-              { borderBottomColor: dark ? "rgba(255,255,255,0.05)" : colors.border },
-              pressed && styles.pressed,
-            ]}
-            onPress={() => toggleDarkMode(!dark)}
-            accessibilityRole="button"
-          >
-            <View
-              style={[
-                styles.iconContainer,
-                { backgroundColor: colors.warningSoft },
+            {/* 1. Appearance */}
+            <Pressable
+              style={({ pressed }) => [
+                styles.settingRow,
+                { borderBottomColor: dark ? "rgba(255,255,255,0.05)" : colors.border },
+                pressed && styles.pressed,
               ]}
+              onPress={() => toggleDarkMode(!dark)}
+              accessibilityRole="button"
             >
-              <Ionicons name={dark ? "moon" : "sunny"} size={19} color={colors.warning} />
-            </View>
-            <View style={styles.rowContent}>
-              <Text style={[styles.rowTitle, { color: colors.foreground }]}>Appearance</Text>
-              <Text style={[styles.rowSubtitle, { color: colors.muted }]}>
-                {dark ? "Dark mode active" : "Light porcelain aesthetic"}
-              </Text>
-            </View>
-            <Switch
-              value={dark}
-              onValueChange={toggleDarkMode}
-              trackColor={{
-                false: colors.border,
-                true: colors.primary,
-              }}
-              thumbColor="#FFFFFF"
-              accessibilityLabel="Dark theme"
-            />
-          </Pressable>
+              <View
+                style={[
+                  styles.iconContainer,
+                  { backgroundColor: colors.warningSoft },
+                ]}
+              >
+                <Ionicons name={dark ? "moon" : "sunny"} size={19} color={colors.warning} />
+              </View>
+              <View style={styles.rowContent}>
+                <Text style={[styles.rowTitle, { color: colors.foreground }]}>Appearance</Text>
+                <Text style={[styles.rowSubtitle, { color: colors.muted }]}>
+                  {dark ? "Dark mode active" : "Light mode active"}
+                </Text>
+              </View>
+              <Switch
+                value={dark}
+                onValueChange={toggleDarkMode}
+                trackColor={{
+                  false: colors.border,
+                  true: colors.primary,
+                }}
+                thumbColor="#FFFFFF"
+                accessibilityLabel="Dark theme"
+              />
+            </Pressable>
 
-          {/* 2. Notifications */}
-          <Pressable
-            style={({ pressed }) => [styles.settingRow, styles.lastRow, pressed && styles.pressed]}
-            onPress={() => toggleBudgetNudges(!budgetNudges)}
-            accessibilityRole="button"
-          >
-            <View
-              style={[
-                styles.iconContainer,
-                { backgroundColor: colors.primarySoft },
-              ]}
+            {/* 2. Notifications */}
+            <Pressable
+              style={({ pressed }) => [styles.settingRow, styles.lastRow, pressed && styles.pressed]}
+              onPress={() => toggleBudgetNudges(!budgetNudges)}
+              accessibilityRole="button"
             >
-              <Ionicons name="notifications" size={19} color={colors.primary} />
-            </View>
-            <View style={styles.rowContent}>
-              <Text style={[styles.rowTitle, { color: colors.foreground }]}>Notifications</Text>
-              <Text style={[styles.rowSubtitle, { color: colors.muted }]}>
-                {budgetNudges ? "Budget alerts enabled" : "Manage spending notifications"}
-              </Text>
-            </View>
-            <Switch
-              value={budgetNudges}
-              onValueChange={toggleBudgetNudges}
-              trackColor={{
-                false: colors.border,
-                true: colors.primary,
-              }}
-              thumbColor="#FFFFFF"
-              accessibilityLabel="Budget reminders"
-            />
-          </Pressable>
-        </View>
+              <View
+                style={[
+                  styles.iconContainer,
+                  { backgroundColor: colors.primarySoft },
+                ]}
+              >
+                <Ionicons name="notifications" size={19} color={colors.primary} />
+              </View>
+              <View style={styles.rowContent}>
+                <Text style={[styles.rowTitle, { color: colors.foreground }]}>Notifications</Text>
+                <Text style={[styles.rowSubtitle, { color: colors.muted }]}>
+                  {budgetNudges ? "Budget alerts enabled" : "Manage spending notifications"}
+                </Text>
+              </View>
+              <Switch
+                value={budgetNudges}
+                onValueChange={toggleBudgetNudges}
+                trackColor={{
+                  false: colors.border,
+                  true: colors.primary,
+                }}
+                thumbColor="#FFFFFF"
+                accessibilityLabel="Budget reminders"
+              />
+            </Pressable>
+          </GlassSurface>
         </MotionEntrance>
 
         {/* SECTION 2: BUDGET & FINANCIALS */}
@@ -289,14 +346,10 @@ export default function SettingsScreen() {
             <Text style={[styles.sectionTitle, { color: colors.muted }]}>BUDGET & FINANCIALS</Text>
           </View>
 
-          <View
-            style={[
-              styles.groupedCard,
-              {
-                backgroundColor: colors.surface,
-                borderColor: colors.border,
-              },
-            ]}
+          <GlassSurface
+            variant="card"
+            radius={radii.panel}
+            style={styles.groupedCard}
           >
             {/* 3. Budget Settings */}
             <Pressable
@@ -350,7 +403,7 @@ export default function SettingsScreen() {
                 <Text style={styles.currencyPillText}>PHP</Text>
               </View>
             </View>
-          </View>
+          </GlassSurface>
         </MotionEntrance>
 
         {/* SECTION 3: DATA & STORAGE */}
@@ -359,14 +412,10 @@ export default function SettingsScreen() {
             <Text style={[styles.sectionTitle, { color: colors.muted }]}>DATA & STORAGE</Text>
           </View>
 
-          <View
-            style={[
-              styles.groupedCard,
-              {
-                backgroundColor: colors.surface,
-                borderColor: colors.border,
-              },
-            ]}
+          <GlassSurface
+            variant="card"
+            radius={radii.panel}
+            style={styles.groupedCard}
           >
             {/* 5. Data & Backup */}
             <Pressable
@@ -399,7 +448,11 @@ export default function SettingsScreen() {
 
             {/* 6. Export as CSV */}
             <Pressable
-              style={({ pressed }) => [styles.settingRow, styles.lastRow, pressed && styles.pressed]}
+              style={({ pressed }) => [
+                styles.settingRow,
+                { borderBottomColor: dark ? "rgba(255,255,255,0.05)" : colors.border },
+                pressed && styles.pressed,
+              ]}
               onPress={handleExport}
               accessibilityRole="button"
             >
@@ -419,7 +472,30 @@ export default function SettingsScreen() {
               </View>
               <Ionicons name="chevron-forward" size={18} color={colors.muted} />
             </Pressable>
-          </View>
+
+            {/* 7. Import CSV */}
+            <Pressable
+              style={({ pressed }) => [styles.settingRow, styles.lastRow, pressed && styles.pressed]}
+              onPress={() => setShowImportModal(true)}
+              accessibilityRole="button"
+            >
+              <View
+                style={[
+                  styles.iconContainer,
+                  { backgroundColor: dark ? "rgba(16, 185, 129, 0.15)" : "#ECFDF5" },
+                ]}
+              >
+                <Ionicons name="document-text-outline" size={19} color="#10B981" />
+              </View>
+              <View style={styles.rowContent}>
+                <Text style={[styles.rowTitle, { color: colors.foreground }]}>Import Records</Text>
+                <Text style={[styles.rowSubtitle, { color: colors.muted }]}>
+                  Restore or import CSV transactions
+                </Text>
+              </View>
+              <Ionicons name="chevron-forward" size={18} color={colors.muted} />
+            </Pressable>
+          </GlassSurface>
         </MotionEntrance>
 
         {/* SECTION 4: ABOUT */}
@@ -428,14 +504,10 @@ export default function SettingsScreen() {
             <Text style={[styles.sectionTitle, { color: colors.muted }]}>ABOUT LEDGERLY</Text>
           </View>
 
-          <View
-            style={[
-              styles.groupedCard,
-              {
-                backgroundColor: colors.surface,
-                borderColor: colors.border,
-              },
-            ]}
+          <GlassSurface
+            variant="card"
+            radius={radii.panel}
+            style={styles.groupedCard}
           >
             {/* 7. About Ledgerly */}
             <Pressable
@@ -456,12 +528,12 @@ export default function SettingsScreen() {
               <View style={styles.rowContent}>
                 <Text style={[styles.rowTitle, { color: colors.foreground }]}>About Ledgerly</Text>
                 <Text style={[styles.rowSubtitle, { color: colors.muted }]}>
-                  Version 1.0.0 · Warm Architectural Edition
+                  Version 1.0.0 · Personal Finance Edition
                 </Text>
               </View>
               <Ionicons name="chevron-forward" size={18} color={colors.muted} />
             </Pressable>
-          </View>
+          </GlassSurface>
         </MotionEntrance>
       </ScrollView>
 
@@ -781,6 +853,97 @@ export default function SettingsScreen() {
         destructive
       />
 
+      {/* CSV Import Modal */}
+      <Modal
+        visible={showImportModal}
+        animationType="slide"
+        transparent
+        onRequestClose={() => setShowImportModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <Pressable style={styles.modalBackdrop} onPress={() => setShowImportModal(false)} />
+          <View
+            style={[
+              styles.modalSheet,
+              { backgroundColor: colors.surface, borderColor: colors.border },
+            ]}
+          >
+            <View style={styles.modalHeader}>
+              <View>
+                <Text style={[styles.modalKicker, { color: colors.muted }]}>DATA RESTORE</Text>
+                <Text style={[styles.modalTitle, { color: colors.foreground }]}>Import CSV Records</Text>
+              </View>
+              <Pressable
+                onPress={() => setShowImportModal(false)}
+                style={({ pressed }) => [
+                  styles.closeBtn,
+                  { backgroundColor: dark ? "rgba(255,255,255,0.06)" : colors.surfaceSubtle },
+                  pressed && { opacity: 0.7 },
+                ]}
+              >
+                <Ionicons name="close" size={20} color={colors.muted} />
+              </Pressable>
+            </View>
+
+            <Text style={[styles.importGuideText, { color: colors.muted }]}>
+              Paste CSV text below or upload a .csv file. Columns supported: Date, Description, Category, Payment, Amount.
+            </Text>
+
+            {Platform.OS === "web" && (
+              <View style={styles.webUploadWrap}>
+                <label style={{ cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 6 }}>
+                  <input
+                    type="file"
+                    accept=".csv,text/csv"
+                    style={{ display: "none" }}
+                    onChange={handleWebFileUpload}
+                  />
+                  <View style={[styles.fileUploadBtn, { backgroundColor: colors.primarySoft, borderColor: colors.primary }]}>
+                    <Ionicons name="cloud-upload-outline" size={16} color={colors.primary} />
+                    <Text style={[styles.fileUploadBtnText, { color: colors.primary }]}>Select CSV File</Text>
+                  </View>
+                </label>
+              </View>
+            )}
+
+            <TextInput
+              value={importCsvText}
+              onChangeText={setImportCsvText}
+              placeholder={'Date,Description,Category,Payment,Amount\n2026-10-14,"Lunch","Food","Cash",150'}
+              placeholderTextColor={colors.subtle}
+              multiline
+              numberOfLines={6}
+              style={[
+                styles.csvTextInput,
+                {
+                  backgroundColor: dark ? "rgba(255,255,255,0.04)" : colors.surfaceSubtle,
+                  borderColor: colors.border,
+                  color: colors.foreground,
+                },
+              ]}
+            />
+
+            <Pressable
+              style={({ pressed }) => [
+                styles.saveButton,
+                { marginTop: 14 },
+                pressed && { opacity: 0.88, transform: [{ scale: 0.99 }] },
+              ]}
+              onPress={handleExecuteImport}
+            >
+              <LinearGradient
+                colors={["#FF5A4E", "#E84A3F"]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={styles.saveGradient}
+              >
+                <Text style={styles.saveButtonText}>Parse & Import Records</Text>
+              </LinearGradient>
+            </Pressable>
+          </View>
+        </View>
+      </Modal>
+
       {exportNotice && (
         <ConfirmDialog
           visible={Boolean(exportNotice)}
@@ -790,6 +953,17 @@ export default function SettingsScreen() {
           onConfirm={() => setExportNotice(null)}
         />
       )}
+
+      {importNotice && (
+        <ConfirmDialog
+          visible={Boolean(importNotice)}
+          title={importNotice.title}
+          message={importNotice.message}
+          variant={importNotice.variant || "success"}
+          confirmText="Done"
+          onConfirm={() => setImportNotice(null)}
+        />
+      )}
     </ScreenContainer>
   );
 }
@@ -797,7 +971,7 @@ export default function SettingsScreen() {
 const styles = StyleSheet.create({
   scroll: {
     paddingTop: spacing.md,
-    paddingBottom: 96,
+    paddingBottom: 104,
   },
   header: {
     marginBottom: spacing.lg,
@@ -840,14 +1014,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     padding: spacing.lg,
-    borderRadius: radii.panel,
-    borderWidth: 1,
-    marginBottom: 20,
-    shadowColor: "#1A1D20",
-    shadowOpacity: 0.04,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 3 },
-    elevation: 2,
     position: "relative",
     overflow: "hidden",
     ...(Platform.OS === "web" ? ({ cursor: "pointer" } as any) : {}),
@@ -908,13 +1074,21 @@ const styles = StyleSheet.create({
     fontSize: 10.5,
     fontWeight: "600",
   },
-  chevronCircle: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-    alignItems: "center",
-    justifyContent: "center",
+  profileHeroRight: {
     marginLeft: 10,
+  },
+  viewProfilePill: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: radii.pill,
+  },
+  viewProfileText: {
+    fontFamily: "DMSans_700Bold",
+    fontSize: 12,
+    fontWeight: "700",
   },
   sectionHeader: {
     marginBottom: 8,
@@ -927,15 +1101,8 @@ const styles = StyleSheet.create({
     textTransform: "uppercase",
   },
   groupedCard: {
-    borderRadius: radii.panel,
-    borderWidth: 1,
     overflow: "hidden",
     marginBottom: 18,
-    shadowColor: "#1A1D20",
-    shadowOpacity: 0.03,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 1,
   },
   settingRow: {
     flexDirection: "row",
@@ -1175,5 +1342,38 @@ const styles = StyleSheet.create({
   secondaryModalBtnText: {
     fontSize: 13.5,
     fontWeight: "600",
+  },
+  importGuideText: {
+    fontSize: 12,
+    lineHeight: 17,
+    marginBottom: 10,
+  },
+  webUploadWrap: {
+    marginBottom: 10,
+    alignItems: "flex-start",
+  },
+  fileUploadBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    borderRadius: 10,
+    borderWidth: 1,
+  },
+  fileUploadBtnText: {
+    fontFamily: "DMSans_700Bold",
+    fontSize: 12,
+    fontWeight: "700",
+  },
+  csvTextInput: {
+    fontFamily: Platform.OS === "ios" ? "Courier" : "monospace",
+    fontSize: 11.5,
+    borderRadius: 12,
+    borderWidth: 1,
+    padding: 10,
+    minHeight: 110,
+    maxHeight: 180,
+    textAlignVertical: "top",
   },
 });

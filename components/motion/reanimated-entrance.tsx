@@ -55,14 +55,14 @@ export function ReanimatedEntrance({
   if (direction === "down") {
     enteringAnimation = FadeInDown.springify()
       .damping(22)
-      .stiffness(240)
-      .mass(0.7)
+      .stiffness(280)
+      .mass(0.6)
       .delay(delay);
   } else if (direction === "up") {
     enteringAnimation = FadeInUp.springify()
       .damping(22)
-      .stiffness(240)
-      .mass(0.7)
+      .stiffness(280)
+      .mass(0.6)
       .delay(delay);
   } else {
     enteringAnimation = FadeIn.duration(duration).delay(delay);

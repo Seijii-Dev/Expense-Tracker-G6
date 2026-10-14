@@ -21,6 +21,7 @@ import Svg, { Path, Circle } from "react-native-svg";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ConfirmDialog } from "@/components/common/confirm-dialog";
 import { AccountSkeleton } from "@/components/ui/account-skeleton";
+import { GlassSurface } from "@/components/ui/glass-surface";
 import { useAuth } from "@/lib/auth-store";
 import { useExpenses } from "@/lib/expense-store";
 import { useTheme } from "@/lib/theme-store";
@@ -28,7 +29,7 @@ import { formatMoney } from "@/utils/formatters";
 import { ProfileAvatar } from "@/components/account/profile-avatar";
 import { ProfileBannerLayer } from "@/components/account/profile-banner-layer";
 import { radii, spacing, typography } from "@/constants/design-tokens";
-import { MotionEntrance, PressableScale } from "@/components/motion";
+import { MotionEntrance, MotionNumber, PressableScale } from "@/components/motion";
 import {
   persistProfilePicture,
   removeStoredProfilePicture,
@@ -279,9 +280,29 @@ export default function AccountScreen() {
           />
         }
       >
-        {/* Top Contextual Sub-bar: Action icons repositioned to the LEFT (TikTok profile inspiration) */}
+        {/* Top Contextual Bar */}
         <MotionEntrance delay={0}>
           <View style={[styles.topSubBar, { paddingTop: Math.max(insets.top + 6, 12) }]}>
+            <PressableScale
+              style={[
+                styles.backBtn,
+                { backgroundColor: dark ? "rgba(255,255,255,0.06)" : colors.surface },
+              ]}
+              onPress={() => {
+                if (router.canGoBack()) {
+                  router.back();
+                } else {
+                  router.replace("/(tabs)/settings");
+                }
+              }}
+              accessibilityRole="button"
+              accessibilityLabel="Back"
+            >
+              <Ionicons name="arrow-back" size={18} color={colors.foreground} />
+            </PressableScale>
+
+            <Text style={[styles.topSubBarTitle, { color: colors.foreground }]}>Profile</Text>
+
             <View style={styles.topActionsRow}>
               <PressableScale
                 style={[
@@ -298,27 +319,15 @@ export default function AccountScreen() {
                 <Ionicons name="image-outline" size={14} color={colors.foreground} />
                 <Text style={[styles.editBannerText, { color: colors.foreground }]}>Edit Banner</Text>
               </PressableScale>
-
-              <PressableScale
-                style={[
-                  styles.gearCircleBtn,
-                  { backgroundColor: dark ? "rgba(255,255,255,0.06)" : colors.surface },
-                ]}
-                onPress={() => router.push("/(tabs)/settings")}
-                accessibilityRole="button"
-                accessibilityLabel="Open settings"
-              >
-                <Ionicons name="settings-outline" size={18} color={colors.foreground} />
-              </PressableScale>
             </View>
           </View>
         </MotionEntrance>
 
-        {/* Hero Banner Section matching Stitch */}
+        {/* Hero Profile Banner */}
         <MotionEntrance delay={60}>
           <View style={styles.bannerContainer}>
             <View style={[styles.bannerCard, { height: bannerHeight }]}>
-              {/* Fallback Terracotta Architectural Gradient Backdrop */}
+              {/* Fallback Brand Gradient Backdrop */}
               <LinearGradient
                 colors={["#FF5A4E", "#E84A3F", "#C83226"]}
                 start={{ x: 0, y: 0 }}
@@ -326,7 +335,7 @@ export default function AccountScreen() {
                 style={StyleSheet.absoluteFillObject}
               />
 
-              {/* Abstract Architectural SVG Overlay (Base underlay pattern) */}
+              {/* Geometric SVG Underlay Pattern */}
               <Svg
                 style={StyleSheet.absoluteFillObject}
                 preserveAspectRatio="none"
@@ -356,14 +365,14 @@ export default function AccountScreen() {
                 />
               ) : null}
 
-              {/* Decorative Micro Badge on Banner matching Stitch */}
+              {/* Region Badge */}
               <View style={styles.bannerBadge}>
                 <Ionicons name="shield-checkmark" size={12} color={colors.primary} />
                 <Text style={styles.bannerBadgeText}>PHILIPPINES ED.</Text>
               </View>
             </View>
 
-            {/* Floating Avatar with overlap matching Stitch */}
+            {/* Floating Avatar */}
             <View style={styles.avatarOverlapSection}>
               <View style={styles.avatarRingWrap}>
                 <ProfileAvatar
@@ -379,8 +388,8 @@ export default function AccountScreen() {
                 </View>
 
                 {/* Camera edit button on avatar */}
-                <PressableScale
-                  style={styles.avatarEditBtn}
+                <Pressable
+                  style={({ pressed }) => [styles.avatarEditBtn, pressed && { opacity: 0.85, transform: [{ scale: 0.95 }] }]}
                   onPress={() => {
                     setPhotoError(null);
                     setShowPhotoActions(true);
@@ -389,7 +398,7 @@ export default function AccountScreen() {
                   accessibilityLabel="Edit profile picture"
                 >
                   <Ionicons name="camera" size={13} color={colors.primary} />
-                </PressableScale>
+                </Pressable>
               </View>
 
               {/* Identity Details */}
@@ -410,18 +419,16 @@ export default function AccountScreen() {
           </View>
         </MotionEntrance>
 
-        {/* Financial Snapshot Overview (3 Mini-Cards Grid matching Stitch) */}
+        {/* Financial Snapshot Overview */}
         <MotionEntrance delay={120}>
           <View style={[styles.snapshotGrid, windowWidth < 380 && styles.snapshotGridNarrow]}>
             {/* 1. Total Tracked */}
-            <View
+            <GlassSurface
+              variant="card"
+              radius={16}
               style={[
                 styles.snapshotCard,
                 windowWidth < 380 && styles.snapshotCardNarrow,
-                {
-                  backgroundColor: colors.surface,
-                  borderColor: colors.border,
-                },
               ]}
             >
               <View style={[styles.snapshotIconBox, { backgroundColor: colors.primarySoft }]}>
@@ -429,21 +436,24 @@ export default function AccountScreen() {
               </View>
               <View>
                 <Text style={[styles.snapshotLabel, { color: colors.muted }]}>TOTAL TRACKED</Text>
-                <Text style={[styles.snapshotAmount, { color: colors.foreground }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.72}>
-                  {formatMoney(totalTracked)}
-                </Text>
+                <MotionNumber
+                  value={totalTracked}
+                  formatter={formatMoney}
+                  style={[styles.snapshotAmount, { color: colors.foreground }]}
+                  numberOfLines={1}
+                  adjustsFontSizeToFit
+                  minimumFontScale={0.72}
+                />
               </View>
-            </View>
+            </GlassSurface>
 
             {/* 2. Active Budget */}
-            <View
+            <GlassSurface
+              variant="card"
+              radius={16}
               style={[
                 styles.snapshotCard,
                 windowWidth < 380 && styles.snapshotCardNarrow,
-                {
-                  backgroundColor: colors.surface,
-                  borderColor: colors.border,
-                },
               ]}
             >
               <View style={[styles.snapshotIconBox, { backgroundColor: colors.successSoft }]}>
@@ -451,21 +461,24 @@ export default function AccountScreen() {
               </View>
               <View>
                 <Text style={[styles.snapshotLabel, { color: colors.muted }]}>BUDGET</Text>
-                <Text style={[styles.snapshotAmount, { color: colors.foreground }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.72}>
-                  {formatMoney(budget)}
-                </Text>
+                <MotionNumber
+                  value={budget}
+                  formatter={formatMoney}
+                  style={[styles.snapshotAmount, { color: colors.foreground }]}
+                  numberOfLines={1}
+                  adjustsFontSizeToFit
+                  minimumFontScale={0.72}
+                />
               </View>
-            </View>
+            </GlassSurface>
 
             {/* 3. Remaining Balance */}
-            <View
+            <GlassSurface
+              variant="card"
+              radius={16}
               style={[
                 styles.snapshotCard,
                 windowWidth < 380 && styles.snapshotCardWide,
-                {
-                  backgroundColor: colors.surface,
-                  borderColor: colors.border,
-                },
               ]}
             >
               <View style={[styles.snapshotIconBox, { backgroundColor: dark ? "rgba(255,255,255,0.08)" : colors.surfaceSubtle }]}>
@@ -473,37 +486,45 @@ export default function AccountScreen() {
               </View>
               <View>
                 <Text style={[styles.snapshotLabel, { color: colors.muted }]}>REMAINING</Text>
-                <Text
-                  style={[
-                    styles.snapshotAmount,
-                    { color: totalBalance > 0 ? colors.success : colors.foreground },
-                  ]}
-                  numberOfLines={1}
-                  adjustsFontSizeToFit
-                  minimumFontScale={0.72}
-                >
-                  {isBalanceHidden ? "••••••" : formatMoney(totalBalance)}
-                </Text>
+                {isBalanceHidden ? (
+                  <Text
+                    style={[
+                      styles.snapshotAmount,
+                      { color: totalBalance > 0 ? colors.success : colors.foreground },
+                    ]}
+                    numberOfLines={1}
+                  >
+                    ••••••
+                  </Text>
+                ) : (
+                  <MotionNumber
+                    value={totalBalance}
+                    formatter={formatMoney}
+                    style={[
+                      styles.snapshotAmount,
+                      { color: totalBalance > 0 ? colors.success : colors.foreground },
+                    ]}
+                    numberOfLines={1}
+                    adjustsFontSizeToFit
+                    minimumFontScale={0.72}
+                  />
+                )}
               </View>
-            </View>
+            </GlassSurface>
           </View>
         </MotionEntrance>
 
-        {/* Group: Personal Details (Matching Stitch Grouped Card) */}
+        {/* Personal Details */}
         <MotionEntrance delay={180}>
           <View style={styles.sectionWrap}>
             <View style={styles.sectionTitleRow}>
               <Text style={[styles.sectionTitle, { color: colors.muted }]}>PERSONAL DETAILS</Text>
             </View>
 
-            <View
-              style={[
-                styles.groupedCard,
-                {
-                  backgroundColor: colors.surface,
-                  borderColor: colors.border,
-                },
-              ]}
+            <GlassSurface
+              variant="card"
+              radius={20}
+              style={styles.groupedCard}
             >
               {/* Full Name */}
               <Pressable
@@ -577,11 +598,11 @@ export default function AccountScreen() {
                 </View>
                 <Ionicons name="chevron-forward" size={16} color={colors.muted} />
               </Pressable>
-            </View>
+            </GlassSurface>
           </View>
         </MotionEntrance>
 
-        {/* Destructive Action: Log Out Button matching Stitch */}
+        {/* Sign Out Action */}
         <MotionEntrance delay={240}>
           <View style={styles.logoutSection}>
             <PressableScale
@@ -1048,7 +1069,7 @@ const styles = StyleSheet.create({
     fontSize: 11.5,
     fontWeight: "600",
   },
-  gearCircleBtn: {
+  backBtn: {
     width: 40,
     height: 40,
     borderRadius: radii.pill,
@@ -1060,6 +1081,12 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 1 },
     elevation: 1,
     ...(Platform.OS === "web" ? ({ cursor: "pointer" } as any) : {}),
+  },
+  topSubBarTitle: {
+    fontFamily: "DMSans_700Bold",
+    fontSize: 17,
+    fontWeight: "700",
+    letterSpacing: -0.2,
   },
   bannerContainer: {
     position: "relative",
@@ -1097,17 +1124,20 @@ const styles = StyleSheet.create({
   },
   avatarOverlapSection: {
     alignItems: "center",
-    marginTop: -42,
+    marginTop: -46,
     zIndex: 10,
   },
   avatarRingWrap: {
+    width: 96,
+    height: 96,
+    borderRadius: 48,
     position: "relative",
-    padding: 3.5,
-    borderRadius: 999,
+    alignItems: "center",
+    justifyContent: "center",
     backgroundColor: "#FFFFFF",
     shadowColor: "#1A1D20",
-    shadowOpacity: 0.12,
-    shadowRadius: 10,
+    shadowOpacity: 0.16,
+    shadowRadius: 12,
     shadowOffset: { width: 0, height: 4 },
     elevation: 4,
   },
@@ -1123,41 +1153,45 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     borderWidth: 2,
     borderColor: "#FFFFFF",
+    zIndex: 5,
   },
   avatarEditBtn: {
     position: "absolute",
     top: 2,
     right: 2,
-    width: 24,
-    height: 24,
-    borderRadius: 12,
+    width: 26,
+    height: 26,
+    borderRadius: 13,
     backgroundColor: "#FFFFFF",
     alignItems: "center",
     justifyContent: "center",
     borderWidth: 1.5,
     borderColor: "#FED7D2",
     shadowColor: "#000",
-    shadowOpacity: 0.1,
+    shadowOpacity: 0.12,
     shadowRadius: 4,
     shadowOffset: { width: 0, height: 1 },
-    elevation: 2,
+    elevation: 3,
+    zIndex: 5,
     ...(Platform.OS === "web" ? ({ cursor: "pointer" } as any) : {}),
   },
   identityDetails: {
     alignItems: "center",
-    marginTop: 8,
+    marginTop: 12,
+    paddingHorizontal: 20,
+    width: "100%",
   },
   userName: {
-    fontFamily: "Fraunces_600SemiBold",
-    fontSize: 20,
-    fontWeight: "600",
-    letterSpacing: -0.4,
+    fontFamily: "DMSans_700Bold",
+    fontSize: 21,
+    fontWeight: "700",
+    letterSpacing: -0.3,
   },
   userHandle: {
     fontFamily: "DMSans_500Medium",
-    fontSize: 12.5,
+    fontSize: 13,
     fontWeight: "500",
-    marginTop: 2,
+    marginTop: 3,
   },
   bannerNoticeText: {
     color: "#10B981",
@@ -1213,13 +1247,6 @@ const styles = StyleSheet.create({
   snapshotCard: {
     flex: 1,
     padding: 12,
-    borderRadius: radii.card,
-    borderWidth: 1,
-    shadowColor: "#1A1D20",
-    shadowOpacity: 0.03,
-    shadowRadius: 6,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 1,
     justifyContent: "space-between",
   },
   snapshotCardNarrow: {
@@ -1266,14 +1293,7 @@ const styles = StyleSheet.create({
     textTransform: "uppercase",
   },
   groupedCard: {
-    borderRadius: 20,
-    borderWidth: 1,
     overflow: "hidden",
-    shadowColor: "#1A1D20",
-    shadowOpacity: 0.03,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 1,
   },
   detailsRow: {
     flexDirection: "row",

@@ -23,46 +23,49 @@ function getTopCategoryInfo(expenses: Expense[]): TopCategoryInfo | null {
   return top ? { name: top[0], total: top[1] } : null;
 }
 
+import { GlassSurface } from "@/components/ui/glass-surface";
+
 export const SpendingInsight = React.memo(function SpendingInsight({ expenses }: SpendingInsightProps) {
   const { colors, dark } = useTheme();
   const hasExpenses = expenses.length > 0;
   const topInfo = React.useMemo(() => getTopCategoryInfo(expenses), [expenses]);
 
   return (
-    <View
-      style={[
-        styles.card,
-        {
-          backgroundColor: dark ? "rgba(255, 255, 255, 0.04)" : colors.surfaceSubtle,
-          borderColor: colors.border,
-        },
-      ]}
+    <GlassSurface
+      radius={20}
+      variant="card"
+      style={styles.card}
+      contentStyle={styles.cardContent}
     >
       <View style={[styles.iconWrap, { backgroundColor: dark ? "rgba(16, 185, 129, 0.18)" : "#ECFDF5" }]}>
-        <Ionicons name="checkmark-circle" size={20} color={colors.success} />
+        <Ionicons name="sparkles" size={18} color={colors.success} />
       </View>
       <View style={styles.content}>
-        <Text style={[styles.title, { color: colors.foreground }]}>Pacing beautifully!</Text>
+        <Text style={[styles.title, { color: colors.foreground }]}>
+          {hasExpenses && topInfo ? "Spending Insight" : "Budget Ready"}
+        </Text>
         <Text style={[styles.copy, { color: colors.muted }]}>
           {hasExpenses && topInfo
-            ? `${topInfo.name} leads your budget this month (${formatMoney(topInfo.total)}). Your spending pace is well tracked.`
-            : "Your spending records remain encrypted offline and update smoothly in real time."}
+            ? `Your highest expenditure this month is ${topInfo.name} at ${formatMoney(topInfo.total)}.`
+            : "No expenses recorded this month yet. Tap the '+' button to log a payment."}
         </Text>
       </View>
-    </View>
+    </GlassSurface>
   );
 });
 
+
 const styles = StyleSheet.create({
   card: {
+    marginBottom: 16,
+  },
+  cardContent: {
     flexDirection: "row",
     alignItems: "center",
     gap: 14,
     padding: 16,
-    borderRadius: 20,
-    borderWidth: 1,
-    marginBottom: 16,
   },
+
   iconWrap: {
     width: 42,
     height: 42,

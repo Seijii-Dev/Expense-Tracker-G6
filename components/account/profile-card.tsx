@@ -118,7 +118,7 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   name: {
-    fontFamily: "Fraunces_700Bold",
+    fontFamily: "DMSans_700Bold",
     fontSize: 17,
     letterSpacing: -0.2,
   },

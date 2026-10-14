@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { Platform, StyleSheet, Text, View, useWindowDimensions } from "react-native";
+import { Platform, Pressable, StyleSheet, Text, View, useWindowDimensions } from "react-native";
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -10,6 +10,8 @@ import { useTheme } from "@/lib/theme-store";
 import { formatMoney } from "@/utils/formatters";
 import { SpendingTimeline } from "@/utils/spending-trajectory";
 import { radii, spacing } from "@/constants/design-tokens";
+
+import { GlassSurface } from "@/components/ui/glass-surface";
 
 interface SpendingTrendChartProps {
   timeline: SpendingTimeline;
@@ -79,25 +81,21 @@ export function SpendingTrendChart({ timeline }: SpendingTrendChartProps) {
   const tooltipLeft = Math.max(12, Math.min(activePoint.x - tooltipWidth / 2, chartWidth - tooltipWidth - 12));
 
   return (
-    <Animated.View
-      onLayout={(e) => {
-        const w = e.nativeEvent.layout.width;
-        if (w > 0 && Math.abs(w - measuredWidth) > 1) {
-          setMeasuredWidth(w);
-        }
-      }}
-      style={[
-        styles.container,
-        {
-          backgroundColor: colors.surface,
-          borderColor: colors.border,
-          shadowColor: dark ? "#000000" : "#1A1D20",
-          shadowOpacity: dark ? 0.35 : 0.04,
-        },
-        animatedContainerStyle,
-      ]}
-    >
-      <View style={styles.headerRow}>
+    <Animated.View style={animatedContainerStyle}>
+      <GlassSurface
+        variant="card"
+        radius={24}
+        style={styles.container}
+        contentStyle={styles.containerContent}
+        onLayout={(e: any) => {
+          const w = e.nativeEvent.layout.width;
+          if (w > 0 && Math.abs(w - measuredWidth) > 1) {
+            setMeasuredWidth(w);
+          }
+        }}
+      >
+        <View style={styles.headerRow}>
+
         <View style={styles.titleBlock}>
           <Text style={[styles.kicker, { color: colors.muted }]}>SPENDING TREND</Text>
           <View style={styles.amountRow}>
@@ -216,7 +214,7 @@ export function SpendingTrendChart({ timeline }: SpendingTrendChartProps) {
                 <Circle
                   cx={point.x}
                   cy={point.y}
-                  r={14}
+                  r={24}
                   fill="transparent"
                   onPress={() => setSelectedPointKey(point.key)}
                   accessibilityLabel={`${point.label}: ${formatMoney(point.amount)}`}
@@ -227,44 +225,55 @@ export function SpendingTrendChart({ timeline }: SpendingTrendChartProps) {
         </Svg>
       </View>
 
-      {/* Horizontal Axis */}
+      {/* Horizontal Axis with interactive inspection */}
       <View style={[styles.xAxisRow, { paddingLeft, paddingRight }]}>
         {timeline.points.map((point) => {
           const isSelected = point.key === activePoint.key;
           return (
-            <Text
+            <Pressable
               key={point.key}
+              onPress={() => setSelectedPointKey(point.key)}
+              hitSlop={6}
               style={[
-                styles.axisText,
-                {
-                  color: isSelected ? colors.primary : colors.muted,
-                  fontWeight: isSelected ? "700" : "500",
+                styles.axisButton,
+                isSelected && {
+                  backgroundColor: dark ? "rgba(232, 74, 63, 0.16)" : colors.primarySoft,
+                  borderColor: colors.primary,
                 },
               ]}
-              numberOfLines={1}
+              accessibilityRole="button"
+              accessibilityLabel={`${point.label}: ${formatMoney(point.amount)}`}
             >
-              {point.label}
-            </Text>
+              <Text
+                style={[
+                  styles.axisText,
+                  {
+                    color: isSelected ? colors.primary : colors.muted,
+                    fontWeight: isSelected ? "700" : "500",
+                  },
+                ]}
+                numberOfLines={1}
+              >
+                {point.label}
+              </Text>
+            </Pressable>
           );
         })}
       </View>
+      </GlassSurface>
     </Animated.View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    borderRadius: radii.panel,
-    borderWidth: 1,
+    marginBottom: spacing.lg,
+  },
+  containerContent: {
     paddingTop: spacing.lg,
     paddingBottom: spacing.md,
-    marginBottom: spacing.lg,
-    shadowOffset: { width: 0, height: 4 },
-    shadowRadius: 12,
-    elevation: 2,
-    position: "relative",
-    overflow: "hidden",
   },
+
   headerRow: {
     flexDirection: "row",
     alignItems: "flex-start",
@@ -348,8 +357,17 @@ const styles = StyleSheet.create({
     gap: 2,
     marginTop: 2,
   },
+  axisButton: {
+    paddingHorizontal: 4,
+    paddingVertical: 2,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: "transparent",
+    alignItems: "center",
+    justifyContent: "center",
+    ...(Platform.OS === "web" ? ({ cursor: "pointer" } as any) : {}),
+  },
   axisText: {
-    flex: 1,
     textAlign: "center",
     fontSize: 9.5,
   },

@@ -18,6 +18,9 @@ interface ExpenseRowProps {
   onEdit?: () => void;
   onDelete?: () => void;
   showActions?: boolean;
+  isSelectable?: boolean;
+  isSelected?: boolean;
+  onToggleSelect?: () => void;
 }
 
 export const ExpenseRow = React.memo(function ExpenseRow({
@@ -26,6 +29,9 @@ export const ExpenseRow = React.memo(function ExpenseRow({
   onEdit,
   onDelete,
   showActions = true,
+  isSelectable = false,
+  isSelected = false,
+  onToggleSelect,
 }: ExpenseRowProps) {
   const { colors, dark } = useTheme();
   const { customCategories } = useExpenses();
@@ -38,8 +44,30 @@ export const ExpenseRow = React.memo(function ExpenseRow({
     setShowDeleteConfirm(true);
   }, []);
 
+  const handleBodyPress = isSelectable ? onToggleSelect : (onPress || onEdit);
+
   return (
     <View style={[styles.row, compact && styles.rowCompact, { borderBottomColor: colors.borderSubtle }]}>
+      {/* Optional Multi-Select Checkbox */}
+      {isSelectable && (
+        <Pressable
+          onPress={onToggleSelect}
+          hitSlop={8}
+          style={[
+            styles.checkbox,
+            {
+              backgroundColor: isSelected ? colors.primary : "transparent",
+              borderColor: isSelected ? colors.primary : colors.border,
+            },
+          ]}
+          accessibilityRole="checkbox"
+          accessibilityState={{ checked: isSelected }}
+          accessibilityLabel={`Select ${expense.description}`}
+        >
+          {isSelected && <Ionicons name="checkmark" size={13} color="#FFFFFF" />}
+        </Pressable>
+      )}
+
       {/* Category Avatar (44px, 12px radius, contextual pastel tint) */}
       <View
         style={[
@@ -57,7 +85,7 @@ export const ExpenseRow = React.memo(function ExpenseRow({
       {/* Main Content */}
       <Pressable
         style={[styles.body, compact && styles.bodyCompact]}
-        onPress={onPress || onEdit}
+        onPress={handleBodyPress}
         accessibilityRole="button"
         accessibilityLabel={`${expense.description}, ${formatMoney(expense.amount)}, ${expense.category}, ${formatDate(expense.date)}`}
       >
@@ -162,6 +190,16 @@ const styles = StyleSheet.create({
   },
   rowCompact: {
     gap: spacing.sm,
+  },
+  checkbox: {
+    width: 22,
+    height: 22,
+    borderRadius: 6,
+    borderWidth: 1.5,
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: 2,
+    ...(Platform.OS === "web" ? ({ cursor: "pointer" } as any) : {}),
   },
   iconWrap: {
     width: 40,

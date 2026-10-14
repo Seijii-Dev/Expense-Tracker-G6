@@ -4,6 +4,7 @@ import {
   Platform,
   Pressable,
   RefreshControl,
+  ScrollView,
   StyleSheet,
   Text,
   View,
@@ -12,6 +13,7 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 
 import { ScreenContainer } from "@/components/screen-container";
+import { GlassSurface } from "@/components/ui/glass-surface";
 import { ExpenseRow } from "@/components/ui/expense-row";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ExpenseModal } from "@/components/expense-modal";
@@ -23,13 +25,14 @@ import { useExpenses } from "@/lib/expense-store";
 import { useTheme } from "@/lib/theme-store";
 import { formatDate, formatMoney } from "@/utils/formatters";
 import { useFilteredExpenses } from "@/hooks/useFilteredExpenses";
-import { MotionEntrance, PressableScale } from "@/components/motion";
+import { MotionEntrance, MotionNumber, MotionSegmentedControl, PressableScale } from "@/components/motion";
 import { TransactionsSkeleton } from "@/components/ui/transactions-skeleton";
 import { DatePickerModal } from "@/components/common/date-picker-modal";
 import { addCalendarDays, getExpenseDateKey, getPhilippinesDate, getYesterdayDate } from "@/utils/date";
 import { exportExpensesToCsv } from "@/utils/export-csv";
 import { ConfirmDialog } from "@/components/common/confirm-dialog";
 import { radii, spacing, typography } from "@/constants/design-tokens";
+
 
 export default function TransactionsScreen() {
   const { sortedExpenses, removeExpense, updateExpense, addExpense, refreshExpenses, syncing, hydrated } =
@@ -49,6 +52,10 @@ export default function TransactionsScreen() {
     variant: "success" | "danger" | "warning";
   } | null>(null);
 
+  const [isSelectMode, setIsSelectMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [showBulkDeleteConfirm, setShowBulkDeleteConfirm] = useState(false);
+
   const todayDate = getPhilippinesDate();
   const yesterdayDate = getYesterdayDate();
 
@@ -59,6 +66,8 @@ export default function TransactionsScreen() {
     setCategory,
     sortBy,
     setSortBy,
+    rangePreset,
+    setRangePreset,
     filtered,
     total,
     resetFilters: resetTextFilters,
@@ -68,7 +77,32 @@ export default function TransactionsScreen() {
   const resetFilters = useCallback(() => {
     resetTextFilters();
     setSelectedDate(null);
-  }, [resetTextFilters]);
+    setRangePreset("all");
+  }, [resetTextFilters, setRangePreset]);
+
+  const toggleSelectExpense = useCallback((id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }, []);
+
+  const handleSelectAll = useCallback(() => {
+    if (selectedIds.size === filtered.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(filtered.map((e) => e.id)));
+    }
+  }, [filtered, selectedIds.size]);
+
+  const handleConfirmBulkDelete = useCallback(() => {
+    selectedIds.forEach((id) => removeExpense(id));
+    setSelectedIds(new Set());
+    setIsSelectMode(false);
+    setShowBulkDeleteConfirm(false);
+  }, [selectedIds, removeExpense]);
 
   const navigateDate = useCallback(
     (direction: -1 | 1) => {
@@ -146,8 +180,8 @@ export default function TransactionsScreen() {
         {/* Confident Screen Header & Month Switcher */}
         <View style={[styles.screenHeaderRow, isNarrowScreen && styles.screenHeaderRowCompact]}>
           <View style={[styles.headerLeft, isNarrowScreen && styles.headerLeftCompact]}>
-            <Text style={[styles.kicker, { color: colors.muted }]}>LEDGER & HISTORY</Text>
-            <Text style={[styles.title, { color: colors.foreground }]}>Records</Text>
+            <Text style={[styles.kicker, { color: colors.muted }]}>ACTIVITY</Text>
+            <Text style={[styles.title, { color: colors.foreground }]}>Transactions</Text>
           </View>
 
           <View style={[styles.headerActions, isNarrowScreen && styles.headerActionsCompact]}>
@@ -169,6 +203,34 @@ export default function TransactionsScreen() {
                 {selectedDate ? formatDate(selectedDate) : "All Dates"}
               </Text>
               <Ionicons name="chevron-down" size={13} color={colors.muted} />
+            </PressableScale>
+
+            {/* Multi-Select Toggle */}
+            <PressableScale
+              onPress={() => {
+                setIsSelectMode((prev) => !prev);
+                setSelectedIds(new Set());
+              }}
+              style={[
+                styles.iconActionBtn,
+                isSelectMode && { backgroundColor: colors.primary, borderColor: colors.primary },
+                {
+                  backgroundColor: isSelectMode
+                    ? colors.primary
+                    : dark
+                    ? "rgba(255,255,255,0.06)"
+                    : "#FFFFFF",
+                  borderColor: isSelectMode ? colors.primary : colors.border,
+                },
+              ]}
+              accessibilityRole="button"
+              accessibilityLabel={isSelectMode ? "Cancel selection" : "Select multiple records"}
+            >
+              <Ionicons
+                name={isSelectMode ? "close" : "checkbox-outline"}
+                size={17}
+                color={isSelectMode ? "#FFFFFF" : colors.foreground}
+              />
             </PressableScale>
 
             {/* Export Document Action */}
@@ -204,6 +266,49 @@ export default function TransactionsScreen() {
           </View>
         </View>
 
+        {/* Multi-Select Action Bar (when active) */}
+        {isSelectMode && (
+          <GlassSurface variant="card" radius={14} style={styles.selectionBar}>
+            <Pressable onPress={handleSelectAll} style={styles.selectActionBtn}>
+              <Ionicons
+                name={
+                  selectedIds.size === filtered.length && filtered.length > 0
+                    ? "checkbox"
+                    : "square-outline"
+                }
+                size={16}
+                color={colors.primary}
+              />
+              <Text style={[styles.selectActionText, { color: colors.foreground }]}>
+                {selectedIds.size === filtered.length && filtered.length > 0
+                  ? "Deselect All"
+                  : "Select All"}
+              </Text>
+            </Pressable>
+
+            <Text style={[styles.selectedCountText, { color: colors.muted }]}>
+              {selectedIds.size} of {filtered.length} selected
+            </Text>
+
+            <PressableScale
+              onPress={() => {
+                if (selectedIds.size > 0) setShowBulkDeleteConfirm(true);
+              }}
+              disabled={selectedIds.size === 0}
+              style={[
+                styles.bulkDeleteBtn,
+                {
+                  backgroundColor: selectedIds.size > 0 ? colors.primary : colors.border,
+                  opacity: selectedIds.size > 0 ? 1 : 0.5,
+                },
+              ]}
+            >
+              <Ionicons name="trash-outline" size={13} color="#FFFFFF" />
+              <Text style={styles.bulkDeleteText}>Delete ({selectedIds.size})</Text>
+            </PressableScale>
+          </GlassSurface>
+        )}
+
         {/* Search Bar */}
         <SearchBar
           value={query}
@@ -212,6 +317,24 @@ export default function TransactionsScreen() {
           onPressFilter={() => setShowSortFilter((prev) => !prev)}
           hasActiveFilters={hasActiveFilters}
         />
+
+        {/* Quick Date Range Pills with Motion.dev Morphing Pill */}
+        <View style={{ marginBottom: 10 }}>
+          <MotionSegmentedControl
+            options={[
+              { id: "all", label: "All Time" },
+              { id: "today", label: "Today" },
+              { id: "week", label: "7 Days" },
+              { id: "month", label: "This Month" },
+              { id: "last_month", label: "Last Month" },
+            ]}
+            selectedId={selectedDate ? "" : rangePreset}
+            onSelect={(id) => {
+              setSelectedDate(null);
+              setRangePreset(id as any);
+            }}
+          />
+        </View>
 
         {/* Date Filter & Navigator Block */}
         <View style={styles.dateFilterBlock}>
@@ -292,16 +415,13 @@ export default function TransactionsScreen() {
           </View>
         )}
 
-        {/* Monthly Overview Ribbon / Summary Mini-Card */}
+        {/* Summary Ribbon */}
         <MotionEntrance delay={60}>
-          <View
-            style={[
-              styles.monthlySummaryRibbon,
-              {
-                backgroundColor: colors.card,
-                borderColor: colors.border,
-              },
-            ]}
+          <GlassSurface
+            variant="card"
+            radius={18}
+            style={styles.monthlySummaryRibbon}
+            contentStyle={styles.ribbonContent}
           >
             <View style={styles.ribbonLeft}>
               <View style={[styles.ribbonIconBox, { backgroundColor: colors.primarySoft }]}>
@@ -312,11 +432,13 @@ export default function TransactionsScreen() {
                   {selectedDate ? `${formatDate(selectedDate).toUpperCase()} TOTAL` : "FILTERED TOTAL"}
                 </Text>
                 <View style={styles.ribbonAmountRow}>
-                  <Text style={[styles.ribbonAmount, { color: colors.foreground }]}>
-                    {formatMoney(total)}
-                  </Text>
+                  <MotionNumber
+                    value={total}
+                    formatter={formatMoney}
+                    style={[styles.ribbonAmount, { color: colors.foreground }]}
+                  />
                   <Text style={[styles.ribbonTxCount, { color: colors.muted }]}>
-                    • {filtered.length} txns
+                    • {filtered.length} {filtered.length === 1 ? "txn" : "txns"}
                   </Text>
                 </View>
               </View>
@@ -328,7 +450,7 @@ export default function TransactionsScreen() {
                 {category === "All" ? "All" : category}
               </Text>
             </View>
-          </View>
+          </GlassSurface>
         </MotionEntrance>
 
         <View style={{ height: 12 }} />
@@ -357,43 +479,34 @@ export default function TransactionsScreen() {
           </View>
 
           {/* Grouped Transaction Card Surface */}
-          <MotionEntrance enableLayoutTransition delay={0}>
-            <View
-              style={[
-                styles.transactionGroupCard,
-                {
-                  backgroundColor: colors.card,
-                  borderColor: colors.border,
-                },
-              ]}
-            >
-              {group.items.map((item, index) => (
-                <View key={item.id} style={{ paddingHorizontal: 14 }}>
-                  <ExpenseRow
-                    expense={item}
-                    onEdit={() => setEditingExpense(item)}
-                    onDelete={() => removeExpense(item.id)}
-                  />
-                </View>
-              ))}
-            </View>
-          </MotionEntrance>
+          <GlassSurface variant="card" radius={18} style={styles.transactionGroupCard}>
+            {group.items.map((item) => (
+              <View key={item.id} style={{ paddingHorizontal: 14 }}>
+                <ExpenseRow
+                  expense={item}
+                  onEdit={() => setEditingExpense(item)}
+                  onDelete={() => removeExpense(item.id)}
+                  isSelectable={isSelectMode}
+                  isSelected={selectedIds.has(item.id)}
+                  onToggleSelect={() => toggleSelectExpense(item.id)}
+                  showActions={!isSelectMode}
+                />
+              </View>
+            ))}
+          </GlassSurface>
         </View>
       );
     },
-    [colors.border, colors.card, colors.foreground, colors.muted, colors.primary, removeExpense]
+    [colors.foreground, colors.muted, colors.primary, isSelectMode, removeExpense, selectedIds, toggleSelectExpense]
   );
 
   const ListEmpty = useMemo(
     () => (
-      <View
-        style={[
-          styles.emptyContainer,
-          {
-            backgroundColor: colors.card,
-            borderColor: colors.border,
-          },
-        ]}
+      <GlassSurface
+        variant="card"
+        radius={20}
+        style={styles.emptyContainer}
+        contentStyle={styles.emptyContent}
       >
         <EmptyState
           icon="receipt-outline"
@@ -430,10 +543,11 @@ export default function TransactionsScreen() {
             <Text style={[styles.resetBtnText, { color: colors.primary }]}>Clear all filters</Text>
           </Pressable>
         )}
-      </View>
+      </GlassSurface>
     ),
-    [colors.border, colors.card, colors.primary, colors.primarySoft, hasActiveFilters, hasTransactionsForSelectedDate, resetFilters, selectedDate]
+    [colors.primary, colors.primarySoft, hasActiveFilters, hasTransactionsForSelectedDate, resetFilters, selectedDate]
   );
+
 
   if (!hydrated) {
     return (
@@ -497,6 +611,22 @@ export default function TransactionsScreen() {
           onConfirm={() => setExportNotice(null)}
         />
       )}
+
+      {/* Bulk Delete Confirmation Dialog */}
+      <ConfirmDialog
+        visible={showBulkDeleteConfirm}
+        title="Delete Selected Records?"
+        message={`Are you sure you want to delete ${selectedIds.size} selected transaction ${
+          selectedIds.size === 1 ? "record" : "records"
+        }? This action cannot be undone.`}
+        variant="danger"
+        icon="trash"
+        confirmText={`Delete ${selectedIds.size} ${selectedIds.size === 1 ? "Record" : "Records"}`}
+        cancelText="Cancel"
+        destructive
+        onConfirm={handleConfirmBulkDelete}
+        onCancel={() => setShowBulkDeleteConfirm(false)}
+      />
     </ScreenContainer>
   );
 }
@@ -504,7 +634,7 @@ export default function TransactionsScreen() {
 const styles = StyleSheet.create({
   scroll: {
     paddingTop: spacing.sm,
-    paddingBottom: 96,
+    paddingBottom: 104,
   },
   screenHeaderRow: {
     flexDirection: "row",
@@ -590,6 +720,68 @@ const styles = StyleSheet.create({
     elevation: 3,
     ...(Platform.OS === "web" ? ({ cursor: "pointer" } as any) : {}),
   },
+  rangePillsScroll: {
+    flexDirection: "row",
+    gap: 6,
+    marginTop: 10,
+    marginBottom: 4,
+    paddingVertical: 2,
+  },
+  rangePill: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: radii.pill,
+    borderWidth: 1,
+    shadowColor: "#000",
+    shadowOpacity: 0.02,
+    shadowRadius: 2,
+    elevation: 1,
+    ...(Platform.OS === "web" ? ({ cursor: "pointer" } as any) : {}),
+  },
+  rangePillText: {
+    fontFamily: "DMSans_700Bold",
+    fontSize: 11.5,
+    fontWeight: "700",
+  },
+  selectionBar: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    marginBottom: 10,
+  },
+  selectActionBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    ...(Platform.OS === "web" ? ({ cursor: "pointer" } as any) : {}),
+  },
+  selectActionText: {
+    fontFamily: "DMSans_700Bold",
+    fontSize: 12,
+    fontWeight: "700",
+  },
+  selectedCountText: {
+    fontFamily: "DMSans_500Medium",
+    fontSize: 11.5,
+    fontWeight: "500",
+  },
+  bulkDeleteBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 10,
+    ...(Platform.OS === "web" ? ({ cursor: "pointer" } as any) : {}),
+  },
+  bulkDeleteText: {
+    color: "#FFFFFF",
+    fontFamily: "DMSans_700Bold",
+    fontSize: 11.5,
+    fontWeight: "700",
+  },
   dateFilterBlock: {
     marginTop: 10,
     marginBottom: 4,
@@ -606,6 +798,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     borderRadius: 10,
+    ...(Platform.OS === "web" ? ({ cursor: "pointer" } as any) : {}),
   },
   disabledDateArrow: {
     opacity: 0.35,
@@ -621,6 +814,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     gap: 8,
+    ...(Platform.OS === "web" ? ({ cursor: "pointer" } as any) : {}),
   },
   datePickerText: {
     fontFamily: "DMSans_700Bold",
@@ -639,24 +833,21 @@ const styles = StyleSheet.create({
     minHeight: 24,
     justifyContent: "center",
     paddingHorizontal: 4,
+    ...(Platform.OS === "web" ? ({ cursor: "pointer" } as any) : {}),
   },
   dateActionText: {
     fontSize: 11,
     fontWeight: "700",
   },
   monthlySummaryRibbon: {
+    marginBottom: 8,
+  },
+  ribbonContent: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     paddingVertical: 12,
     paddingHorizontal: 16,
-    borderRadius: 16,
-    borderWidth: 1,
-    shadowColor: "#1A1D20",
-    shadowOpacity: 0.03,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 1,
   },
   ribbonLeft: {
     flexDirection: "row",
@@ -733,23 +924,17 @@ const styles = StyleSheet.create({
     fontWeight: "700",
   },
   transactionGroupCard: {
-    borderRadius: 18,
-    borderWidth: 1,
     overflow: "hidden",
-    shadowColor: "#1A1D20",
-    shadowOpacity: 0.03,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 3 },
-    elevation: 1,
   },
   emptyContainer: {
     marginTop: 16,
+  },
+  emptyContent: {
     paddingVertical: 28,
     paddingHorizontal: 20,
-    borderRadius: 20,
-    borderWidth: 1,
     alignItems: "center",
   },
+
   resetBtn: {
     paddingHorizontal: 18,
     paddingVertical: 10,
