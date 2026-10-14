@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useCallback, useRef, useState } from "react";
 import {
   Image,
   KeyboardAvoidingView,
@@ -10,10 +10,247 @@ import {
   TextInput,
   View,
 } from "react-native";
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring,
+  useReducedMotion,
+  interpolateColor,
+  interpolate,
+} from "react-native-reanimated";
 import { Ionicons } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { useTheme } from "@/lib/theme-store";
 import { AmbientBackground } from "@/components/ui/ambient-background";
+
+/* ─── Animated Floating Input ──────────────────────────────────── */
+
+interface FloatingInputProps {
+  label: string;
+  icon: keyof typeof Ionicons.glyphMap;
+  value: string;
+  onChangeText: (text: string) => void;
+  placeholder?: string;
+  secureTextEntry?: boolean;
+  keyboardType?: TextInput["props"]["keyboardType"];
+  autoCapitalize?: TextInput["props"]["autoCapitalize"];
+  autoCorrect?: boolean;
+  returnKeyType?: TextInput["props"]["returnKeyType"];
+  onSubmitEditing?: () => void;
+  trailingContent?: React.ReactNode;
+}
+
+const springConfig = { damping: 18, stiffness: 260, mass: 0.7 };
+
+function FloatingInput({
+  label,
+  icon,
+  value,
+  onChangeText,
+  placeholder,
+  secureTextEntry,
+  keyboardType,
+  autoCapitalize,
+  autoCorrect,
+  returnKeyType,
+  onSubmitEditing,
+  trailingContent,
+}: FloatingInputProps) {
+  const { colors, dark } = useTheme();
+  const reduceMotion = useReducedMotion();
+  const inputRef = useRef<TextInput>(null);
+  const [isFocused, setIsFocused] = useState(false);
+
+  const focusProgress = useSharedValue(0);
+  const hasValue = value.length > 0;
+  const isFloated = isFocused || hasValue;
+
+  const handleFocus = useCallback(() => {
+    setIsFocused(true);
+    focusProgress.value = reduceMotion ? 1 : withSpring(1, springConfig);
+  }, [focusProgress, reduceMotion]);
+
+  const handleBlur = useCallback(() => {
+    setIsFocused(false);
+    if (!value) {
+      focusProgress.value = reduceMotion ? 0 : withSpring(0, springConfig);
+    }
+  }, [focusProgress, value, reduceMotion]);
+
+  const labelStyle = useAnimatedStyle(() => {
+    const floated = isFloated ? 1 : focusProgress.value;
+    return {
+      transform: [
+        { translateY: interpolate(floated, [0, 1], [0, -22]) },
+        { scale: interpolate(floated, [0, 1], [1, 0.8]) },
+      ],
+      opacity: interpolate(floated, [0, 1], [0.5, 1]),
+    };
+  });
+
+  const borderStyle = useAnimatedStyle(() => ({
+    borderColor: interpolateColor(
+      focusProgress.value,
+      [0, 1],
+      [dark ? "rgba(255,255,255,0.10)" : "#E2E8F0", colors.primary]
+    ),
+  }));
+
+  const focusBgColor = isFocused
+    ? dark
+      ? "rgba(232, 74, 63, 0.06)"
+      : "rgba(232, 74, 63, 0.03)"
+    : dark
+    ? "rgba(255,255,255,0.04)"
+    : colors.surface;
+
+  return (
+    <Pressable
+      onPress={() => inputRef.current?.focus()}
+      accessibilityRole="none"
+    >
+      <Animated.View
+        style={[
+          styles.floatingFieldWrap,
+          borderStyle,
+          {
+            backgroundColor: focusBgColor,
+          },
+        ]}
+      >
+        {/* Leading Icon */}
+        <View
+          style={[
+            styles.floatingIconWrap,
+            {
+              backgroundColor: isFocused
+                ? dark
+                  ? "rgba(232, 74, 63, 0.18)"
+                  : colors.primarySoft
+                : dark
+                ? "rgba(255,255,255,0.06)"
+                : colors.surfaceSubtle,
+            },
+          ]}
+        >
+          <Ionicons
+            name={icon}
+            size={16}
+            color={isFocused ? colors.primary : colors.muted}
+          />
+        </View>
+
+        {/* Floating Label + Input */}
+        <View style={styles.floatingInputArea}>
+          <Animated.Text
+            style={[
+              styles.floatingLabel,
+              labelStyle,
+              {
+                color: isFocused ? colors.primary : colors.subtle,
+              },
+            ]}
+            numberOfLines={1}
+          >
+            {label}
+          </Animated.Text>
+          <TextInput
+            ref={inputRef}
+            value={value}
+            onChangeText={onChangeText}
+            onFocus={handleFocus}
+            onBlur={handleBlur}
+            placeholder={isFloated ? placeholder : undefined}
+            placeholderTextColor={colors.subtle}
+            secureTextEntry={secureTextEntry}
+            keyboardType={keyboardType}
+            autoCapitalize={autoCapitalize}
+            autoCorrect={autoCorrect}
+            returnKeyType={returnKeyType}
+            onSubmitEditing={onSubmitEditing}
+            style={[
+              styles.floatingInput,
+              {
+                color: colors.foreground,
+                marginTop: isFloated ? 10 : 0,
+              },
+            ]}
+            accessibilityLabel={label}
+          />
+        </View>
+
+        {/* Trailing content (e.g. password visibility toggle) */}
+        {trailingContent}
+
+        {/* Focused glow accent line */}
+        {isFocused && (
+          <View
+            style={[
+              styles.focusAccentLine,
+              { backgroundColor: colors.primary },
+            ]}
+          />
+        )}
+      </Animated.View>
+    </Pressable>
+  );
+}
+
+/* ─── Password Strength Indicator ──────────────────────────────── */
+
+function PasswordStrength({ password }: { password: string }) {
+  const { colors, dark } = useTheme();
+
+  if (!password) return null;
+
+  let strength = 0;
+  if (password.length >= 6) strength++;
+  if (password.length >= 8) strength++;
+  if (/[A-Z]/.test(password)) strength++;
+  if (/[0-9]/.test(password)) strength++;
+  if (/[^A-Za-z0-9]/.test(password)) strength++;
+
+  const levels = [
+    { label: "Weak", color: "#EF4444", bars: 1 },
+    { label: "Weak", color: "#EF4444", bars: 1 },
+    { label: "Fair", color: "#F59E0B", bars: 2 },
+    { label: "Good", color: "#10B981", bars: 3 },
+    { label: "Strong", color: "#10B981", bars: 4 },
+    { label: "Very Strong", color: "#059669", bars: 4 },
+  ];
+
+  const level = levels[strength];
+
+  return (
+    <View style={styles.strengthWrap}>
+      <View style={styles.strengthBars}>
+        {[1, 2, 3, 4].map((bar) => (
+          <View
+            key={bar}
+            style={[
+              styles.strengthBar,
+              {
+                backgroundColor:
+                  bar <= level.bars
+                    ? level.color
+                    : dark
+                    ? "rgba(255,255,255,0.08)"
+                    : "#E2E8F0",
+              },
+            ]}
+          />
+        ))}
+      </View>
+      <Text style={[styles.strengthLabel, { color: level.color }]}>
+        {level.label}
+      </Text>
+    </View>
+  );
+}
+
+/* ─── Main Auth Form ───────────────────────────────────────────── */
 
 interface AuthFormProps {
   mode: "login" | "register";
@@ -25,12 +262,16 @@ interface AuthFormProps {
 
 export function AuthForm({ mode, onModeChange, onBack, onSubmit, busy }: AuthFormProps) {
   const { colors, dark } = useTheme();
+  const insets = useSafeAreaInsets();
   const isRegister = mode === "register";
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+
+  const emailRef = useRef<TextInput>(null);
+  const passwordRef = useRef<TextInput>(null);
 
   const handleSubmit = () => {
     onSubmit({ name, email, password });
@@ -44,7 +285,10 @@ export function AuthForm({ mode, onModeChange, onBack, onSubmit, busy }: AuthFor
       <AmbientBackground />
 
       <ScrollView
-        contentContainerStyle={styles.formScroll}
+        contentContainerStyle={[
+          styles.formScroll,
+          { paddingTop: Math.max(insets.top + 10, Platform.OS === "ios" ? 56 : 38) },
+        ]}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
@@ -162,129 +406,114 @@ export function AuthForm({ mode, onModeChange, onBack, onSubmit, busy }: AuthFor
           </Pressable>
         </View>
 
-        {/* Form Fields */}
+        {/* Form Fields with Floating Labels */}
         <View style={styles.formFields}>
           {isRegister && (
-            <View>
-              <Text style={[styles.fieldLabel, { color: colors.subtle }]}>FULL NAME</Text>
-              <View
-                style={[
-                  styles.fieldWrap,
-                  {
-                    backgroundColor: colors.surface,
-                    borderColor: colors.border,
-                  },
-                ]}
-              >
-                <View
-                  style={[
-                    styles.fieldIconWrap,
-                    { backgroundColor: dark ? "rgba(255,255,255,0.04)" : colors.surfaceSubtle },
-                  ]}
-                >
-                  <Ionicons name="person-outline" size={17} color={colors.primary} />
-                </View>
-                <TextInput
-                  placeholder="e.g. Maria Santos"
-                  placeholderTextColor={colors.subtle}
-                  value={name}
-                  onChangeText={setName}
-                  autoCapitalize="words"
-                  style={[styles.input, { color: colors.foreground }]}
-                />
-              </View>
-            </View>
+            <FloatingInput
+              label="Full Name"
+              icon="person-outline"
+              value={name}
+              onChangeText={setName}
+              placeholder="e.g. Maria Santos"
+              autoCapitalize="words"
+              returnKeyType="next"
+              onSubmitEditing={() => emailRef.current?.focus()}
+            />
           )}
 
-          <View>
-            <Text style={[styles.fieldLabel, { color: colors.subtle }]}>EMAIL ADDRESS</Text>
-            <View
-              style={[
-                styles.fieldWrap,
-                {
-                  backgroundColor: colors.surface,
-                  borderColor: colors.border,
-                },
-              ]}
-            >
-              <View
-                style={[
-                  styles.fieldIconWrap,
-                  { backgroundColor: dark ? "rgba(255,255,255,0.04)" : colors.surfaceSubtle },
-                ]}
-              >
-                <Ionicons name="mail-outline" size={17} color={colors.primary} />
-              </View>
-              <TextInput
-                placeholder="you@example.com"
-                placeholderTextColor={colors.subtle}
-                value={email}
-                onChangeText={setEmail}
-                keyboardType="email-address"
-                autoCapitalize="none"
-                autoCorrect={false}
-                style={[styles.input, { color: colors.foreground }]}
-              />
-            </View>
-          </View>
+          <FloatingInput
+            label="Email Address"
+            icon="mail-outline"
+            value={email}
+            onChangeText={setEmail}
+            placeholder="you@example.com"
+            keyboardType="email-address"
+            autoCapitalize="none"
+            autoCorrect={false}
+            returnKeyType="next"
+            onSubmitEditing={() => passwordRef.current?.focus()}
+          />
 
           <View>
-            <Text style={[styles.fieldLabel, { color: colors.subtle }]}>PASSWORD</Text>
-            <View
-              style={[
-                styles.fieldWrap,
-                {
-                  backgroundColor: colors.surface,
-                  borderColor: colors.border,
-                },
-              ]}
-            >
-              <View
-                style={[
-                  styles.fieldIconWrap,
-                  { backgroundColor: dark ? "rgba(255,255,255,0.04)" : colors.surfaceSubtle },
-                ]}
-              >
-                <Ionicons name="lock-closed-outline" size={17} color={colors.primary} />
-              </View>
-              <TextInput
-                placeholder={isRegister ? "At least 6 characters" : "Your password"}
-                placeholderTextColor={colors.subtle}
-                value={password}
-                onChangeText={setPassword}
-                secureTextEntry={!showPassword}
-                autoCapitalize="none"
-                style={[styles.input, { color: colors.foreground }]}
-              />
-              <Pressable hitSlop={10} onPress={() => setShowPassword((v) => !v)}>
-                <Ionicons
-                  name={showPassword ? "eye-off-outline" : "eye-outline"}
-                  size={18}
-                  color={colors.muted}
-                />
-              </Pressable>
-            </View>
+            <FloatingInput
+              label="Password"
+              icon="lock-closed-outline"
+              value={password}
+              onChangeText={setPassword}
+              placeholder={isRegister ? "At least 6 characters" : "Your password"}
+              secureTextEntry={!showPassword}
+              autoCapitalize="none"
+              returnKeyType="done"
+              onSubmitEditing={handleSubmit}
+              trailingContent={
+                <Pressable
+                  hitSlop={12}
+                  onPress={() => setShowPassword((v) => !v)}
+                  style={styles.eyeToggle}
+                  accessibilityRole="button"
+                  accessibilityLabel={showPassword ? "Hide password" : "Show password"}
+                >
+                  <View
+                    style={[
+                      styles.eyeToggleBg,
+                      {
+                        backgroundColor: dark
+                          ? "rgba(255,255,255,0.06)"
+                          : colors.surfaceSubtle,
+                      },
+                    ]}
+                  >
+                    <Ionicons
+                      name={showPassword ? "eye-off-outline" : "eye-outline"}
+                      size={16}
+                      color={colors.muted}
+                    />
+                  </View>
+                </Pressable>
+              }
+            />
+            {isRegister && <PasswordStrength password={password} />}
           </View>
         </View>
 
-        {/* Submit Button */}
+        {/* Submit Button with Gradient */}
         <Pressable
           disabled={busy}
           style={({ pressed }) => [
-            styles.primaryCta,
             styles.formSubmitBtn,
-            { backgroundColor: colors.primary },
             pressed && styles.pressed,
             busy && { opacity: 0.65 },
           ]}
           onPress={handleSubmit}
           accessibilityRole="button"
         >
-          <Text style={styles.primaryCtaText}>
-            {busy ? "Please wait…" : isRegister ? "Create Free Account" : "Sign In"}
-          </Text>
-          <Ionicons name="arrow-forward" size={18} color="#FFFFFF" />
+          <LinearGradient
+            colors={["#FF5A4E", "#E84A3F", "#D43C32"]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            style={styles.submitGradient}
+          >
+            {busy ? (
+              <Text style={styles.submitText}>Please wait…</Text>
+            ) : (
+              <>
+                <Text style={styles.submitText}>
+                  {isRegister ? "Create Free Account" : "Sign In"}
+                </Text>
+                <View style={styles.submitArrowCircle}>
+                  <Ionicons name="arrow-forward" size={16} color="#FFFFFF" />
+                </View>
+              </>
+            )}
+          </LinearGradient>
         </Pressable>
+
+        {/* Divider */}
+        <View style={styles.dividerRow}>
+          <View style={[styles.dividerLine, { backgroundColor: colors.border }]} />
+          <Text style={[styles.dividerText, { color: colors.subtle }]}>or</Text>
+          <View style={[styles.dividerLine, { backgroundColor: colors.border }]} />
+        </View>
 
         {/* Mode Switch text */}
         <Pressable
@@ -301,6 +530,13 @@ export function AuthForm({ mode, onModeChange, onBack, onSubmit, busy }: AuthFor
             </Text>
           </Text>
         </Pressable>
+
+        {/* Terms footer */}
+        {isRegister && (
+          <Text style={[styles.termsText, { color: colors.subtle }]}>
+            By creating an account, you agree to our Terms of Service and Privacy Policy.
+          </Text>
+        )}
       </ScrollView>
     </KeyboardAvoidingView>
   );
@@ -387,43 +623,100 @@ const styles = StyleSheet.create({
     fontSize: 12,
   },
   formFields: {
-    gap: 16,
+    gap: 14,
   },
-  fieldLabel: {
-    fontSize: 10,
-    fontWeight: "800",
-    letterSpacing: 1,
-    marginBottom: 7,
-  },
-  fieldWrap: {
+
+  /* ─── Floating Input Styles ───────────────────────────────── */
+  floatingFieldWrap: {
     flexDirection: "row",
     alignItems: "center",
     gap: 12,
-    height: 54,
+    minHeight: 60,
     paddingHorizontal: 14,
-    borderRadius: 16,
-    borderWidth: 1,
+    borderRadius: 18,
+    borderWidth: 1.5,
+    position: "relative",
+    overflow: "hidden",
   },
-  fieldIconWrap: {
+  floatingIconWrap: {
+    width: 34,
+    height: 34,
+    borderRadius: 11,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  floatingInputArea: {
+    flex: 1,
+    justifyContent: "center",
+    minHeight: 44,
+    position: "relative",
+  },
+  floatingLabel: {
+    position: "absolute",
+    left: 0,
+    top: 12,
+    fontSize: 14,
+    fontWeight: "600",
+    letterSpacing: 0.1,
+    transformOrigin: "left top",
+  },
+  floatingInput: {
+    flex: 1,
+    fontSize: 14,
+    fontWeight: "600",
+    paddingVertical: 0,
+  },
+  focusAccentLine: {
+    position: "absolute",
+    bottom: 0,
+    left: 14,
+    right: 14,
+    height: 2,
+    borderRadius: 1,
+  },
+  eyeToggle: {
+    padding: 4,
+    ...(Platform.OS === "web" ? ({ cursor: "pointer" } as any) : {}),
+  },
+  eyeToggleBg: {
     width: 32,
     height: 32,
     borderRadius: 10,
     alignItems: "center",
     justifyContent: "center",
   },
-  input: {
-    flex: 1,
-    fontSize: 14,
-    fontWeight: "600",
-  },
-  primaryCta: {
-    width: "100%",
+
+  /* ─── Password Strength ───────────────────────────────────── */
+  strengthWrap: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "center",
     gap: 8,
-    height: 54,
-    borderRadius: 16,
+    marginTop: 8,
+    paddingHorizontal: 4,
+  },
+  strengthBars: {
+    flexDirection: "row",
+    gap: 4,
+    flex: 1,
+  },
+  strengthBar: {
+    flex: 1,
+    height: 3,
+    borderRadius: 1.5,
+  },
+  strengthLabel: {
+    fontSize: 10,
+    fontWeight: "700",
+    letterSpacing: 0.3,
+    minWidth: 70,
+    textAlign: "right",
+  },
+
+  /* ─── Submit Button ───────────────────────────────────────── */
+  formSubmitBtn: {
+    marginTop: 24,
+    borderRadius: 18,
+    overflow: "hidden",
     shadowColor: "#FF6554",
     shadowOpacity: 0.35,
     shadowRadius: 16,
@@ -431,18 +724,50 @@ const styles = StyleSheet.create({
     elevation: 6,
     ...(Platform.OS === "web" ? ({ cursor: "pointer" } as any) : {}),
   },
-  primaryCtaText: {
+  submitGradient: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 10,
+    height: 54,
+    paddingHorizontal: 24,
+  },
+  submitText: {
     color: "#FFFFFF",
     fontSize: 15,
     fontWeight: "800",
     letterSpacing: 0.2,
   },
-  formSubmitBtn: {
-    marginTop: 24,
+  submitArrowCircle: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: "rgba(255,255,255,0.2)",
+    alignItems: "center",
+    justifyContent: "center",
   },
+
+  /* ─── Divider ─────────────────────────────────────────────── */
+  dividerRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    marginTop: 22,
+    marginBottom: 4,
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+  },
+  dividerText: {
+    fontSize: 11,
+    fontWeight: "600",
+  },
+
+  /* ─── Mode Switch ─────────────────────────────────────────── */
   switchMode: {
     alignItems: "center",
-    marginTop: 20,
+    marginTop: 16,
     ...(Platform.OS === "web" ? ({ cursor: "pointer" } as any) : {}),
   },
   switchText: {
@@ -451,9 +776,18 @@ const styles = StyleSheet.create({
   switchAccent: {
     fontWeight: "700",
   },
+
+  /* ─── Terms ───────────────────────────────────────────────── */
+  termsText: {
+    textAlign: "center",
+    fontSize: 10.5,
+    lineHeight: 16,
+    marginTop: 16,
+    paddingHorizontal: 20,
+  },
+
   pressed: {
     opacity: 0.8,
     transform: [{ scale: 0.98 }],
   },
 });
-
