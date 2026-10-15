@@ -28,7 +28,6 @@ import { useTheme } from "@/lib/theme-store";
 import { formatMoney } from "@/utils/formatters";
 import { ProfileAvatar } from "@/components/account/profile-avatar";
 import { ProfileBannerLayer } from "@/components/account/profile-banner-layer";
-import { AppLottieView } from "@/components/ui/app-lottie-view";
 import { radii, spacing, typography } from "@/constants/design-tokens";
 import { MotionEntrance, MotionNumber, PressableScale } from "@/components/motion";
 import {
@@ -408,13 +407,7 @@ export default function AccountScreen() {
                   <Text style={[styles.userHandle, { color: colors.muted }]} numberOfLines={1}>
                     {account?.email || "alex.johnson@example.com"}
                   </Text>
-                  <AppLottieView
-                    source={require("@/assets/lottie/verified-badge.json")}
-                    style={styles.verifiedLottieHandle}
-                    autoPlay
-                    loop
-                    fallback={<Ionicons name="checkmark-circle" size={16} color="#3D66F3" />}
-                  />
+                  <Ionicons name="checkmark-circle" size={16} color="#3D66F3" />
                 </View>
 
                 {bannerNotice ? (
@@ -575,13 +568,7 @@ export default function AccountScreen() {
                 <View style={styles.detailsLeft}>
                   <View style={styles.labelWithBadge}>
                     <Text style={[styles.detailsLabel, { color: colors.muted }]}>Email Address</Text>
-                    <AppLottieView
-                      source={require("@/assets/lottie/verified-badge.json")}
-                      style={styles.verifiedLottieIcon}
-                      autoPlay
-                      loop
-                      fallback={<Ionicons name="checkmark-circle" size={14} color="#3D66F3" />}
-                    />
+                    <Ionicons name="checkmark-circle" size={14} color="#3D66F3" />
                   </View>
                   <Text style={[styles.detailsValue, { color: colors.foreground }]}>
                     {account?.email || "alex.johnson@example.com"}
@@ -639,7 +626,7 @@ export default function AccountScreen() {
       {/* Photo Actions Modal */}
       <Modal
         visible={showPhotoActions}
-        animationType="fade"
+        animationType="none"
         transparent
         onRequestClose={() => setShowPhotoActions(false)}
       >
@@ -714,7 +701,7 @@ export default function AccountScreen() {
       {/* Photo Preview Modal */}
       <Modal
         visible={showPhotoPreview}
-        animationType="fade"
+        animationType="none"
         transparent
         onRequestClose={() => {
           if (!isSavingPhoto) {
@@ -782,7 +769,7 @@ export default function AccountScreen() {
       {/* Banner Actions Modal */}
       <Modal
         visible={showBannerActions}
-        animationType="fade"
+        animationType="none"
         transparent
         onRequestClose={() => setShowBannerActions(false)}
       >
@@ -869,7 +856,7 @@ export default function AccountScreen() {
       </Modal>
 
       {/* Banner Processing Modal */}
-      <Modal visible={showBannerProcessing} transparent animationType="fade" onRequestClose={() => undefined}>
+      <Modal visible={showBannerProcessing} transparent animationType="none" onRequestClose={() => undefined}>
         <View style={styles.modalOverlay}>
           <View style={[styles.modalSheetCard, { backgroundColor: colors.surface, borderColor: colors.border, alignItems: "center" }]}>
             <ActivityIndicator size="large" color="#E84A3F" />
@@ -889,7 +876,7 @@ export default function AccountScreen() {
       {/* Banner Preview Modal */}
       <Modal
         visible={showBannerPreview}
-        animationType="fade"
+        animationType="none"
         transparent
         onRequestClose={cancelBannerPreview}
       >
@@ -962,7 +949,7 @@ export default function AccountScreen() {
       {/* Info Dialog Modal */}
       <Modal
         visible={Boolean(infoModalTitle)}
-        animationType="fade"
+        animationType="none"
         transparent
         onRequestClose={() => setInfoModalTitle(null)}
       >
@@ -1193,10 +1180,6 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: "500",
   },
-  verifiedLottieHandle: {
-    width: 20,
-    height: 20,
-  },
   bannerNoticeText: {
     color: "#10B981",
     fontSize: 11,
@@ -1333,10 +1316,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "600",
     letterSpacing: -0.1,
-  },
-  verifiedLottieIcon: {
-    width: 20,
-    height: 20,
   },
   logoutSection: {
     paddingHorizontal: 16,

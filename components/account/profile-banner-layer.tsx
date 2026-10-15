@@ -1,6 +1,5 @@
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import {
-  Animated,
   AppState,
   Image,
   Platform,
@@ -23,14 +22,12 @@ type ProfileBannerLayerProps = {
 export function ProfileBannerLayer({ banner, visible, style }: ProfileBannerLayerProps) {
   const [sourceUri, setSourceUri] = useState<string | null>(null);
   const [hasError, setHasError] = useState(false);
-  const opacityAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     let active = true;
     let dispose: (() => void) | undefined;
     setSourceUri(null);
     setHasError(false);
-    opacityAnim.setValue(0);
 
     if (banner?.uri) {
       resolveProfileBannerSource(banner.uri).then((resolved) => {
@@ -53,15 +50,7 @@ export function ProfileBannerLayer({ banner, visible, style }: ProfileBannerLaye
       active = false;
       dispose?.();
     };
-  }, [banner?.uri, opacityAnim]);
-
-  const handleMediaLoaded = useCallback(() => {
-    Animated.timing(opacityAnim, {
-      toValue: 1,
-      duration: 320,
-      useNativeDriver: true,
-    }).start();
-  }, [opacityAnim]);
+  }, [banner?.uri]);
 
   const handleMediaError = useCallback(() => setHasError(true), []);
 
@@ -71,41 +60,37 @@ export function ProfileBannerLayer({ banner, visible, style }: ProfileBannerLaye
 
   if (banner.type === "image") {
     return (
-      <Animated.View pointerEvents="none" style={[styles.media, style, { opacity: opacityAnim }]}>
+      <View pointerEvents="none" style={[styles.media, style]}>
         <Image
           source={{ uri: sourceUri }}
           resizeMode="cover"
           style={styles.image}
-          onLoad={handleMediaLoaded}
           onError={handleMediaError}
           accessibilityIgnoresInvertColors
         />
-      </Animated.View>
+      </View>
     );
   }
 
   return (
-    <Animated.View pointerEvents="none" style={[styles.media, style, { opacity: opacityAnim }]}>
+    <View pointerEvents="none" style={[styles.media, style]}>
       <ProfileBannerVideo
         key={sourceUri}
         uri={sourceUri}
         visible={visible}
-        onReady={handleMediaLoaded}
         onError={handleMediaError}
       />
-    </Animated.View>
+    </View>
   );
 }
 
 function ProfileBannerVideo({
   uri,
   visible,
-  onReady,
   onError,
 }: {
   uri: string;
   visible: boolean;
-  onReady: () => void;
   onError: () => void;
 }) {
   const pathname = usePathname();
@@ -133,7 +118,6 @@ function ProfileBannerVideo({
     if (visible && focused && appIsActive) {
       try {
         player.play();
-        onReady();
       } catch {
         onError();
       }
@@ -142,7 +126,7 @@ function ProfileBannerVideo({
         player.pause();
       } catch {}
     }
-  }, [appIsActive, focused, onError, onReady, player, visible]);
+  }, [appIsActive, focused, onError, player, visible]);
 
   return (
     <VideoView

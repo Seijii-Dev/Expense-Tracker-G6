@@ -58,7 +58,7 @@ export function DatePickerModal({
   const daySize = Math.min(44, Math.max(36, (width - 72) / 7));
 
   return (
-    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
+    <Modal visible={visible} transparent animationType="none" onRequestClose={onClose}>
       <View style={styles.backdrop}>
         <Pressable style={StyleSheet.absoluteFill} onPress={onClose} accessibilityLabel="Close date picker" />
         <View

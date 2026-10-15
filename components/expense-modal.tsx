@@ -33,7 +33,6 @@ import { DatePickerModal } from "@/components/common/date-picker-modal";
 import { PressableScale } from "@/components/motion";
 import { formatDate, formatMoney } from "@/utils/formatters";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useReducedMotion } from "react-native-reanimated";
 import { spacing } from "@/constants/design-tokens";
 
 /** Gap between category tiles in the picker grid. */
@@ -55,7 +54,6 @@ export function ExpenseModal({ visible, initialExpense, onClose, onSubmit }: Exp
   const { allCategories, customCategories, addCustomCategory, monthTotal, budget } = useExpenses();
   const { width: windowWidth, height: windowHeight } = useWindowDimensions();
   const insets = useSafeAreaInsets();
-  const reduceMotion = useReducedMotion();
 
   const isEditing = Boolean(initialExpense);
 
@@ -102,20 +100,6 @@ export function ExpenseModal({ visible, initialExpense, onClose, onSubmit }: Exp
     setValidationError(null);
     onClose();
   }, [onClose]);
-
-  const handleSuccessAnimationFinish = useCallback(
-    (isCancelled: boolean) => {
-      if (!isCancelled) finishSuccess();
-    },
-    [finishSuccess]
-  );
-
-  useEffect(() => {
-    if (!showSuccessModal) return;
-    // Safety fallback for reduced-motion devices or a Lottie rendering failure.
-    const timer = setTimeout(finishSuccess, 2500);
-    return () => clearTimeout(timer);
-  }, [finishSuccess, showSuccessModal]);
 
   // Reset or initialize values when modal opens
   useEffect(() => {
@@ -234,7 +218,7 @@ export function ExpenseModal({ visible, initialExpense, onClose, onSubmit }: Exp
     <Modal
       visible={visible}
       transparent
-      animationType={reduceMotion ? "none" : "slide"}
+      animationType="none"
       onRequestClose={handleRequestClose}
     >
       <KeyboardAvoidingView
@@ -675,12 +659,11 @@ export function ExpenseModal({ visible, initialExpense, onClose, onSubmit }: Exp
           </ScrollView>
         </View>
 
-        {/* Lottie Vector Success Feedback Overlay */}
+        {/* Static success confirmation overlay */}
         <SuccessOverlay
           visible={showSuccessModal}
           title={isEditing ? "Changes Saved!" : "Record Logged!"}
           onDismiss={finishSuccess}
-          onAnimationFinish={handleSuccessAnimationFinish}
         />
       </KeyboardAvoidingView>
 

@@ -1,14 +1,6 @@
-import React, { useEffect } from "react";
-import { Platform, Pressable, StyleSheet } from "react-native";
+import React from "react";
+import { Platform, Pressable, StyleSheet, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import Animated, {
-  interpolate,
-  interpolateColor,
-  useAnimatedStyle,
-  useReducedMotion,
-  useSharedValue,
-  withTiming,
-} from "react-native-reanimated";
 
 export interface DayNightSwitchProps {
   value: boolean;
@@ -17,23 +9,6 @@ export interface DayNightSwitchProps {
 }
 
 export function DayNightSwitch({ value, onValueChange, disabled = false }: DayNightSwitchProps) {
-  const reduceMotion = useReducedMotion();
-  const progress = useSharedValue(value ? 1 : 0);
-
-  useEffect(() => {
-    const nextValue = value ? 1 : 0;
-    progress.value = reduceMotion
-      ? nextValue
-      : withTiming(nextValue, { duration: 180 });
-  }, [progress, reduceMotion, value]);
-
-  const trackStyle = useAnimatedStyle(() => ({
-    backgroundColor: interpolateColor(progress.value, [0, 1], ["#F2B544", "#344054"]),
-  }));
-  const thumbStyle = useAnimatedStyle(() => ({
-    transform: [{ translateX: interpolate(progress.value, [0, 1], [0, 22]) }],
-  }));
-
   return (
     <Pressable
       onPress={() => !disabled && onValueChange(!value)}
@@ -49,15 +24,15 @@ export function DayNightSwitch({ value, onValueChange, disabled = false }: DayNi
         disabled ? styles.disabled : null,
       ]}
     >
-      <Animated.View style={[styles.track, trackStyle]}>
+      <View style={[styles.track, { backgroundColor: value ? "#344054" : "#F2B544" }]}>
         <Ionicons
           name={value ? "moon" : "sunny"}
           size={12}
           color={value ? "#E7ECF5" : "#FFFFFF"}
           style={value ? styles.moonIcon : styles.sunIcon}
         />
-        <Animated.View style={[styles.thumb, thumbStyle]} />
-      </Animated.View>
+        <View style={[styles.thumb, value && styles.thumbOn]} />
+      </View>
     </Pressable>
   );
 }
@@ -92,6 +67,9 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 1 },
     shadowRadius: 2,
     elevation: 1,
+  },
+  thumbOn: {
+    left: 25,
   },
   sunIcon: {
     position: "absolute",

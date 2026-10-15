@@ -29,7 +29,6 @@ import { CustomCategoryModal } from "@/components/settings/custom-category-modal
 import { ConfirmDialog } from "@/components/common/confirm-dialog";
 import { AboutDialog } from "@/components/common/about-dialog";
 import { ProfileAvatar } from "@/components/account/profile-avatar";
-import { AppLottieView } from "@/components/ui/app-lottie-view";
 import { MotionEntrance, PressableScale } from "@/components/motion";
 import { GlassSurface } from "@/components/ui/glass-surface";
 import { DayNightSwitch } from "@/components/ui/day-night-switch";
@@ -244,13 +243,7 @@ export default function SettingsScreen() {
                     <Text style={[styles.profileHeroEmail, { color: colors.muted }]} numberOfLines={1}>
                       {account?.email || "alex.johnson@example.com"}
                     </Text>
-                    <AppLottieView
-                      source={require("@/assets/lottie/verified-badge.json")}
-                      style={styles.verifiedLottieIcon}
-                      autoPlay
-                      loop
-                      fallback={<Ionicons name="checkmark-circle" size={13} color="#3D66F3" />}
-                    />
+                    <Ionicons name="checkmark-circle" size={13} color="#3D66F3" />
                   </View>
                 </View>
               </View>
@@ -545,7 +538,7 @@ export default function SettingsScreen() {
       {/* Budget Settings Modal */}
       <Modal
         visible={showBudgetModal}
-        animationType="slide"
+        animationType="none"
         transparent
         onRequestClose={() => setShowBudgetModal(false)}
       >
@@ -730,7 +723,7 @@ export default function SettingsScreen() {
       {/* Data & Backup Modal */}
       <Modal
         visible={showBackupModal}
-        animationType="slide"
+        animationType="none"
         transparent
         onRequestClose={() => setShowBackupModal(false)}
       >
@@ -834,7 +827,7 @@ export default function SettingsScreen() {
       {/* CSV Import Modal */}
       <Modal
         visible={showImportModal}
-        animationType="slide"
+        animationType="none"
         transparent
         onRequestClose={() => setShowImportModal(false)}
       >
@@ -1045,10 +1038,6 @@ const styles = StyleSheet.create({
   profileHeroEmail: {
     fontSize: 12,
     fontWeight: "500",
-  },
-  verifiedLottieIcon: {
-    width: 17,
-    height: 17,
   },
   profileHeroRight: {
     marginLeft: 10,

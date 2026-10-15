@@ -1,13 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import {
-  AccessibilityInfo,
-  Animated,
-  Easing,
-  StyleSheet,
-  Text,
-  View,
-} from "react-native";
-import { useReducedMotion } from "react-native-reanimated";
+import { StyleSheet, Text, View } from "react-native";
 
 interface SplashScreenProps {
   isReady: boolean;
@@ -15,117 +7,27 @@ interface SplashScreenProps {
   dark?: boolean;
 }
 
-/**
- * Branded application launch screen with short entrance and exit transitions.
- */
+/** Keeps startup covered until fonts are ready and the branded minimum time passes. */
 export function SplashScreen({ isReady, onFinish, dark = false }: SplashScreenProps) {
   const [visible, setVisible] = useState(true);
-  const systemReduceMotion = useReducedMotion();
-  const [reduceMotion, setReduceMotion] = useState(systemReduceMotion);
-
   const [minTimeElapsed, setMinTimeElapsed] = useState(false);
-
-  // Animations
-  const opacityAnim = useRef(new Animated.Value(0)).current;
-  const scaleAnim = useRef(new Animated.Value(0.88)).current;
-  const exitOpacityAnim = useRef(new Animated.Value(1)).current;
-  const exitScaleAnim = useRef(new Animated.Value(1)).current;
   const onFinishRef = useRef(onFinish);
+  const didFinishRef = useRef(false);
 
   onFinishRef.current = onFinish;
 
   useEffect(() => {
-    let isMounted = true;
-    AccessibilityInfo.isReduceMotionEnabled()
-      .then((enabled) => {
-        if (isMounted) setReduceMotion(enabled);
-      })
-      .catch(() => undefined);
-
-    const subscription = AccessibilityInfo.addEventListener(
-      "reduceMotionChanged",
-      (enabled) => setReduceMotion(enabled)
-    );
-
-    return () => {
-      isMounted = false;
-      subscription?.remove?.();
-    };
-  }, []);
-
-  // Guarantee minimum visible display duration so users see the branded intro
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setMinTimeElapsed(true);
-    }, 1100);
-
+    const timer = setTimeout(() => setMinTimeElapsed(true), 1100);
     return () => clearTimeout(timer);
   }, []);
 
-  // Entrance animation starts on mount
   useEffect(() => {
-    if (reduceMotion) {
-      opacityAnim.setValue(1);
-      scaleAnim.setValue(1);
-      return;
-    }
+    if (!isReady || !minTimeElapsed || didFinishRef.current) return;
 
-    // Fade in and gently scale up.
-    const entrance = Animated.parallel([
-      Animated.timing(opacityAnim, {
-        toValue: 1,
-        duration: 420,
-        easing: Easing.out(Easing.cubic),
-        useNativeDriver: true,
-      }),
-      Animated.spring(scaleAnim, {
-        toValue: 1,
-        friction: 7,
-        tension: 50,
-        useNativeDriver: true,
-      }),
-    ]);
-    entrance.start();
-
-    return () => {
-      entrance.stop();
-    };
-  }, [opacityAnim, reduceMotion, scaleAnim]);
-
-  // Handle exit once both the application is ready and minimum display time elapsed
-  useEffect(() => {
-    if (!isReady || !minTimeElapsed) return;
-
-    if (reduceMotion) {
-      setVisible(false);
-      onFinishRef.current?.();
-      return;
-    }
-
-    const exitAnimation = Animated.parallel([
-      Animated.timing(exitOpacityAnim, {
-        toValue: 0,
-        duration: 380,
-        easing: Easing.inOut(Easing.ease),
-        useNativeDriver: true,
-      }),
-      Animated.timing(exitScaleAnim, {
-        toValue: 1.05,
-        duration: 380,
-        easing: Easing.out(Easing.quad),
-        useNativeDriver: true,
-      }),
-    ]);
-
-    exitAnimation.start(() => {
-      setVisible(false);
-      onFinishRef.current?.();
-    });
-
-    return () => {
-      exitAnimation.stop();
-    };
-  }, [exitOpacityAnim, exitScaleAnim, isReady, minTimeElapsed, reduceMotion]);
+    didFinishRef.current = true;
+    setVisible(false);
+    onFinishRef.current?.();
+  }, [isReady, minTimeElapsed]);
 
   if (!visible) return null;
 
@@ -134,38 +36,18 @@ export function SplashScreen({ isReady, onFinish, dark = false }: SplashScreenPr
   const kickerColor = "#FF6554";
 
   return (
-    <Animated.View
-      style={[
-        styles.container,
-        {
-          backgroundColor: bgColor,
-          opacity: exitOpacityAnim,
-          transform: [{ scale: exitScaleAnim }],
-        },
-      ]}
+    <View
+      style={[styles.container, { backgroundColor: bgColor }]}
       pointerEvents={isReady ? "none" : "auto"}
     >
-      <Animated.View
-        style={[
-          styles.content,
-          {
-            opacity: opacityAnim,
-            transform: [{ scale: scaleAnim }],
-          },
-        ]}
-      >
-        {/* Brand Name & Tagline */}
+      <View style={styles.content}>
         <Text style={[styles.brandTitle, { color: textColor }]}>Ledgerly</Text>
-        <Text style={[styles.brandKicker, { color: kickerColor }]}>
-          EXPENSE TRACKER
-        </Text>
-
-        {/* Minimalist Loading Dots */}
+        <Text style={[styles.brandKicker, { color: kickerColor }]}>EXPENSE TRACKER</Text>
         <View style={styles.loaderWrap}>
           <View style={[styles.loaderDot, { backgroundColor: kickerColor }]} />
         </View>
-      </Animated.View>
-    </Animated.View>
+      </View>
+    </View>
   );
 }
 

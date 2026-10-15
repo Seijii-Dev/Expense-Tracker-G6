@@ -515,7 +515,6 @@ export default function TransactionsScreen() {
       >
         <EmptyState
           icon="receipt-outline"
-          lottieSource={require("@/assets/lottie/empty-ledger.json")}
           title={
             selectedDate && !hasTransactionsForSelectedDate
               ? "No records for this date"

@@ -1,11 +1,5 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Platform, Pressable, StyleSheet, Text, View, useWindowDimensions } from "react-native";
-import Animated, {
-  Easing,
-  useAnimatedStyle,
-  useSharedValue,
-  withTiming,
-} from "react-native-reanimated";
 import Svg, { Circle, Defs, LinearGradient, Path, Stop, Line } from "react-native-svg";
 import { useTheme } from "@/lib/theme-store";
 import { formatMoney } from "@/utils/formatters";
@@ -23,8 +17,6 @@ export function SpendingTrendChart({ timeline }: SpendingTrendChartProps) {
   const { width: windowWidth } = useWindowDimensions();
   const [selectedPointKey, setSelectedPointKey] = useState<string | null>(null);
   const [measuredWidth, setMeasuredWidth] = useState(0);
-  const chartOpacity = useSharedValue(1);
-  const isFirstTimeline = useRef(true);
 
   // Compute exact chart width to match container width
   const fallbackWidth = Math.min(windowWidth - (windowWidth < 360 ? 24 : windowWidth < 480 ? 32 : 48), 440);
@@ -42,21 +34,7 @@ export function SpendingTrendChart({ timeline }: SpendingTrendChartProps) {
 
   useEffect(() => {
     setSelectedPointKey(null);
-    if (isFirstTimeline.current) {
-      isFirstTimeline.current = false;
-      return;
-    }
-
-    chartOpacity.value = 0.5;
-    chartOpacity.value = withTiming(1, {
-      duration: 240,
-      easing: Easing.bezier(0.16, 1, 0.3, 1),
-    });
-  }, [chartOpacity, timeline?.interval, timeline?.startDate, timeline?.endDate]);
-
-  const animatedContainerStyle = useAnimatedStyle(() => ({
-    opacity: chartOpacity.value,
-  }));
+  }, [timeline?.interval, timeline?.startDate, timeline?.endDate]);
 
   if (pointsData.length === 0) {
     return null;
@@ -85,8 +63,7 @@ export function SpendingTrendChart({ timeline }: SpendingTrendChartProps) {
   const tooltipLeft = Math.max(12, Math.min(activePoint.x - tooltipWidth / 2, chartWidth - tooltipWidth - 12));
 
   return (
-    <Animated.View style={animatedContainerStyle}>
-      <GlassSurface
+    <GlassSurface
         variant="card"
         radius={24}
         style={styles.container}
@@ -265,7 +242,6 @@ export function SpendingTrendChart({ timeline }: SpendingTrendChartProps) {
         })}
       </View>
       </GlassSurface>
-    </Animated.View>
   );
 }
 
