@@ -11,10 +11,7 @@ export interface MotionNumberProps extends Omit<TextProps, "children" | "style">
   style?: StyleProp<TextStyle>;
 }
 
-/**
- * MotionNumber: Motion.dev-inspired fluid numerical counter spring.
- * Seamlessly animates numbers when value updates, with full accessibility support.
- */
+/** Counts briefly to an updated value and respects reduced motion. */
 export function MotionNumber({
   value,
   formatter,
@@ -47,7 +44,7 @@ export function MotionNumber({
       const elapsed = now - startTime;
       const progress = Math.min(elapsed / duration, 1);
 
-      // Motion fluid ease-out polynomial [1 - (1 - p)^4]
+      // Ease out quickly, then settle at the final value.
       const eased = 1 - Math.pow(1 - progress, 4);
       const nextVal = startVal + (endVal - startVal) * eased;
       currentValRef.current = nextVal;

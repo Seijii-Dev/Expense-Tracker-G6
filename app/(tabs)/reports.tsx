@@ -349,15 +349,15 @@ export default function ReportsScreen() {
             </View>
             <View style={styles.delightContent}>
               <Text style={[styles.delightTitle, { color: colors.foreground }]}>
-                {topCategory ? `${topCategory.category} is top category` : "Healthy Tracking Pace"}
+                {topCategory ? `${topCategory.category} is your top category` : "Spending summary"}
               </Text>
               <Text style={[styles.delightText, { color: colors.muted }]}>
                 {topCategory
-                  ? `Total of ${formatMoney(topCategory.total)} tracked in ${topCategory.category} (${formatPercent(
+                  ? `You spent ${formatMoney(topCategory.total)} on ${topCategory.category} (${formatPercent(
                       topCategory.total,
                       timeline.total
-                    )} of period spend).`
-                  : "Keep logging records regularly to discover deep category patterns."}
+                    )} of this period’s spending).`
+                  : "Your spending summary will appear here after you add expenses."}
               </Text>
             </View>
           </GlassSurface>
@@ -370,7 +370,7 @@ export default function ReportsScreen() {
           >
             <View style={styles.panelHeader}>
               <View>
-                <Text style={[styles.kicker, { color: colors.muted }]}>KEY OBSERVATIONS</Text>
+                <Text style={[styles.kicker, { color: colors.muted }]}>SUMMARY</Text>
                 <Text style={[styles.panelTitle, { color: colors.foreground }]}>Spending highlights</Text>
               </View>
               <View
@@ -395,7 +395,7 @@ export default function ReportsScreen() {
                       topCategory.total,
                       timeline.total
                     )} of this period's spending).`
-                  : "Add expenses to see category breakdown insights."
+                  : "Add expenses to see a breakdown by category."
               }
             />
             <ReportNote
@@ -403,8 +403,8 @@ export default function ReportsScreen() {
               title={`${periodExpenses.length} expense ${periodExpenses.length === 1 ? "record" : "records"} in this period`}
               copy={
                 periodExpenses.length
-                  ? "These records are included in the selected spending range. Your ledger remains available offline."
-                  : "Your transaction activity patterns will appear here once you log expenses."
+                  ? "These expenses are included in the selected date range."
+                  : "Add expenses to see them in this date range."
               }
             />
             <ReportNote
@@ -413,7 +413,7 @@ export default function ReportsScreen() {
               copy={
                 periodExpenses.length
                   ? `Your average transaction in this period is ${averageExpenseSize}.`
-                  : "Add transactions to calculate your average expense size."
+                  : "Add expenses to see your average amount."
               }
               last
             />

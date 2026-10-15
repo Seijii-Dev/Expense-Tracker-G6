@@ -14,8 +14,8 @@ import Animated, {
   Easing,
   useAnimatedStyle,
   useSharedValue,
-  withSpring,
   withTiming,
+  useReducedMotion,
 } from "react-native-reanimated";
 import { Ionicons } from "@expo/vector-icons";
 
@@ -31,27 +31,20 @@ const WEBSITE_URL = "https://ledgerly-web-g6.netlify.app/";
 
 export function AboutDialog({ visible, onClose }: AboutDialogProps) {
   const { colors, dark } = useTheme();
+  const reduceMotion = useReducedMotion();
 
-  // Entrance animations
   const fade = useSharedValue(0);
   const scale = useSharedValue(0.92);
 
   useEffect(() => {
     if (visible) {
-      fade.value = withTiming(1, {
-        duration: 220,
-        easing: Easing.bezier(0.16, 1, 0.3, 1),
-      });
-      scale.value = withSpring(1, {
-        damping: 20,
-        stiffness: 280,
-        mass: 0.65,
-      });
+      fade.value = reduceMotion ? 1 : withTiming(1, { duration: 180, easing: Easing.out(Easing.quad) });
+      scale.value = reduceMotion ? 1 : withTiming(1, { duration: 180, easing: Easing.out(Easing.quad) });
     } else {
       fade.value = 0;
       scale.value = 0.92;
     }
-  }, [visible, fade, scale]);
+  }, [visible, fade, scale, reduceMotion]);
 
   const dialogAnimatedStyle = useAnimatedStyle(() => ({
     opacity: fade.value,
@@ -60,14 +53,9 @@ export function AboutDialog({ visible, onClose }: AboutDialogProps) {
 
   const handleVisitWebsite = async () => {
     try {
-      const supported = await Linking.canOpenURL(WEBSITE_URL);
-      if (supported) {
-        await Linking.openURL(WEBSITE_URL);
-      } else {
-        await Linking.openURL(WEBSITE_URL);
-      }
+      await Linking.openURL(WEBSITE_URL);
     } catch {
-      Linking.openURL(WEBSITE_URL);
+      // Keep the dialog open if the device cannot open the site.
     }
   };
 
@@ -75,7 +63,7 @@ export function AboutDialog({ visible, onClose }: AboutDialogProps) {
     <Modal
       visible={visible}
       transparent
-      animationType="fade"
+      animationType="none"
       onRequestClose={onClose}
     >
       <View style={[styles.backdrop, { backgroundColor: colors.dialogBackdrop }]}>
@@ -112,7 +100,7 @@ export function AboutDialog({ visible, onClose }: AboutDialogProps) {
               <View style={styles.headerInfo}>
                 <Text style={[styles.appName, { color: colors.foreground }]}>Ledgerly</Text>
                 <Text style={[styles.kicker, { color: colors.primary }]}>
-                  SMART SPENDING & SAVINGS
+                  EXPENSE TRACKER
                 </Text>
                 <View style={[styles.versionPill, { backgroundColor: colors.surfaceSubtle }]}>
                   <Text style={[styles.versionText, { color: colors.muted }]}>v1.0.0 • Official</Text>
@@ -127,7 +115,7 @@ export function AboutDialog({ visible, onClose }: AboutDialogProps) {
               contentContainerStyle={styles.scrollContent}
             >
               <Text style={[styles.description, { color: colors.foreground }]}>
-                Ledgerly is a simple and user-friendly financial management application designed to help users keep track of their expenses, savings, and spending habits. It provides an organized way to record daily transactions, monitor budgets, review spending patterns, and work toward savings goals. With its clean and easy-to-use interface, Ledgerly helps users better understand where their money goes and encourages smarter financial decisions and more responsible money management.
+                Ledgerly helps you record expenses, keep an eye on your budget, and review your spending over time.
               </Text>
 
               {/* Website Prompt Card */}
@@ -140,11 +128,11 @@ export function AboutDialog({ visible, onClose }: AboutDialogProps) {
                 <View style={styles.promptHeader}>
                   <Ionicons name="globe-outline" size={17} color={colors.primary} />
                   <Text style={[styles.promptTitle, { color: colors.foreground }]}>
-                    Official Web Portal
+                    Ledgerly on the web
                   </Text>
                 </View>
                 <Text style={[styles.promptCopy, { color: colors.muted }]}>
-                  Visit our official web application, user documentation, and showcase.
+                  Open Ledgerly in your browser.
                 </Text>
 
                 {/* Visit Website Primary Action */}

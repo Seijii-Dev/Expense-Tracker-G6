@@ -111,7 +111,7 @@ export function CustomCategoryModal({
               <Text style={[styles.kicker, { color: colors.primary }]}>NEW CATEGORY</Text>
               <Text style={[styles.title, { color: colors.foreground }]}>Add custom category</Text>
               <Text style={[styles.subtitle, { color: colors.muted }]}>
-                Personalize your tracking with custom categories and colors.
+                Add a name and color for your category.
               </Text>
             </View>
             <Pressable

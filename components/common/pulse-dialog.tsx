@@ -11,8 +11,8 @@ import Animated, {
   Easing,
   useAnimatedStyle,
   useSharedValue,
-  withSpring,
   withTiming,
+  useReducedMotion,
 } from "react-native-reanimated";
 import { Ionicons } from "@expo/vector-icons";
 
@@ -41,27 +41,20 @@ export function PulseDialog({
   formatMoney = defaultFormatMoney,
 }: PulseDialogProps) {
   const { colors, dark } = useTheme();
+  const reduceMotion = useReducedMotion();
 
-  // Smooth entrance animations
   const fade = useSharedValue(0);
   const scale = useSharedValue(0.92);
 
   useEffect(() => {
     if (visible) {
-      fade.value = withTiming(1, {
-        duration: 220,
-        easing: Easing.bezier(0.16, 1, 0.3, 1),
-      });
-      scale.value = withSpring(1, {
-        damping: 20,
-        stiffness: 280,
-        mass: 0.65,
-      });
+      fade.value = reduceMotion ? 1 : withTiming(1, { duration: 180, easing: Easing.out(Easing.quad) });
+      scale.value = reduceMotion ? 1 : withTiming(1, { duration: 180, easing: Easing.out(Easing.quad) });
     } else {
       fade.value = 0;
       scale.value = 0.92;
     }
-  }, [visible, fade, scale]);
+  }, [visible, fade, scale, reduceMotion]);
 
   const dialogAnimatedStyle = useAnimatedStyle(() => ({
     opacity: fade.value,
@@ -85,10 +78,10 @@ export function PulseDialog({
     : "rgba(90, 158, 126, 0.14)";
 
   const statusBadgeText = isOver
-    ? "BUDGET EXCEEDED"
+    ? "OVER BUDGET"
     : isWarning
-    ? "APPROACHING LIMIT"
-    : "OPTIMAL HEALTH";
+    ? "NEAR YOUR LIMIT"
+    : "ON TRACK";
 
   const statusIcon: keyof typeof Ionicons.glyphMap = isOver
     ? "alert-circle"
@@ -97,16 +90,16 @@ export function PulseDialog({
     : "checkmark-circle";
 
   const adviceText = isOver
-    ? "You have surpassed your planned spending ceiling for this cycle. Review your recent transactions to avoid further deficit."
+    ? "You’re over your budget. Check recent expenses to see where you can adjust."
     : isWarning
-    ? "You have utilized the majority of your budget. Consider deferring discretionary purchases until the next cycle begins."
-    : "Your daily spending pace is disciplined and well within limits. Keep tracking micro-expenses to maximize your savings goals.";
+    ? "You’re close to your budget. Review recent expenses before spending more."
+    : "You’re within your budget. Keep recording expenses to stay up to date.";
 
   return (
     <Modal
       visible={visible}
       transparent
-      animationType="fade"
+      animationType="none"
       onRequestClose={onClose}
     >
       <View style={[styles.backdrop, { backgroundColor: colors.dialogBackdrop }]}>
@@ -138,13 +131,13 @@ export function PulseDialog({
 
           <Text style={[styles.title, { color: colors.foreground }]}>Spending Pulse</Text>
           <Text style={[styles.subtitle, { color: colors.muted }]}>
-            Real-time financial pace and budget health assessment.
+            How this month’s spending compares with your budget.
           </Text>
 
           {/* Gauge / Progress Bar */}
           <View style={[styles.gaugeContainer, { backgroundColor: colors.surfaceSubtle }]}>
             <View style={styles.gaugeHeader}>
-              <Text style={[styles.gaugeLabel, { color: colors.muted }]}>Budget Consumption</Text>
+              <Text style={[styles.gaugeLabel, { color: colors.muted }]}>Budget used</Text>
               <Text style={[styles.gaugePercent, { color: statusColor }]}>{budgetPercent}%</Text>
             </View>
             <View style={[styles.progressBarTrack, { backgroundColor: "rgba(150, 150, 150, 0.18)" }]}>

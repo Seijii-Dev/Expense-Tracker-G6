@@ -40,10 +40,7 @@ interface LayoutItem {
   width: number;
 }
 
-/**
- * MotionSegmentedControl: Inspired by Motion.dev layoutId shared layout transitions.
- * Features a single floating active indicator pill that glides with organic spring physics.
- */
+/** Moves one selected pill between the available options. */
 export function MotionSegmentedControl<T extends string = string>({
   options,
   selectedId,
@@ -83,7 +80,7 @@ export function MotionSegmentedControl<T extends string = string>({
   };
 
   useEffect(() => {
-    // Smooth liquid glide spring parameters
+    // Short, damped movement keeps the selected option easy to follow.
     const springConfig = {
       damping: 24,
       stiffness: 240,

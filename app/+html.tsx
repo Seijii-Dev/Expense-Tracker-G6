@@ -16,9 +16,9 @@ export default function RootHtml({ children }: PropsWithChildren) {
           name="viewport"
           content="width=device-width, initial-scale=1, shrink-to-fit=no, viewport-fit=cover"
         />
-        <meta name="description" content="Ledgerly — Smart Spending & Savings Tracker" />
+        <meta name="description" content="Track expenses, check your budget, and review your spending with Ledgerly." />
         <meta name="theme-color" content="#E84A3F" />
-        <title>Ledgerly — Smart Spending & Savings Tracker</title>
+        <title>Ledgerly — Expense Tracker</title>
 
         {/* Reset styles */}
         <ScrollViewStyleReset />

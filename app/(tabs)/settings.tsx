@@ -445,7 +445,7 @@ export default function SettingsScreen() {
               <View style={styles.rowContent}>
                 <Text style={[styles.rowTitle, { color: colors.foreground }]}>Data & Backup</Text>
                 <Text style={[styles.rowSubtitle, { color: colors.muted }]}>
-                  {expenses.length} records saved securely
+                  {expenses.length} expenses saved on this device
                 </Text>
               </View>
               <Ionicons name="chevron-forward" size={18} color={colors.muted} />
@@ -472,7 +472,7 @@ export default function SettingsScreen() {
               <View style={styles.rowContent}>
                 <Text style={[styles.rowTitle, { color: colors.foreground }]}>Export Records</Text>
                 <Text style={[styles.rowSubtitle, { color: colors.muted }]}>
-                  Download CSV statement
+                  Save a CSV copy of your expenses
                 </Text>
               </View>
               <Ionicons name="chevron-forward" size={18} color={colors.muted} />
@@ -495,7 +495,7 @@ export default function SettingsScreen() {
               <View style={styles.rowContent}>
                 <Text style={[styles.rowTitle, { color: colors.foreground }]}>Import Records</Text>
                 <Text style={[styles.rowSubtitle, { color: colors.muted }]}>
-                  Restore or import CSV transactions
+                  Add expenses from a CSV file
                 </Text>
               </View>
               <Ionicons name="chevron-forward" size={18} color={colors.muted} />
@@ -533,7 +533,7 @@ export default function SettingsScreen() {
               <View style={styles.rowContent}>
                 <Text style={[styles.rowTitle, { color: colors.foreground }]}>About Ledgerly</Text>
                 <Text style={[styles.rowSubtitle, { color: colors.muted }]}>
-                  Version 1.0.0 · Personal Finance Edition
+                  Version 1.0.0
                 </Text>
               </View>
               <Ionicons name="chevron-forward" size={18} color={colors.muted} />
@@ -775,7 +775,7 @@ export default function SettingsScreen() {
                 {expenses.length} Records Safe
               </Text>
               <Text style={[styles.backupCardSubtitle, { color: colors.muted }]}>
-                Your transactions are stored securely offline and synchronized locally.
+                Your expenses are saved on this device and can sync with your account.
               </Text>
             </View>
 
@@ -864,7 +864,7 @@ export default function SettingsScreen() {
             </View>
 
             <Text style={[styles.importGuideText, { color: colors.muted }]}>
-              Paste CSV text below or upload a .csv file. Columns supported: Date, Description, Category, Payment, Amount.
+              Paste CSV text or choose a file. Include these columns: Date, Description, Category, Payment, Amount.
             </Text>
 
             {Platform.OS === "web" && (

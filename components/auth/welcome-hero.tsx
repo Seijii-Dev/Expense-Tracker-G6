@@ -68,17 +68,17 @@ export function WelcomeHero({ onSignIn, onRegister }: WelcomeHeroProps) {
         <View style={styles.heroSection}>
           <View style={styles.badgeRow}>
             <View style={styles.pulseDot} />
-            <Text style={[styles.badgeText, { color: colors.primary }]}>INTELLIGENT FINANCE FOR EVERY PESO</Text>
+            <Text style={[styles.badgeText, { color: colors.primary }]}>A CLEARER VIEW OF YOUR SPENDING</Text>
           </View>
 
           <Text style={[styles.heroTitle, { color: colors.foreground }]}>
-            Master your money.{"\n"}
-            <Text style={{ color: colors.primary }}>Grow every peso</Text>
+            Know where your money goes.{"\n"}
+            <Text style={{ color: colors.primary }}>Plan what comes next</Text>
             <Text style={{ color: colors.accent }}>.</Text>
           </Text>
 
           <Text style={[styles.heroSubtitle, { color: colors.muted }]}>
-            Effortless expense logging, visual rhythm charts, and budget insights designed for peace of mind.
+            Add expenses, check your budget, and see how your spending changes over time.
           </Text>
 
           {/* Interactive Mock Fintech Card */}
@@ -126,7 +126,7 @@ export function WelcomeHero({ onSignIn, onRegister }: WelcomeHeroProps) {
               </View>
 
               <View style={styles.mockBalanceWrap}>
-                <Text style={styles.mockBalanceLabel}>OCTOBER CASHFLOW</Text>
+                <Text style={styles.mockBalanceLabel}>MONTHLY CASH FLOW</Text>
                 <Text
                   style={styles.mockBalanceAmount}
                   numberOfLines={1}

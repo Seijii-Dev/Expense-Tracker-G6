@@ -149,7 +149,7 @@ export function ConfirmDialog({
     <Modal
       visible={visible}
       transparent
-      animationType={reduceMotion ? "none" : "fade"}
+      animationType="none"
       onRequestClose={handleCancel}
     >
       <View style={[styles.backdrop, { backgroundColor: colors.dialogBackdrop }]}>

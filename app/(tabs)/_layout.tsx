@@ -8,14 +8,13 @@ import { DashboardSkeleton } from "@/components/ui/dashboard-skeleton";
 import { FloatingTabBar } from "@/components/navigation/floating-nav-bar";
 import { ExpenseModal } from "@/components/expense-modal";
 
-// Apple fluid deceleration curve [0.16, 1, 0.3, 1] for buttery-smooth tab transitions
-const fluidEase = Easing.bezier(0.16, 1, 0.3, 1);
+const tabEase = Easing.bezier(0.2, 0, 0, 1);
 
-const fluidTabTransitionSpec = {
+const tabTransitionSpec = {
   animation: "timing" as const,
   config: {
-    duration: 200,
-    easing: fluidEase,
+    duration: 170,
+    easing: tabEase,
   },
 };
 
@@ -44,7 +43,7 @@ export default function TabsLayout() {
           lazy: true,
           freezeOnBlur: Platform.OS !== "web",
           animation: Platform.OS === "web" ? "none" : "shift",
-          transitionSpec: fluidTabTransitionSpec,
+          transitionSpec: tabTransitionSpec,
         }}
       >
         <Tabs.Screen

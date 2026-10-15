@@ -12,7 +12,7 @@ import Animated, {
   useAnimatedStyle,
   useReducedMotion,
   useSharedValue,
-  withSpring,
+  withTiming,
 } from "react-native-reanimated";
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
@@ -44,25 +44,14 @@ export function PressableScale({
   const handlePressIn = (event: GestureResponderEvent) => {
     if (disabled) return;
     if (!reduceMotion) {
-      scale.value = withSpring(activeScale, {
-        damping: 20,
-        stiffness: 280,
-        mass: 0.65,
-      });
+      scale.value = withTiming(activeScale, { duration: 90 });
     }
 
     onPressIn?.(event);
   };
 
   const handlePressOut = (event: GestureResponderEvent) => {
-    if (disabled) return;
-    if (!reduceMotion) {
-      scale.value = withSpring(1, {
-        damping: 18,
-        stiffness: 200,
-        mass: 0.7,
-      });
-    }
+    scale.value = reduceMotion ? 1 : withTiming(1, { duration: 130 });
 
     onPressOut?.(event);
   };

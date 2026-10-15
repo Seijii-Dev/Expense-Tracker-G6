@@ -10,14 +10,6 @@ import {
   TextInput,
   View,
 } from "react-native";
-import Animated, {
-  useAnimatedStyle,
-  useSharedValue,
-  withSpring,
-  useReducedMotion,
-  interpolateColor,
-  interpolate,
-} from "react-native-reanimated";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -25,7 +17,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTheme } from "@/lib/theme-store";
 import { AmbientBackground } from "@/components/ui/ambient-background";
 
-/* ─── Animated Floating Input ──────────────────────────────────── */
+/* ─── Native-style labeled input ───────────────────────────────── */
 
 interface FloatingInputProps {
   label: string;
@@ -43,8 +35,6 @@ interface FloatingInputProps {
   trailingContent?: React.ReactNode;
 }
 
-const springConfig = { damping: 18, stiffness: 260, mass: 0.7 };
-
 function FloatingInput({
   label,
   icon,
@@ -61,76 +51,33 @@ function FloatingInput({
   trailingContent,
 }: FloatingInputProps) {
   const { colors, dark } = useTheme();
-  const reduceMotion = useReducedMotion();
   const localInputRef = useRef<TextInput | null>(null);
   const setInputRef = useCallback((input: TextInput | null) => {
     localInputRef.current = input;
     if (inputRef) inputRef.current = input;
   }, [inputRef]);
   const [isFocused, setIsFocused] = useState(false);
-  const hasValue = value.length > 0;
-  const focusProgress = useSharedValue(0);
-  const labelProgress = useSharedValue(hasValue ? 1 : 0);
-  const isFloated = isFocused || hasValue;
-
   const handleFocus = useCallback(() => {
     setIsFocused(true);
-    focusProgress.value = reduceMotion ? 1 : withSpring(1, springConfig);
-    labelProgress.value = reduceMotion ? 1 : withSpring(1, springConfig);
-  }, [focusProgress, labelProgress, reduceMotion]);
+  }, []);
 
   const handleBlur = useCallback(() => {
     setIsFocused(false);
-    focusProgress.value = reduceMotion ? 0 : withSpring(0, springConfig);
-    labelProgress.value = reduceMotion
-      ? value.length > 0 ? 1 : 0
-      : withSpring(value.length > 0 ? 1 : 0, springConfig);
-  }, [focusProgress, labelProgress, reduceMotion, value]);
+  }, []);
 
-  React.useEffect(() => {
-    if (isFocused) return;
-    const nextValue = hasValue ? 1 : 0;
-    labelProgress.value = reduceMotion ? nextValue : withSpring(nextValue, springConfig);
-  }, [hasValue, isFocused, labelProgress, reduceMotion]);
-
-  const labelStyle = useAnimatedStyle(() => {
-    const floated = labelProgress.value;
-    return {
-      transform: [
-        { translateY: interpolate(floated, [0, 1], [0, -22]) },
-        { scale: interpolate(floated, [0, 1], [1, 0.8]) },
-      ],
-      opacity: interpolate(floated, [0, 1], [0.5, 1]),
-    };
-  });
-
-  const borderStyle = useAnimatedStyle(() => ({
-    borderColor: interpolateColor(
-      focusProgress.value,
-      [0, 1],
-      [dark ? "rgba(255,255,255,0.10)" : "#E2E8F0", colors.primary]
-    ),
-  }));
-
-  const focusBgColor = isFocused
-    ? dark
-      ? "rgba(232, 74, 63, 0.06)"
-      : "rgba(232, 74, 63, 0.03)"
-    : dark
-    ? "rgba(255,255,255,0.04)"
-    : colors.surface;
+  const focusBgColor = dark ? colors.surfaceSubtle : colors.surface;
 
   return (
     <Pressable
       onPress={() => localInputRef.current?.focus()}
       accessibilityRole="none"
     >
-      <Animated.View
+      <View
         style={[
           styles.floatingFieldWrap,
-          borderStyle,
           {
             backgroundColor: focusBgColor,
+            borderColor: isFocused ? colors.primary : colors.border,
           },
         ]}
       >
@@ -156,12 +103,11 @@ function FloatingInput({
           />
         </View>
 
-        {/* Floating Label + Input */}
+        {/* Persistent label and input match familiar native form controls. */}
         <View style={styles.floatingInputArea}>
-          <Animated.Text
+          <Text
             style={[
               styles.floatingLabel,
-              labelStyle,
               {
                 color: isFocused ? colors.primary : colors.subtle,
               },
@@ -169,14 +115,14 @@ function FloatingInput({
             numberOfLines={1}
           >
             {label}
-          </Animated.Text>
+          </Text>
           <TextInput
             ref={setInputRef}
             value={value}
             onChangeText={onChangeText}
             onFocus={handleFocus}
             onBlur={handleBlur}
-            placeholder={isFloated ? placeholder : undefined}
+            placeholder={placeholder}
             placeholderTextColor={colors.subtle}
             secureTextEntry={secureTextEntry}
             keyboardType={keyboardType}
@@ -186,10 +132,7 @@ function FloatingInput({
             onSubmitEditing={onSubmitEditing}
             style={[
               styles.floatingInput,
-              {
-                color: colors.foreground,
-                marginTop: isFloated ? 10 : 0,
-              },
+              { color: colors.foreground },
             ]}
             accessibilityLabel={label}
             accessibilityHint={placeholder}
@@ -208,7 +151,7 @@ function FloatingInput({
             ]}
           />
         )}
-      </Animated.View>
+      </View>
     </Pressable>
   );
 }
@@ -345,8 +288,8 @@ export function AuthForm({ mode, onModeChange, onBack, onSubmit, busy }: AuthFor
           </Text>
           <Text style={[styles.formSubtitle, { color: colors.muted }]}>
             {isRegister
-              ? "Create your account to sync your expenses and track savings."
-              : "Sign in to access your saved transactions and budget."}
+              ? "Save your expenses and check them across your devices."
+              : "Sign in to see your expenses and budget."}
           </Text>
         </View>
 
@@ -643,52 +586,46 @@ const styles = StyleSheet.create({
     gap: 14,
   },
 
-  /* ─── Floating Input Styles ───────────────────────────────── */
+  /* ─── Labeled Input Styles ─────────────────────────────────── */
   floatingFieldWrap: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
-    minHeight: 60,
-    paddingHorizontal: 14,
-    borderRadius: 18,
-    borderWidth: 1.5,
+    gap: 10,
+    minHeight: 58,
+    paddingHorizontal: 12,
+    borderRadius: 14,
+    borderWidth: 1,
     position: "relative",
-    overflow: "hidden",
+    overflow: "visible",
   },
   floatingIconWrap: {
-    width: 34,
-    height: 34,
-    borderRadius: 11,
+    width: 30,
+    height: 30,
+    borderRadius: 9,
     alignItems: "center",
     justifyContent: "center",
   },
   floatingInputArea: {
     flex: 1,
     justifyContent: "center",
-    minHeight: 44,
-    position: "relative",
+    minHeight: 48,
+    gap: 2,
   },
   floatingLabel: {
-    position: "absolute",
-    left: 0,
-    top: 12,
-    fontSize: 14,
-    fontWeight: "600",
-    letterSpacing: 0.1,
+    fontSize: 11,
+    fontWeight: "700",
+    letterSpacing: 0.15,
   },
   floatingInput: {
     flex: 1,
-    fontSize: 14,
-    fontWeight: "600",
+    minHeight: 24,
+    fontSize: 15,
+    fontWeight: "500",
     paddingVertical: 0,
   },
   focusAccentLine: {
     position: "absolute",
-    bottom: 0,
-    left: 14,
-    right: 14,
-    height: 2,
-    borderRadius: 1,
+    display: "none",
   },
   eyeToggle: {
     padding: 4,

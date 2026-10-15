@@ -1,20 +1,11 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 import {
-  AccessibilityInfo,
   DimensionValue,
   StyleProp,
   StyleSheet,
   View,
   ViewStyle,
 } from "react-native";
-import Animated, {
-  Easing,
-  interpolate,
-  useAnimatedStyle,
-  useSharedValue,
-  withRepeat,
-  withTiming,
-} from "react-native-reanimated";
 import { useTheme } from "@/lib/theme-store";
 
 export interface SkeletonProps {
@@ -33,50 +24,10 @@ export function Skeleton({
   children,
 }: SkeletonProps) {
   const { dark } = useTheme();
-  const [reduceMotion, setReduceMotion] = useState(false);
-  const pulse = useSharedValue(0);
-
-  useEffect(() => {
-    let isMounted = true;
-    AccessibilityInfo.isReduceMotionEnabled().then((enabled) => {
-      if (isMounted) setReduceMotion(enabled);
-    });
-
-    const subscription = AccessibilityInfo.addEventListener(
-      "reduceMotionChanged",
-      (enabled) => setReduceMotion(enabled)
-    );
-
-    return () => {
-      isMounted = false;
-      subscription?.remove?.();
-    };
-  }, []);
-
-  useEffect(() => {
-    if (reduceMotion) {
-      pulse.value = 0.5;
-      return;
-    }
-    pulse.value = withRepeat(
-      withTiming(1, { duration: 800, easing: Easing.inOut(Easing.ease) }),
-      -1,
-      true
-    );
-  }, [pulse, reduceMotion]);
-
-  const animatedStyle = useAnimatedStyle(() => ({
-    opacity: interpolate(
-      pulse.value,
-      [0, 1],
-      [dark ? 0.35 : 0.45, dark ? 0.85 : 0.9]
-    ),
-  }));
-
   const baseColor = dark ? "rgba(255, 255, 255, 0.08)" : "#E2E8E5";
 
   return (
-    <Animated.View
+    <View
       style={[
         styles.skeleton,
         {
@@ -85,12 +36,11 @@ export function Skeleton({
           borderRadius,
           backgroundColor: baseColor,
         },
-        animatedStyle,
         style,
       ]}
     >
       {children}
-    </Animated.View>
+    </View>
   );
 }
 

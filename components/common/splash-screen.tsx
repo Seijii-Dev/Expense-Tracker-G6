@@ -19,7 +19,7 @@ interface SplashScreenProps {
 
 /**
  * High-fidelity branded application launch screen displaying the official
- * Ledgerly logo with smooth entrance, pulsing glow, and seamless exit transition.
+ * Ledgerly mark with a short entrance and exit transition.
  */
 export function SplashScreen({ isReady, onFinish, dark = false }: SplashScreenProps) {
   const [visible, setVisible] = useState(true);
@@ -219,7 +219,7 @@ export function SplashScreen({ isReady, onFinish, dark = false }: SplashScreenPr
         {/* Brand Name & Tagline */}
         <Text style={[styles.brandTitle, { color: textColor }]}>Ledgerly</Text>
         <Text style={[styles.brandKicker, { color: kickerColor }]}>
-          SMART SPENDING & SAVINGS
+          EXPENSE TRACKER
         </Text>
 
         {/* Minimalist Loading Dots */}

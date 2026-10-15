@@ -14,24 +14,19 @@ export interface MotionEntranceProps {
   delay?: number;
   duration?: number;
   translateY?: number;
-  scale?: number;
   enableLayoutTransition?: boolean;
   direction?: "down" | "up" | "fade";
   style?: StyleProp<ViewStyle>;
 }
 
-// Apple iOS & Motion.dev signature fluid deceleration curve [0.16, 1, 0.3, 1]
-const fluidEase = Easing.bezier(0.16, 1, 0.3, 1);
+const interfaceEase = Easing.bezier(0.2, 0, 0, 1);
 
-/**
- * MotionEntrance: Buttery-smooth, hardware-accelerated entering animation.
- * Features an organic fluid ease curve [0.16, 1, 0.3, 1] with zero jitter.
- */
+/** Adds a short entrance transition to a screen section. */
 export function MotionEntrance({
   children,
   delay = 0,
-  duration = 300,
-  translateY = 10,
+  duration = 220,
+  translateY = 6,
   direction = "down",
   enableLayoutTransition = false,
   style,
@@ -42,13 +37,12 @@ export function MotionEntrance({
   const enteringAnimation = useMemo(() => {
     if (reduceMotion) return undefined;
 
-    // Organic micro-stagger: maintains natural sequencing without excessive lag
-    const safeDelay = Math.min(Math.max(0, delay), 320);
+    const safeDelay = Math.min(Math.max(0, delay) * 0.35, 100);
     const distance = Math.max(0, translateY);
 
     if (direction === "down") {
       return FadeInDown.duration(duration)
-        .easing(fluidEase)
+        .easing(interfaceEase)
         .withInitialValues({
           opacity: 0,
           transform: [{ translateY: -distance }],
@@ -58,7 +52,7 @@ export function MotionEntrance({
 
     if (direction === "up") {
       return FadeInUp.duration(duration)
-        .easing(fluidEase)
+        .easing(interfaceEase)
         .withInitialValues({
           opacity: 0,
           transform: [{ translateY: distance }],
@@ -66,7 +60,7 @@ export function MotionEntrance({
         .delay(safeDelay);
     }
 
-    return FadeIn.duration(duration).easing(fluidEase).delay(safeDelay);
+    return FadeIn.duration(duration).easing(interfaceEase).delay(safeDelay);
   }, [direction, delay, duration, translateY, reduceMotion]);
 
   if (reduceMotion) {
@@ -78,7 +72,7 @@ export function MotionEntrance({
       entering={enteringAnimation}
       layout={
         enableLayoutTransition
-          ? LinearTransition.springify().damping(22).stiffness(280)
+          ? LinearTransition.duration(180).easing(interfaceEase)
           : undefined
       }
       style={[
