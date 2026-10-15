@@ -1,5 +1,5 @@
 import React, { useMemo } from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { StyleProp, StyleSheet, Text, View, ViewStyle } from "react-native";
 import { Expense } from "@/types/expense";
 import { CategoryIcon } from "@/components/ui/category-icon";
 import { getCategoryDisplayName, getCategoryStyle } from "@/constants/categories";
@@ -12,9 +12,10 @@ const SKELETON_WIDTHS = ["58%", "88%", "42%"] as const;
 
 interface CategoryLegendProps {
   expenses: Expense[];
+  style?: StyleProp<ViewStyle>;
 }
 
-export const CategoryLegend = React.memo(function CategoryLegend({ expenses }: CategoryLegendProps) {
+export const CategoryLegend = React.memo(function CategoryLegend({ expenses, style }: CategoryLegendProps) {
   const { colors, dark } = useTheme();
   const { customCategories } = useExpenses();
 
@@ -44,7 +45,7 @@ export const CategoryLegend = React.memo(function CategoryLegend({ expenses }: C
   if (totals.length === 0) {
     const track = dark ? "rgba(255, 255, 255, 0.06)" : colors.surfaceSubtle;
     return (
-      <View style={styles.legendSkeleton} accessibilityLabel="Waiting for category data">
+      <View style={[styles.legendSkeleton, style]} accessibilityLabel="Waiting for category data">
         {SKELETON_WIDTHS.map((width, index) => (
           <View key={index} style={[styles.skeletonRow, { backgroundColor: track, width }]} />
         ))}
@@ -53,7 +54,7 @@ export const CategoryLegend = React.memo(function CategoryLegend({ expenses }: C
   }
 
   return (
-    <View style={styles.legend}>
+    <View style={[styles.legend, style]}>
       {totals.map(({ category, total }) => {
         const meta = getCategoryStyle(category, customCategories);
         const categoryLabel = getCategoryDisplayName(category);
@@ -125,6 +126,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 8,
     flex: 1,
+    minWidth: 0,
     paddingRight: 6,
   },
   iconWrap: {
@@ -143,6 +145,8 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 6,
+    flexShrink: 1,
+    minWidth: 0,
   },
   pctBadge: {
     paddingHorizontal: 6,
@@ -157,6 +161,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: "700",
     minWidth: 54,
+    flexShrink: 1,
     textAlign: "right",
   },
 });
