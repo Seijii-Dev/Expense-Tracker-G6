@@ -17,7 +17,7 @@ import { router } from "expo-router";
 import { LinearGradient } from "expo-linear-gradient";
 import { ScreenContainer } from "@/components/screen-container";
 import { CategoryIcon } from "@/components/ui/category-icon";
-import { getCategoryStyle } from "@/constants/categories";
+import { getCategoryDisplayName, getCategoryStyle } from "@/constants/categories";
 import { STORAGE_KEYS } from "@/constants/storage";
 import { useExpenses } from "@/lib/expense-store";
 import { useTheme } from "@/lib/theme-store";
@@ -689,7 +689,7 @@ export default function SettingsScreen() {
                         size={14}
                         customCategories={customCategories}
                       />
-                      <Text style={[styles.pillText, { color: catStyle.color }]}>{category}</Text>
+                      <Text style={[styles.pillText, { color: catStyle.color }]}>{getCategoryDisplayName(category)}</Text>
                       {isCustom && (
                         <Ionicons
                           name="close-circle"
@@ -817,7 +817,7 @@ export default function SettingsScreen() {
 
       <ConfirmDialog
         visible={Boolean(categoryToDelete)}
-        title={`Delete "${categoryToDelete}"?`}
+        title={`Delete "${getCategoryDisplayName(categoryToDelete)}"?`}
         message="This category will be permanently removed. Existing expenses in this category will keep their label."
         confirmText="Delete"
         cancelText="Cancel"

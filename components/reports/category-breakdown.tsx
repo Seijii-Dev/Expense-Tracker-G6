@@ -9,7 +9,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { GlassSurface } from "@/components/ui/glass-surface";
 import { EmptyState } from "@/components/ui/empty-state";
 import { CategoryIcon } from "@/components/ui/category-icon";
-import { getCategoryStyle } from "@/constants/categories";
+import { getCategoryDisplayName, getCategoryStyle } from "@/constants/categories";
 import { CategoryTotal } from "@/hooks/useReportMetrics";
 import { CustomCategory } from "@/types/expense";
 import { useTheme } from "@/lib/theme-store";
@@ -128,6 +128,7 @@ export function CategoryBreakdown({
           <View style={styles.list}>
             {categoryTotals.map(({ category, total }, index) => {
               const meta = getCategoryStyle(category, customCategories);
+              const categoryLabel = getCategoryDisplayName(category);
               const percentStr = formatPercent(total, periodTotal);
               const rank = index + 1;
               const fillPct =
@@ -169,7 +170,7 @@ export function CategoryBreakdown({
                           style={[styles.categoryTitle, { color: colors.foreground }]}
                           numberOfLines={1}
                         >
-                          {category}
+                          {categoryLabel}
                         </Text>
                         <View
                           style={[

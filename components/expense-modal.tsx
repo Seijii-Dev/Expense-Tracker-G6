@@ -18,6 +18,7 @@ import {
   PAYMENT_ICON_COLORS,
   PAYMENT_ICON_NAMES,
   PAYMENT_METHODS,
+  getCategoryDisplayName,
   getCategoryStyle,
 } from "@/constants/categories";
 import { getPhilippinesDate, getYesterdayDate, normalizeDate } from "@/utils/date";
@@ -427,7 +428,7 @@ export function ExpenseModal({ visible, initialExpense, onClose, onSubmit }: Exp
             <View style={styles.sectionHeaderRow}>
               <Text style={[styles.sectionLabel, { color: colors.muted }]}>CATEGORY</Text>
               <Text style={[styles.selectedCategoryBadge, { color: colors.primary }]}>
-                {category}
+                {getCategoryDisplayName(category)}
               </Text>
             </View>
 
@@ -442,7 +443,7 @@ export function ExpenseModal({ visible, initialExpense, onClose, onSubmit }: Exp
                     style={[styles.categoryItem, { width: categoryItemWidth }]}
                     accessibilityRole="button"
                     accessibilityState={{ selected: active }}
-                    accessibilityLabel={item}
+                    accessibilityLabel={getCategoryDisplayName(item)}
                   >
                     <View
                       style={[
@@ -478,7 +479,7 @@ export function ExpenseModal({ visible, initialExpense, onClose, onSubmit }: Exp
                       ]}
                       numberOfLines={1}
                     >
-                      {item}
+                      {getCategoryDisplayName(item)}
                     </Text>
                   </Pressable>
                 );

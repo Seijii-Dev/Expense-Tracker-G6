@@ -4,7 +4,7 @@ import { Platform, Pressable, ScrollView, StyleSheet, Text, View } from "react-n
 import { Category } from "@/types/expense";
 import { useExpenses } from "@/lib/expense-store";
 import { useTheme } from "@/lib/theme-store";
-import { getCategoryStyle } from "@/constants/categories";
+import { getCategoryDisplayName, getCategoryStyle } from "@/constants/categories";
 
 interface CategoryChipsProps {
   selected: "All" | Category;
@@ -79,7 +79,7 @@ export function CategoryChips({ selected, onSelect, countMap }: CategoryChipsPro
                 },
               ]}
             >
-              {item}
+              {getCategoryDisplayName(item)}
             </Text>
 
             {/* Optional count pill for All */}

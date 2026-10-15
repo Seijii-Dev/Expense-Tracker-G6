@@ -10,8 +10,6 @@ const config: ExpoConfig = {
   userInterfaceStyle: "automatic",
   newArchEnabled: true,
   splash: {
-    image: "./assets/images/icon.png",
-    resizeMode: "contain",
     backgroundColor: "#0A1714",
   },
   ios: {

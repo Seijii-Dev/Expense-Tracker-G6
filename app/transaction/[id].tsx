@@ -29,6 +29,7 @@ import {
   PAYMENT_ICON_COLORS,
   PAYMENT_ICON_NAMES,
   PAYMENT_METHODS,
+  getCategoryDisplayName,
   getCategoryStyle,
 } from "@/constants/categories";
 import { formatDate, formatMoney } from "@/utils/formatters";
@@ -301,7 +302,7 @@ export default function TransactionDetailsScreen() {
                   onPress={() => setCategory(item)}
                   accessibilityRole="button"
                   accessibilityState={{ selected: active }}
-                  accessibilityLabel={`Category ${item}`}
+                  accessibilityLabel={`Category ${getCategoryDisplayName(item)}`}
                   style={[
                     styles.chip,
                     {
@@ -332,7 +333,7 @@ export default function TransactionDetailsScreen() {
                     ]}
                     numberOfLines={1}
                   >
-                    {item}
+                    {getCategoryDisplayName(item)}
                   </Text>
                 </Pressable>
               );
@@ -521,7 +522,7 @@ export default function TransactionDetailsScreen() {
         destructive
         snippet={{
           title: expense.description,
-          subtitle: `${expense.category} • ${formatDate(expense.date)}`,
+          subtitle: `${getCategoryDisplayName(expense.category)} • ${formatDate(expense.date)}`,
           amount: `−${formatMoney(expense.amount)}`,
           badge: expense.payment,
         }}

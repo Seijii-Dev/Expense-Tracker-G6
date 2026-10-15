@@ -2,7 +2,7 @@ import React, { useMemo } from "react";
 import { StyleSheet, Text, View } from "react-native";
 import { Expense } from "@/types/expense";
 import { CategoryIcon } from "@/components/ui/category-icon";
-import { getCategoryStyle } from "@/constants/categories";
+import { getCategoryDisplayName, getCategoryStyle } from "@/constants/categories";
 import { useExpenses } from "@/lib/expense-store";
 import { useTheme } from "@/lib/theme-store";
 import { formatMoney, formatPercent } from "@/utils/formatters";
@@ -56,6 +56,7 @@ export const CategoryLegend = React.memo(function CategoryLegend({ expenses }: C
     <View style={styles.legend}>
       {totals.map(({ category, total }) => {
         const meta = getCategoryStyle(category, customCategories);
+        const categoryLabel = getCategoryDisplayName(category);
         return (
           <View style={styles.legendRow} key={category}>
             <View style={styles.legendName}>
@@ -70,7 +71,7 @@ export const CategoryLegend = React.memo(function CategoryLegend({ expenses }: C
                 <CategoryIcon category={category} size={14} customCategories={customCategories} />
               </View>
               <Text style={[styles.legendText, { color: colors.foreground }]} numberOfLines={1}>
-                {category}
+                {categoryLabel}
               </Text>
             </View>
 

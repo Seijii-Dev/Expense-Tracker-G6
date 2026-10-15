@@ -286,11 +286,6 @@ export function AuthForm({ mode, onModeChange, onBack, onSubmit, busy }: AuthFor
             {isRegister ? "Start your ledger" : "Welcome back"}
             <Text style={{ color: colors.primary }}>.</Text>
           </Text>
-          <Text style={[styles.formSubtitle, { color: colors.muted }]}>
-            {isRegister
-              ? "Save your expenses and check them across your devices."
-              : "Sign in to see your expenses and budget."}
-          </Text>
         </View>
 
         {/* Segmented Mode Selector */}
@@ -550,11 +545,6 @@ const styles = StyleSheet.create({
     fontSize: 30,
     fontWeight: "700",
     letterSpacing: -0.8,
-  },
-  formSubtitle: {
-    fontSize: 13,
-    lineHeight: 19,
-    marginTop: 6,
   },
   segmentContainer: {
     flexDirection: "row",

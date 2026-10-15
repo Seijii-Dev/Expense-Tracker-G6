@@ -33,6 +33,7 @@ import { addCalendarDays, getExpenseDateKey, getPhilippinesDate, getYesterdayDat
 import { exportExpensesToCsv } from "@/utils/export-csv";
 import { ConfirmDialog } from "@/components/common/confirm-dialog";
 import { radii, spacing, typography } from "@/constants/design-tokens";
+import { getCategoryDisplayName } from "@/constants/categories";
 
 
 export default function TransactionsScreen() {
@@ -448,7 +449,7 @@ export default function TransactionsScreen() {
             <View style={[styles.ribbonBadge, { backgroundColor: dark ? "rgba(16,185,129,0.18)" : "#ECFDF5" }]}>
               <Ionicons name="wallet-outline" size={13} color={colors.success} />
               <Text style={[styles.ribbonBadgeText, { color: colors.success }]}>
-                {category === "All" ? "All" : category}
+                {getCategoryDisplayName(category)}
               </Text>
             </View>
           </GlassSurface>

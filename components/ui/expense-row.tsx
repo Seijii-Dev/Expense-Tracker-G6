@@ -4,7 +4,7 @@ import { Ionicons } from "@expo/vector-icons";
 
 import { CategoryIcon } from "@/components/ui/category-icon";
 import { Expense } from "@/types/expense";
-import { getCategoryStyle } from "@/constants/categories";
+import { getCategoryDisplayName, getCategoryStyle } from "@/constants/categories";
 import { useExpenses } from "@/lib/expense-store";
 import { useTheme } from "@/lib/theme-store";
 import { formatDate, formatMoney } from "@/utils/formatters";
@@ -38,6 +38,7 @@ export const ExpenseRow = React.memo(function ExpenseRow({
   const { width } = useWindowDimensions();
   const compact = width < 360;
   const meta = getCategoryStyle(expense.category, customCategories);
+  const categoryLabel = getCategoryDisplayName(expense.category);
   const [showDeleteConfirm, setShowDeleteConfirm] = React.useState(false);
 
   const handleDeletePress = React.useCallback(() => {
@@ -87,14 +88,14 @@ export const ExpenseRow = React.memo(function ExpenseRow({
         style={[styles.body, compact && styles.bodyCompact]}
         onPress={handleBodyPress}
         accessibilityRole="button"
-        accessibilityLabel={`${expense.description}, ${formatMoney(expense.amount)}, ${expense.category}, ${formatDate(expense.date)}`}
+        accessibilityLabel={`${expense.description}, ${formatMoney(expense.amount)}, ${categoryLabel}, ${formatDate(expense.date)}`}
       >
         <Text style={[styles.title, { color: colors.foreground }]} numberOfLines={2}>
           {expense.description}
         </Text>
         <View style={styles.metaRow}>
           <Text style={[styles.metaCategory, { color: colors.muted }]}>
-            {expense.category}
+            {categoryLabel}
           </Text>
           <Text style={[styles.metaDot, { color: colors.subtle }]}>•</Text>
           <View
@@ -164,7 +165,7 @@ export const ExpenseRow = React.memo(function ExpenseRow({
           destructive
           snippet={{
             title: expense.description,
-            subtitle: `${expense.category} • ${formatDate(expense.date)}`,
+            subtitle: `${categoryLabel} • ${formatDate(expense.date)}`,
             amount: `−${formatMoney(expense.amount)}`,
             badge: expense.payment,
           }}

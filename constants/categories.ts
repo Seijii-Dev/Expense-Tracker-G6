@@ -12,6 +12,11 @@ export const CATEGORIES: readonly Category[] = [
   "Other",
 ] as const;
 
+/** Returns the label shown in the UI while keeping stored category values stable. */
+export function getCategoryDisplayName(category?: string | null): string {
+  return category === "Fun" ? "Games" : category ?? "";
+}
+
 export const PAYMENT_METHODS: readonly Payment[] = [
   "Cash",
   "GCash",

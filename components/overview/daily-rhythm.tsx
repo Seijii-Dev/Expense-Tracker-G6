@@ -9,6 +9,7 @@ import { Ionicons } from "@expo/vector-icons";
 
 import { Expense } from "@/types/expense";
 import { useTheme } from "@/lib/theme-store";
+import { getCategoryDisplayName } from "@/constants/categories";
 import { GlassSurface } from "@/components/ui/glass-surface";
 import { formatDate, formatMoney } from "@/utils/formatters";
 import { addCalendarDays, getExpenseDateKey, getPhilippinesDate, getWeekdayShort } from "@/utils/date";
@@ -287,10 +288,10 @@ export const DailyRhythm = React.memo(function DailyRhythm({ expenses }: DailyRh
             <View key={expense.id} style={[styles.expenseRow, { borderBottomColor: colors.border }]}>
               <View style={styles.expenseText}>
                 <Text style={[styles.expenseDescription, { color: colors.foreground }]} numberOfLines={1}>
-                  {expense.description || expense.category}
+                  {expense.description || getCategoryDisplayName(expense.category)}
                 </Text>
                 <Text style={[styles.expenseMeta, { color: colors.muted }]} numberOfLines={1}>
-                  {expense.category} · {expense.payment}
+                  {getCategoryDisplayName(expense.category)} · {expense.payment}
                 </Text>
               </View>
               <Text style={[styles.expenseAmount, { color: colors.primary }]}>{formatMoney(expense.amount)}</Text>

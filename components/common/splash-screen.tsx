@@ -3,8 +3,6 @@ import {
   AccessibilityInfo,
   Animated,
   Easing,
-  Image,
-  Platform,
   StyleSheet,
   Text,
   View,
@@ -18,8 +16,7 @@ interface SplashScreenProps {
 }
 
 /**
- * High-fidelity branded application launch screen displaying the official
- * Ledgerly mark with a short entrance and exit transition.
+ * Branded application launch screen with short entrance and exit transitions.
  */
 export function SplashScreen({ isReady, onFinish, dark = false }: SplashScreenProps) {
   const [visible, setVisible] = useState(true);
@@ -31,7 +28,6 @@ export function SplashScreen({ isReady, onFinish, dark = false }: SplashScreenPr
   // Animations
   const opacityAnim = useRef(new Animated.Value(0)).current;
   const scaleAnim = useRef(new Animated.Value(0.88)).current;
-  const glowAnim = useRef(new Animated.Value(0.4)).current;
   const exitOpacityAnim = useRef(new Animated.Value(1)).current;
   const exitScaleAnim = useRef(new Animated.Value(1)).current;
   const onFinishRef = useRef(onFinish);
@@ -66,16 +62,15 @@ export function SplashScreen({ isReady, onFinish, dark = false }: SplashScreenPr
     return () => clearTimeout(timer);
   }, []);
 
-  // Entrance and ambient glow loop animation starts on mount
+  // Entrance animation starts on mount
   useEffect(() => {
     if (reduceMotion) {
       opacityAnim.setValue(1);
       scaleAnim.setValue(1);
-      glowAnim.setValue(0.4);
       return;
     }
 
-    // 1. Entrance animation (fade in & gentle scale up)
+    // Fade in and gently scale up.
     const entrance = Animated.parallel([
       Animated.timing(opacityAnim, {
         toValue: 1,
@@ -92,30 +87,10 @@ export function SplashScreen({ isReady, onFinish, dark = false }: SplashScreenPr
     ]);
     entrance.start();
 
-    // 2. Subtle ambient pulse loop
-    const pulseLoop = Animated.loop(
-      Animated.sequence([
-        Animated.timing(glowAnim, {
-          toValue: 0.9,
-          duration: 900,
-          easing: Easing.inOut(Easing.quad),
-          useNativeDriver: true,
-        }),
-        Animated.timing(glowAnim, {
-          toValue: 0.4,
-          duration: 900,
-          easing: Easing.inOut(Easing.quad),
-          useNativeDriver: true,
-        }),
-      ])
-    );
-    pulseLoop.start();
-
     return () => {
-      pulseLoop.stop();
       entrance.stop();
     };
-  }, [glowAnim, opacityAnim, reduceMotion, scaleAnim]);
+  }, [opacityAnim, reduceMotion, scaleAnim]);
 
   // Handle exit once both the application is ready and minimum display time elapsed
   useEffect(() => {
@@ -157,7 +132,6 @@ export function SplashScreen({ isReady, onFinish, dark = false }: SplashScreenPr
   const bgColor = dark ? "#0A1714" : "#F7FAF8";
   const textColor = dark ? "#F2F7F5" : "#173129";
   const kickerColor = "#FF6554";
-  const ringColor = dark ? "rgba(255, 101, 84, 0.25)" : "rgba(255, 101, 84, 0.18)";
 
   return (
     <Animated.View
@@ -180,42 +154,6 @@ export function SplashScreen({ isReady, onFinish, dark = false }: SplashScreenPr
           },
         ]}
       >
-        {/* Glowing Logo Wrap */}
-        <View style={styles.logoOuter}>
-          <Animated.View
-            style={[
-              styles.glowRing,
-              {
-                borderColor: ringColor,
-                opacity: glowAnim,
-                transform: [
-                  {
-                    scale: glowAnim.interpolate({
-                      inputRange: [0.4, 0.9],
-                      outputRange: [1, 1.08],
-                    }),
-                  },
-                ],
-              },
-            ]}
-          />
-          <View
-            style={[
-              styles.logoCard,
-              {
-                backgroundColor: dark ? "#142621" : "#FFFFFF",
-                borderColor: dark ? "rgba(255,255,255,0.08)" : "rgba(23, 49, 41, 0.08)",
-              },
-            ]}
-          >
-            <Image
-              source={require("@/assets/images/icon.png")}
-              style={styles.logoImage}
-              resizeMode="contain"
-            />
-          </View>
-        </View>
-
         {/* Brand Name & Tagline */}
         <Text style={[styles.brandTitle, { color: textColor }]}>Ledgerly</Text>
         <Text style={[styles.brandKicker, { color: kickerColor }]}>
@@ -243,39 +181,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     paddingHorizontal: 24,
-  },
-  logoOuter: {
-    width: 104,
-    height: 104,
-    alignItems: "center",
-    justifyContent: "center",
-    marginBottom: 20,
-  },
-  glowRing: {
-    position: "absolute",
-    width: 104,
-    height: 104,
-    borderRadius: 34,
-    borderWidth: 2,
-  },
-  logoCard: {
-    width: 88,
-    height: 88,
-    borderRadius: 28,
-    borderWidth: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    shadowColor: "#FF6554",
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.16,
-    shadowRadius: 18,
-    elevation: 6,
-    overflow: "hidden",
-  },
-  logoImage: {
-    width: 80,
-    height: 80,
-    borderRadius: 24,
   },
   brandTitle: {
     fontFamily: "DMSans_700Bold",

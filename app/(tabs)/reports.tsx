@@ -19,6 +19,7 @@ import { MotionEntrance, MotionSegmentedControl, PressableScale } from "@/compon
 import { getExpenseDateKey, getPhilippinesDate } from "@/utils/date";
 import { DatePickerModal } from "@/components/common/date-picker-modal";
 import { radii, spacing, typography } from "@/constants/design-tokens";
+import { getCategoryDisplayName } from "@/constants/categories";
 import {
   buildSpendingTimeline,
   shiftTrajectoryAnchorDate,
@@ -61,10 +62,6 @@ export default function ReportsScreen() {
     if (!periodExpenses.length) return null;
     return periodExpenses.reduce((max, exp) => (exp.amount > (max?.amount || 0) ? exp : max), periodExpenses[0]);
   }, [periodExpenses]);
-
-  const dailyAvg = periodExpenses.length
-    ? formatMoney(timeline.total / countCalendarDays(timeline.startDate, timeline.endDate))
-    : formatMoney(0);
 
   const selectedMonth = selectedDate.slice(0, 7);
   const selectedMonthTotal = expenses.reduce(
@@ -222,31 +219,10 @@ export default function ReportsScreen() {
           <SpendingTrendChart timeline={timeline} />
         </MotionEntrance>
 
-        {/* 2x2 Performance Metric Grid */}
+        {/* Performance Metric Grid */}
         <MotionEntrance delay={120}>
           <View style={styles.metricsGrid}>
             <View style={styles.metricsRow}>
-              {/* Daily Average */}
-              <GlassSurface variant="card" radius={16} style={styles.metricCard}>
-                <View style={styles.metricTop}>
-                  <Text style={[styles.metricKicker, { color: colors.muted }]}>DAILY AVG</Text>
-                  <View
-                    style={[
-                      styles.metricIconBox,
-                      { backgroundColor: dark ? "rgba(255,255,255,0.06)" : colors.surfaceSubtle },
-                    ]}
-                  >
-                    <Ionicons name="speedometer-outline" size={15} color={colors.foreground} />
-                  </View>
-                </View>
-                <Text style={[styles.metricValue, { color: colors.foreground }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.72}>
-                  {dailyAvg}
-                </Text>
-                <Text style={[styles.metricSub, { color: "#10B981" }]} numberOfLines={1}>
-                  Pacing calculated
-                </Text>
-              </GlassSurface>
-
               {/* Top Expense */}
               <GlassSurface variant="card" radius={16} style={styles.metricCard}>
                 <View style={styles.metricTop}>
@@ -264,12 +240,10 @@ export default function ReportsScreen() {
                   {topExpense ? formatMoney(topExpense.amount) : "₱0.00"}
                 </Text>
                 <Text style={[styles.metricSub, { color: colors.muted }]} numberOfLines={1}>
-                  {topExpense ? topExpense.category : "No spend logged"}
+                  {topExpense ? getCategoryDisplayName(topExpense.category) : "No spend logged"}
                 </Text>
               </GlassSurface>
-            </View>
 
-            <View style={styles.metricsRow}>
               {/* Activity / Transactions */}
               <GlassSurface variant="card" radius={16} style={styles.metricCard}>
                 <View style={styles.metricTop}>
@@ -290,11 +264,13 @@ export default function ReportsScreen() {
                   Avg: {averageExpenseSize}
                 </Text>
               </GlassSurface>
+            </View>
 
-              {/* Budget Left */}
+            <View style={styles.metricsRow}>
+              {/* Remaining Budget */}
               <GlassSurface variant="card" radius={16} style={styles.metricCard}>
                 <View style={styles.metricTop}>
-                  <Text style={[styles.metricKicker, { color: colors.muted }]}>BUDGET LEFT</Text>
+                  <Text style={[styles.metricKicker, { color: colors.muted }]}>REMAINING BUDGET</Text>
                   <View
                     style={[
                       styles.metricIconBox,
@@ -349,11 +325,11 @@ export default function ReportsScreen() {
             </View>
             <View style={styles.delightContent}>
               <Text style={[styles.delightTitle, { color: colors.foreground }]}>
-                {topCategory ? `${topCategory.category} is your top category` : "Spending summary"}
+                {topCategory ? `${getCategoryDisplayName(topCategory.category)} is your top category` : "Spending summary"}
               </Text>
               <Text style={[styles.delightText, { color: colors.muted }]}>
                 {topCategory
-                  ? `You spent ${formatMoney(topCategory.total)} on ${topCategory.category} (${formatPercent(
+                  ? `You spent ${formatMoney(topCategory.total)} on ${getCategoryDisplayName(topCategory.category)} (${formatPercent(
                       topCategory.total,
                       timeline.total
                     )} of this period’s spending).`
@@ -388,10 +364,10 @@ export default function ReportsScreen() {
 
             <ReportNote
               number="01"
-              title={topCategory ? `${topCategory.category} leads spending` : "No category data yet"}
+              title={topCategory ? `${getCategoryDisplayName(topCategory.category)} leads spending` : "No category data yet"}
               copy={
                 topCategory
-                  ? `You’ve logged ${formatMoney(topCategory.total)} on ${topCategory.category.toLowerCase()} (${formatPercent(
+                  ? `You’ve logged ${formatMoney(topCategory.total)} on ${getCategoryDisplayName(topCategory.category).toLowerCase()} (${formatPercent(
                       topCategory.total,
                       timeline.total
                     )} of this period's spending).`
@@ -446,20 +422,6 @@ export default function ReportsScreen() {
       )}
     </ScreenContainer>
   );
-}
-
-function countCalendarDays(startDate: string, endDate: string): number {
-  const parseDate = (value: string) => {
-    const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
-    if (!match) return null;
-    const [, year, month, day] = match;
-    return Date.UTC(Number(year), Number(month) - 1, Number(day));
-  };
-
-  const start = parseDate(startDate);
-  const end = parseDate(endDate);
-  if (start === null || end === null || end < start) return 1;
-  return Math.floor((end - start) / 86_400_000) + 1;
 }
 
 const styles = StyleSheet.create({

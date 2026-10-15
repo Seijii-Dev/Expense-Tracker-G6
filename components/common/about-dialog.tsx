@@ -103,7 +103,7 @@ export function AboutDialog({ visible, onClose }: AboutDialogProps) {
                   EXPENSE TRACKER
                 </Text>
                 <View style={[styles.versionPill, { backgroundColor: colors.surfaceSubtle }]}>
-                  <Text style={[styles.versionText, { color: colors.muted }]}>v1.0.0 • Official</Text>
+                  <Text style={[styles.versionText, { color: colors.muted }]}>v1.0.0</Text>
                 </View>
               </View>
             </View>

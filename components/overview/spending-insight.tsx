@@ -4,6 +4,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { Expense } from "@/types/expense";
 import { formatMoney } from "@/utils/formatters";
 import { useTheme } from "@/lib/theme-store";
+import { getCategoryDisplayName } from "@/constants/categories";
 
 interface SpendingInsightProps {
   expenses: Expense[];
@@ -52,7 +53,7 @@ export const SpendingInsight = React.memo(function SpendingInsight({ expenses }:
         <Text style={[styles.title, { color: colors.foreground }]}>Smart Insights</Text>
         <Text style={[styles.copy, { color: colors.muted }]}>
           {hasExpenses && topInfo
-            ? `Your highest expenditure this month is ${topInfo.name} at ${formatMoney(topInfo.total)}.`
+            ? `Your highest expenditure this month is ${getCategoryDisplayName(topInfo.name)} at ${formatMoney(topInfo.total)}.`
             : "Once you start logging, we'll provide personalized tips to help you save more every month."}
         </Text>
       </View>

@@ -543,7 +543,7 @@ export default function AccountScreen() {
                 onPress={() =>
                   handleOpenInfo(
                     "Account Name",
-                    `Registered Name: ${account?.name || "Alex Johnson"}\nThis name identifies your device profile.`
+                    `Registered Name: ${account?.name || "Alex Johnson"}`
                   )
                 }
                 accessibilityRole="button"
@@ -567,7 +567,7 @@ export default function AccountScreen() {
                 onPress={() =>
                   handleOpenInfo(
                     "Email Address",
-                    `Email: ${account?.email || "alex.johnson@example.com"}\nStatus: Verified Device ID`
+                    `Email: ${account?.email || "alex.johnson@example.com"}`
                   )
                 }
                 accessibilityRole="button"

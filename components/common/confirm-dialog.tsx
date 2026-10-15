@@ -274,13 +274,6 @@ export function ConfirmDialog({
               )}
             </View>
 
-            {/* Trust Assurance Microcopy */}
-            <View style={styles.trustNoteRow}>
-              <Ionicons name="shield-checkmark" size={13} color={colors.muted} />
-              <Text style={[styles.trustNoteText, { color: colors.muted }]}>
-                Encrypted ledger balance recalculates automatically
-              </Text>
-            </View>
           </GlassSurface>
         </Animated.View>
       </View>
@@ -418,16 +411,6 @@ const styles = StyleSheet.create({
   cancelText: {
     fontSize: 14,
     fontWeight: "600",
-  },
-  trustNoteRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-    marginTop: 16,
-  },
-  trustNoteText: {
-    fontSize: 11,
-    fontWeight: "500",
   },
   disabledBtn: {
     opacity: 0.6,
