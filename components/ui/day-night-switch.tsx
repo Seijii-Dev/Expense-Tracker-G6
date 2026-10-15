@@ -1,6 +1,5 @@
 import React, { useEffect } from "react";
 import { Platform, Pressable, StyleSheet } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
 import Animated, {
   interpolate,
   interpolateColor,
@@ -50,12 +49,6 @@ export function DayNightSwitch({ value, onValueChange, disabled = false }: DayNi
       ]}
     >
       <Animated.View style={[styles.track, trackStyle]}>
-        <Ionicons
-          name={value ? "moon" : "sunny"}
-          size={12}
-          color={value ? "#E7ECF5" : "#FFFFFF"}
-          style={value ? styles.moonIcon : styles.sunIcon}
-        />
         <Animated.View style={[styles.thumb, thumbStyle]} />
       </Animated.View>
     </Pressable>
@@ -92,13 +85,5 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 1 },
     shadowRadius: 2,
     elevation: 1,
-  },
-  sunIcon: {
-    position: "absolute",
-    right: 4,
-  },
-  moonIcon: {
-    position: "absolute",
-    left: 5,
   },
 });

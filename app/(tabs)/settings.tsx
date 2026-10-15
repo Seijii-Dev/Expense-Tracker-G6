@@ -200,9 +200,14 @@ export default function SettingsScreen() {
         </MotionEntrance>
 
         {syncError && (
-          <View style={styles.syncBanner}>
+          <View
+            style={[
+              styles.syncBanner,
+              { backgroundColor: dark ? "rgba(232, 74, 63, 0.16)" : "#FDF2EE" },
+            ]}
+          >
             <Ionicons name="cloud-offline-outline" size={16} color={colors.error} />
-            <Text style={styles.syncBannerText}>{syncError}</Text>
+            <Text style={[styles.syncBannerText, { color: colors.error }]}>{syncError}</Text>
           </View>
         )}
 
@@ -599,7 +604,12 @@ export default function SettingsScreen() {
               </View>
 
               {budgetNotice && (
-                <Text style={styles.budgetNoticeText}>
+                <Text
+                  style={[
+                    styles.budgetNoticeText,
+                    { color: dark ? "#FDA29B" : "#B9382D" },
+                  ]}
+                >
                   {budgetNotice}
                 </Text>
               )}
@@ -974,18 +984,19 @@ const styles = StyleSheet.create({
   },
   syncBanner: {
     flexDirection: "row",
-    alignItems: "center",
+    alignItems: "flex-start",
     gap: 8,
     padding: 12,
     borderRadius: 12,
-    backgroundColor: "#FDF2EE",
     marginBottom: 16,
   },
   syncBannerText: {
-    fontSize: 12,
-    color: "#B5502E",
+    fontSize: 14,
+    lineHeight: 20,
     fontWeight: "500",
     flex: 1,
+    minWidth: 0,
+    flexShrink: 1,
   },
   profileHeroCard: {
     flexDirection: "row",
@@ -1199,10 +1210,12 @@ const styles = StyleSheet.create({
     height: "100%",
   },
   budgetNoticeText: {
-    color: "#E84A3F",
-    fontSize: 12,
+    color: "#B9382D",
+    fontSize: 14,
+    lineHeight: 20,
     marginTop: 4,
     fontWeight: "500",
+    flexShrink: 1,
   },
   presetRow: {
     flexDirection: "row",

@@ -181,7 +181,7 @@ export function ConfirmDialog({
 
             {/* Title & Message */}
             <Text style={[styles.title, { color: colors.foreground }]}>{title}</Text>
-            <Text style={[styles.message, { color: colors.muted }]}>{message}</Text>
+            <Text style={[styles.message, { color: colors.foreground }]}>{message}</Text>
 
             {/* In-Dialog Snippet Preview if provided */}
             {snippet && (
@@ -329,10 +329,12 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   message: {
-    fontSize: 13.5,
-    lineHeight: 20,
+    width: "100%",
+    fontSize: 15,
+    lineHeight: 22,
     marginTop: 8,
     textAlign: "center",
+    flexShrink: 1,
   },
   snippetCard: {
     flexDirection: "row",

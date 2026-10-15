@@ -42,7 +42,7 @@ export default function TabsLayout() {
           headerShown: false,
           lazy: true,
           freezeOnBlur: Platform.OS !== "web",
-          animation: Platform.OS === "web" ? "none" : "shift",
+          animation: Platform.OS === "web" ? "none" : "fade",
           transitionSpec: tabTransitionSpec,
         }}
       >

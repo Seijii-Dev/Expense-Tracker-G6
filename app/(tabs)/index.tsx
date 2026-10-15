@@ -26,7 +26,6 @@ import { SpendingInsight } from "@/components/overview/spending-insight";
 import { MotionEntrance, MotionNumber, PressableScale } from "@/components/motion";
 import { Expense, NewExpenseData } from "@/types/expense";
 import { PulseDialog } from "@/components/common/pulse-dialog";
-import { TypewriterText } from "@/components/ui/typewriter-text";
 
 import { useExpenses } from "@/lib/expense-store";
 import { useAuth } from "@/lib/auth-store";
@@ -130,15 +129,9 @@ export default function OverviewScreen() {
             <View style={styles.headerLeft}>
               <BrandWordmark />
               <Text style={[styles.headerTitle, { color: colors.foreground }]}>Overview</Text>
-              <TypewriterText
-                text={isLedgerEmpty ? "Welcome, let's get started!" : `Welcome back, ${firstName}`}
-                speed={28}
-                delay={160}
-                style={[styles.welcomeSubtext, { color: colors.muted }]}
-                accessibilityLabel={
-                  isLedgerEmpty ? "Welcome, let's get started!" : `Welcome back, ${firstName}`
-                }
-              />
+              <Text style={[styles.welcomeSubtext, { color: colors.muted }]}>
+                {isLedgerEmpty ? "Welcome, let's get started!" : `Welcome back, ${firstName}`}
+              </Text>
             </View>
 
             <View style={styles.headerRightActions}>
@@ -436,9 +429,9 @@ const styles = StyleSheet.create({
     marginTop: 6,
   },
   welcomeSubtext: {
-    fontSize: 11.5,
+    fontSize: 14,
+    lineHeight: 20,
     fontWeight: "500",
-    letterSpacing: -0.1,
     marginTop: 2,
   },
   headerRightActions: {

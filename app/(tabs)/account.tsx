@@ -418,7 +418,17 @@ export default function AccountScreen() {
                 </View>
 
                 {bannerNotice ? (
-                  <Text style={styles.bannerNoticeText}>{bannerNotice}</Text>
+                  <Text
+                    style={[
+                      styles.bannerNoticeText,
+                      {
+                        color: dark ? "#6EE7B7" : "#047857",
+                        backgroundColor: dark ? "rgba(16, 185, 129, 0.18)" : "#ECFDF5",
+                      },
+                    ]}
+                  >
+                    {bannerNotice}
+                  </Text>
                 ) : null}
 
               </View>
@@ -1198,14 +1208,17 @@ const styles = StyleSheet.create({
     height: 20,
   },
   bannerNoticeText: {
-    color: "#10B981",
-    fontSize: 11,
-    fontWeight: "700",
-    marginTop: 4,
-    backgroundColor: "rgba(16, 185, 129, 0.1)",
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 6,
+    maxWidth: 300,
+    alignSelf: "center",
+    color: "#047857",
+    fontSize: 13,
+    lineHeight: 18,
+    textAlign: "center",
+    fontWeight: "600",
+    marginTop: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 8,
   },
   statusChipsRow: {
     flexDirection: "row",
