@@ -7,6 +7,9 @@ import { useExpenses } from "@/lib/expense-store";
 import { useTheme } from "@/lib/theme-store";
 import { formatMoney, formatPercent } from "@/utils/formatters";
 
+/** Placeholder bar widths shown while no category totals exist yet. */
+const SKELETON_WIDTHS = ["58%", "88%", "42%"] as const;
+
 interface CategoryLegendProps {
   expenses: Expense[];
 }
@@ -39,9 +42,12 @@ export const CategoryLegend = React.memo(function CategoryLegend({ expenses }: C
   }, [expenses]);
 
   if (totals.length === 0) {
+    const track = dark ? "rgba(255, 255, 255, 0.06)" : colors.surfaceSubtle;
     return (
-      <View style={styles.legendEmpty}>
-        <Text style={[styles.legendEmptyText, { color: colors.muted }]}>No category spending yet</Text>
+      <View style={styles.legendSkeleton} accessibilityLabel="Waiting for category data">
+        {SKELETON_WIDTHS.map((width, index) => (
+          <View key={index} style={[styles.skeletonRow, { backgroundColor: track, width }]} />
+        ))}
       </View>
     );
   }
@@ -98,15 +104,15 @@ const styles = StyleSheet.create({
     gap: 9,
     justifyContent: "center",
   },
-  legendEmpty: {
+  legendSkeleton: {
     flex: 1,
-    alignItems: "center",
+    gap: 12,
     justifyContent: "center",
-    paddingVertical: 20,
+    paddingVertical: 10,
   },
-  legendEmptyText: {
-    fontSize: 11,
-    fontWeight: "500",
+  skeletonRow: {
+    height: 10,
+    borderRadius: 5,
   },
   legendRow: {
     flexDirection: "row",

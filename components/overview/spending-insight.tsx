@@ -37,17 +37,23 @@ export const SpendingInsight = React.memo(function SpendingInsight({ expenses }:
       style={styles.card}
       contentStyle={styles.cardContent}
     >
-      <View style={[styles.iconWrap, { backgroundColor: dark ? "rgba(16, 185, 129, 0.18)" : "#ECFDF5" }]}>
-        <Ionicons name="sparkles" size={18} color={colors.success} />
+      <View
+        style={[
+          styles.iconWrap,
+          {
+            backgroundColor: dark ? "rgba(255, 255, 255, 0.05)" : colors.surfaceSubtle,
+            borderColor: colors.border,
+          },
+        ]}
+      >
+        <Ionicons name="sparkles" size={18} color={colors.primary} />
       </View>
       <View style={styles.content}>
-        <Text style={[styles.title, { color: colors.foreground }]}>
-          {hasExpenses && topInfo ? "Spending Insight" : "Budget Ready"}
-        </Text>
+        <Text style={[styles.title, { color: colors.foreground }]}>Smart Insights</Text>
         <Text style={[styles.copy, { color: colors.muted }]}>
           {hasExpenses && topInfo
             ? `Your highest expenditure this month is ${topInfo.name} at ${formatMoney(topInfo.total)}.`
-            : "No expenses recorded this month yet. Tap the '+' button to log a payment."}
+            : "Once you start logging, we'll provide personalized tips to help you save more every month."}
         </Text>
       </View>
     </GlassSurface>
@@ -67,9 +73,10 @@ const styles = StyleSheet.create({
   },
 
   iconWrap: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
+    width: 44,
+    height: 44,
+    borderRadius: 14,
+    borderWidth: 1,
     alignItems: "center",
     justifyContent: "center",
     flexShrink: 0,

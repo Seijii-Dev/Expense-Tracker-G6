@@ -11,10 +11,12 @@ import {
 } from "react-native";
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
-import { LinearGradient } from "expo-linear-gradient";
 import { ScreenContainer } from "@/components/screen-container";
 import { GlassSurface } from "@/components/ui/glass-surface";
+import { BrandWordmark } from "@/components/ui/brand-wordmark";
 import { ExpenseRow } from "@/components/ui/expense-row";
+import { BalanceCard } from "@/components/overview/balance-card";
+import { LedgerEmptyState } from "@/components/overview/ledger-empty-state";
 import { ProfileAvatar } from "@/components/account/profile-avatar";
 import { ExpenseModal } from "@/components/expense-modal";
 import { DonutChart } from "@/components/overview/donut-chart";
@@ -35,7 +37,7 @@ import {
   getExpenseDateKey,
   getPhilippinesMonth,
 } from "@/utils/date";
-import { radii, spacing, typography } from "@/constants/design-tokens";
+import { spacing, typography } from "@/constants/design-tokens";
 
 export default function OverviewScreen() {
   const {
@@ -105,6 +107,8 @@ export default function OverviewScreen() {
 
   const firstName = account?.name?.trim().split(/\s+/)[0] || "Alex";
   const displayBalance = remaining > 0 ? remaining : Math.max(0, budget - monthTotal);
+  const isLedgerEmpty = sortedExpenses.length === 0;
+  const openBudgetSettings = () => router.push("/(tabs)/settings");
 
   return (
     <ScreenContainer>
@@ -124,22 +128,17 @@ export default function OverviewScreen() {
         <MotionEntrance delay={0}>
           <View style={styles.topHeader}>
             <View style={styles.headerLeft}>
-              <View style={styles.brandBadgeRow}>
-                <View style={[styles.brandIconBox, { backgroundColor: colors.primarySoft }]}>
-                  <Ionicons name="sparkles" size={16} color={colors.primary} />
-                </View>
-                <View>
-                  <Text style={[styles.brandSuperText, { color: colors.muted }]}>LEDGERLY</Text>
-                  <Text style={[styles.brandTitle, { color: colors.foreground }]}>Overview</Text>
-                  <TypewriterText
-                    text={`Welcome back, ${firstName}`}
-                    speed={28}
-                    delay={160}
-                    style={[styles.welcomeSubtext, { color: colors.muted }]}
-                    accessibilityLabel={`Welcome back, ${firstName}`}
-                  />
-                </View>
-              </View>
+              <BrandWordmark />
+              <Text style={[styles.headerTitle, { color: colors.foreground }]}>Overview</Text>
+              <TypewriterText
+                text={isLedgerEmpty ? "Welcome, let's get started!" : `Welcome back, ${firstName}`}
+                speed={28}
+                delay={160}
+                style={[styles.welcomeSubtext, { color: colors.muted }]}
+                accessibilityLabel={
+                  isLedgerEmpty ? "Welcome, let's get started!" : `Welcome back, ${firstName}`
+                }
+              />
             </View>
 
             <View style={styles.headerRightActions}>
@@ -151,14 +150,14 @@ export default function OverviewScreen() {
               >
                 <View
                   style={[
-                    styles.iconCircle,
+                    styles.iconButton,
                     {
                       backgroundColor: dark ? "rgba(255,255,255,0.06)" : colors.surfaceSubtle,
                       borderColor: colors.border,
                     },
                   ]}
                 >
-                  <Ionicons name="notifications-outline" size={18} color={colors.foreground} />
+                  <Ionicons name="notifications-outline" size={19} color={colors.foreground} />
                   <View style={[styles.notificationDot, { backgroundColor: colors.primary }]} />
                 </View>
               </PressableScale>
@@ -169,13 +168,22 @@ export default function OverviewScreen() {
                 accessibilityRole="button"
                 accessibilityLabel="Open Account and Profile"
               >
-                <View style={[styles.avatarCircle, { borderColor: colors.primary }]}>
+                <View
+                  style={[
+                    styles.avatarButton,
+                    {
+                      borderColor: colors.primary,
+                      backgroundColor: dark ? "rgba(255,255,255,0.06)" : colors.surfaceSubtle,
+                    },
+                  ]}
+                >
                   <ProfileAvatar
                     account={account}
-                    size={36}
+                    size={32}
+                    borderRadius={9}
                     backgroundColor={colors.primary}
                     textColor="#FFFFFF"
-                    fontSize={14}
+                    fontSize={13}
                   />
                 </View>
               </PressableScale>
@@ -185,189 +193,142 @@ export default function OverviewScreen() {
 
         {/* Main Balance Card */}
         <MotionEntrance delay={50}>
-          <View style={styles.heroCardContainer}>
-            <LinearGradient
-              colors={["#FF5A4E", "#E84A3F", "#C83226"]}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={styles.heroCardGradient}
-            >
-              {/* Subtle ambient lighting */}
-              <View pointerEvents="none" style={styles.heroAuraOne} />
-              <View pointerEvents="none" style={styles.heroAuraTwo} />
+          <BalanceCard
+            amount={displayBalance}
+            isHidden={isBalanceHidden}
+            onToggleHidden={toggleBalanceHidden}
+            budget={budget}
+            monthTotal={monthTotal}
+            remaining={remaining}
+            budgetPercent={budgetPercent}
+            onPressBudgetHealth={openBudgetSettings}
+          />
+        </MotionEntrance>
 
-              {/* Top balance actions */}
-              <View style={styles.heroTopStrip}>
-                <PressableScale
-                  onPress={toggleBalanceHidden}
-                  style={styles.heroBalanceLabelRow}
-                  accessibilityRole="button"
-                  accessibilityLabel="Toggle Balance Visibility"
+        {/* First-run empty state: replaces the metric tiles until records exist */}
+        {isLedgerEmpty ? (
+          <MotionEntrance delay={100}>
+            <LedgerEmptyState
+              onLogExpense={() => setShowAddModal(true)}
+              onSetBudget={openBudgetSettings}
+            />
+          </MotionEntrance>
+        ) : (
+          <>
+            {/* Quick Financial Metrics */}
+            <MotionEntrance delay={100}>
+              <View style={[styles.metricsGrid, isNarrowMobile && styles.metricsGridNarrow]}>
+                {/* Monthly Budget Target */}
+                <GlassSurface
+                  variant="card"
+                  radius={18}
+                  style={[styles.metricTileWrap, isNarrowMobile && styles.metricTileNarrow]}
+                  contentStyle={styles.metricTileContent}
                 >
-                  <Text style={styles.heroBalanceLabel}>AVAILABLE BALANCE</Text>
-                  <Ionicons
-                    name={isBalanceHidden ? "eye-off-outline" : "eye-outline"}
-                    size={15}
-                    color="rgba(255, 255, 255, 0.85)"
-                    style={{ marginLeft: 6 }}
+                  <View style={styles.metricTileTop}>
+                    <Text style={[styles.metricTileLabel, { color: colors.muted }]}>BUDGET</Text>
+                    <View style={[styles.metricTileIconCircle, { backgroundColor: colors.successSoft }]}>
+                      <Ionicons name="arrow-down" size={13} color={colors.success} />
+                    </View>
+                  </View>
+                  <MotionNumber
+                    value={budget}
+                    formatter={formatMoney}
+                    style={[styles.metricTileValue, { color: colors.foreground }]}
+                    numberOfLines={1}
+                    adjustsFontSizeToFit
+                    minimumFontScale={0.75}
                   />
-                </PressableScale>
+                  <Text style={[styles.metricTileSub, { color: colors.success }]}>Monthly Target</Text>
+                </GlassSurface>
 
-                <View style={styles.heroCurrencyPill}>
-                  <View style={styles.currencyDot} />
-                  <Text style={styles.currencyText}>PHP (₱)</Text>
-                </View>
-              </View>
-
-              {/* Balance Amount with Motion.dev Spring Counter */}
-              {isBalanceHidden ? (
-                <Text style={styles.heroAmount} numberOfLines={1}>
-                  ••••••••
-                </Text>
-              ) : (
-                <MotionNumber
-                  value={displayBalance}
-                  formatter={formatMoney}
-                  style={styles.heroAmount}
-                  numberOfLines={1}
-                  adjustsFontSizeToFit
-                  minimumFontScale={0.78}
-                />
-              )}
-
-              {/* Budget Progress Indicator */}
-              <View style={styles.heroPillRow}>
-                <View style={styles.heroSubPill}>
-                  <Ionicons
-                    name={budgetPercent < 100 ? "trending-up" : "alert-circle"}
-                    size={15}
-                    color="#FFFFFF"
+                {/* Total Spending */}
+                <GlassSurface
+                  variant="card"
+                  radius={18}
+                  style={[styles.metricTileWrap, isNarrowMobile && styles.metricTileNarrow]}
+                  contentStyle={styles.metricTileContent}
+                >
+                  <View style={styles.metricTileTop}>
+                    <Text style={[styles.metricTileLabel, { color: colors.muted }]}>SPENDING</Text>
+                    <View style={[styles.metricTileIconCircle, { backgroundColor: colors.primarySoft }]}>
+                      <Ionicons name="arrow-up" size={13} color={colors.primary} />
+                    </View>
+                  </View>
+                  <MotionNumber
+                    value={monthTotal}
+                    formatter={formatMoney}
+                    style={[styles.metricTileValue, { color: colors.primary }]}
+                    numberOfLines={1}
+                    adjustsFontSizeToFit
+                    minimumFontScale={0.75}
                   />
-                  <Text style={styles.heroSubPillText}>
-                    {budgetPercent < 100
-                      ? `${100 - budgetPercent}% budget remaining`
-                      : `${budgetPercent - 100}% over monthly budget`}
+                  <Text style={[styles.metricTileSub, { color: colors.primary }]}>
+                    {monthExpenses.length} transactions
                   </Text>
-                </View>
+                </GlassSurface>
 
-                <View style={styles.heroTagPill}>
-                  <Text style={styles.heroTagText}>
-                    {budgetPercent < 100 ? "Healthy" : "Attention"}
-                  </Text>
-                </View>
+                {/* Remaining Savings */}
+                <GlassSurface
+                  variant="card"
+                  radius={18}
+                  style={[styles.metricTileWrap, isNarrowMobile && styles.metricTileWide]}
+                  contentStyle={styles.metricTileContent}
+                >
+                  <View style={styles.metricTileTop}>
+                    <Text style={[styles.metricTileLabel, { color: colors.muted }]}>REMAINING</Text>
+                    <View style={[styles.metricTileIconCircle, { backgroundColor: colors.warningSoft }]}>
+                      <Ionicons name="wallet-outline" size={13} color={colors.warning} />
+                    </View>
+                  </View>
+                  <MotionNumber
+                    value={remaining}
+                    formatter={formatMoney}
+                    style={[styles.metricTileValue, { color: colors.foreground }]}
+                    numberOfLines={1}
+                    adjustsFontSizeToFit
+                    minimumFontScale={0.75}
+                  />
+                  <View style={[styles.tileProgressTrack, { backgroundColor: dark ? "rgba(255,255,255,0.08)" : colors.surfaceSubtle }]}>
+                    <View
+                      style={[
+                        styles.tileProgressFill,
+                        {
+                          backgroundColor: budgetPercent > 90 ? colors.primary : colors.success,
+                          width: `${Math.min(100, Math.max(0, budgetPercent))}%`,
+                        },
+                      ]}
+                    />
+                  </View>
+                </GlassSurface>
               </View>
-            </LinearGradient>
-          </View>
-        </MotionEntrance>
-
-        {/* Quick Financial Metrics */}
-        <MotionEntrance delay={100}>
-          <View style={[styles.metricsGrid, isNarrowMobile && styles.metricsGridNarrow]}>
-            {/* Monthly Budget Target */}
-            <GlassSurface
-              variant="card"
-              radius={18}
-              style={[styles.metricTileWrap, isNarrowMobile && styles.metricTileNarrow]}
-              contentStyle={styles.metricTileContent}
-            >
-              <View style={styles.metricTileTop}>
-                <Text style={[styles.metricTileLabel, { color: colors.muted }]}>BUDGET</Text>
-                <View style={[styles.metricTileIconCircle, { backgroundColor: colors.successSoft }]}>
-                  <Ionicons name="arrow-down" size={13} color={colors.success} />
-                </View>
-              </View>
-              <MotionNumber
-                value={budget}
-                formatter={formatMoney}
-                style={[styles.metricTileValue, { color: colors.foreground }]}
-                numberOfLines={1}
-                adjustsFontSizeToFit
-                minimumFontScale={0.75}
-              />
-              <Text style={[styles.metricTileSub, { color: colors.success }]}>Monthly Target</Text>
-            </GlassSurface>
-
-            {/* Total Spending */}
-            <GlassSurface
-              variant="card"
-              radius={18}
-              style={[styles.metricTileWrap, isNarrowMobile && styles.metricTileNarrow]}
-              contentStyle={styles.metricTileContent}
-            >
-              <View style={styles.metricTileTop}>
-                <Text style={[styles.metricTileLabel, { color: colors.muted }]}>SPENDING</Text>
-                <View style={[styles.metricTileIconCircle, { backgroundColor: colors.primarySoft }]}>
-                  <Ionicons name="arrow-up" size={13} color={colors.primary} />
-                </View>
-              </View>
-              <MotionNumber
-                value={monthTotal}
-                formatter={formatMoney}
-                style={[styles.metricTileValue, { color: colors.primary }]}
-                numberOfLines={1}
-                adjustsFontSizeToFit
-                minimumFontScale={0.75}
-              />
-              <Text style={[styles.metricTileSub, { color: colors.primary }]}>
-                {monthExpenses.length} transactions
-              </Text>
-            </GlassSurface>
-
-            {/* Remaining Savings */}
-            <GlassSurface
-              variant="card"
-              radius={18}
-              style={[styles.metricTileWrap, isNarrowMobile && styles.metricTileWide]}
-              contentStyle={styles.metricTileContent}
-            >
-              <View style={styles.metricTileTop}>
-                <Text style={[styles.metricTileLabel, { color: colors.muted }]}>REMAINING</Text>
-                <View style={[styles.metricTileIconCircle, { backgroundColor: colors.warningSoft }]}>
-                  <Ionicons name="wallet-outline" size={13} color={colors.warning} />
-                </View>
-              </View>
-              <MotionNumber
-                value={remaining}
-                formatter={formatMoney}
-                style={[styles.metricTileValue, { color: colors.foreground }]}
-                numberOfLines={1}
-                adjustsFontSizeToFit
-                minimumFontScale={0.75}
-              />
-              <View style={[styles.tileProgressTrack, { backgroundColor: dark ? "rgba(255,255,255,0.08)" : colors.surfaceSubtle }]}>
-                <View
-                  style={[
-                    styles.tileProgressFill,
-                    {
-                      backgroundColor: budgetPercent > 90 ? colors.primary : colors.success,
-                      width: `${Math.min(100, Math.max(0, budgetPercent))}%`,
-                    },
-                  ]}
-                />
-              </View>
-            </GlassSurface>
-          </View>
-        </MotionEntrance>
+            </MotionEntrance>
+          </>
+        )}
 
         {/* Spending Breakdown */}
         <MotionEntrance delay={150}>
           <GlassSurface variant="card" radius={24} style={styles.panel} contentStyle={styles.panelInner}>
             <View style={styles.panelHeader}>
-              <View>
+              <View style={styles.panelHeaderText}>
                 <Text style={[styles.panelSectionTitle, { color: colors.foreground }]}>
                   Spending by Category
                 </Text>
                 <Text style={[styles.panelSubText, { color: colors.muted }]}>
-                  Current month distribution
+                  {isLedgerEmpty ? "Waiting for data..." : "Current month distribution"}
                 </Text>
               </View>
-              <PressableScale
-                onPress={() => router.push("/(tabs)/reports")}
-                style={styles.viewAllBtn}
-              >
-                <Text style={[styles.viewAllText, { color: colors.primary }]}>Details</Text>
-                <Ionicons name="chevron-forward" size={14} color={colors.primary} />
-              </PressableScale>
+              {!isLedgerEmpty && (
+                <PressableScale
+                  onPress={() => router.push("/(tabs)/reports")}
+                  style={styles.viewAllBtn}
+                  accessibilityRole="button"
+                  accessibilityLabel="Open category reports"
+                >
+                  <Text style={[styles.viewAllText, { color: colors.primary }]}>Details</Text>
+                  <Ionicons name="chevron-forward" size={14} color={colors.primary} />
+                </PressableScale>
+              )}
             </View>
 
             <View style={[styles.overviewRow, isNarrowMobile && styles.overviewRowNarrow]}>
@@ -378,60 +339,50 @@ export default function OverviewScreen() {
         </MotionEntrance>
 
         {/* Recent Transactions */}
-        <MotionEntrance delay={200}>
-          <GlassSurface variant="card" radius={24} style={styles.panel} contentStyle={styles.panelInner}>
-            <View style={styles.panelHeader}>
-              <View>
-                <Text style={[styles.panelSectionTitle, { color: colors.foreground }]}>
-                  Recent Activity
-                </Text>
-                <Text style={[styles.panelSubText, { color: colors.muted }]}>
-                  Latest logged expenses
-                </Text>
-              </View>
-              <PressableScale
-                onPress={() => router.push("/(tabs)/transactions")}
-                style={styles.viewAllBtn}
-              >
-                <Text style={[styles.viewAllText, { color: colors.primary }]}>View all</Text>
-                <Ionicons name="chevron-forward" size={14} color={colors.primary} />
-              </PressableScale>
-            </View>
-
-            {recentExpenses.length === 0 ? (
-              <PressableScale
-                style={styles.emptyRecent}
-                onPress={() => setShowAddModal(true)}
-                accessibilityRole="button"
-                accessibilityLabel="Record your first transaction"
-              >
-                <View style={[styles.emptyIconCircle, { backgroundColor: colors.surfaceSubtle }]}>
-                  <Ionicons name="receipt-outline" size={24} color={colors.subtle} />
+        {recentExpenses.length > 0 && (
+          <MotionEntrance delay={200}>
+            <GlassSurface variant="card" radius={24} style={styles.panel} contentStyle={styles.panelInner}>
+              <View style={styles.panelHeader}>
+                <View style={styles.panelHeaderText}>
+                  <Text style={[styles.panelSectionTitle, { color: colors.foreground }]}>
+                    Recent Activity
+                  </Text>
+                  <Text style={[styles.panelSubText, { color: colors.muted }]}>
+                    Latest logged expenses
+                  </Text>
                 </View>
-                <Text style={[styles.emptyRecentText, { color: colors.foreground }]}>
-                  No recent expenses
-                </Text>
-                <Text style={[styles.emptyRecentSub, { color: colors.primary, fontWeight: "600" }]}>
-                  Tap here or '+' to record your first transaction.
-                </Text>
-              </PressableScale>
-            ) : (
-              recentExpenses.map((expense) => (
+                <PressableScale
+                  onPress={() => router.push("/(tabs)/transactions")}
+                  style={styles.viewAllBtn}
+                  accessibilityRole="button"
+                  accessibilityLabel="View all transactions"
+                >
+                  <Text style={[styles.viewAllText, { color: colors.primary }]}>View all</Text>
+                  <Ionicons name="chevron-forward" size={14} color={colors.primary} />
+                </PressableScale>
+              </View>
+
+              {recentExpenses.map((expense) => (
                 <ExpenseRow
                   key={expense.id}
                   expense={expense}
+                  onPress={() =>
+                    router.push({ pathname: "/transaction/[id]", params: { id: expense.id } })
+                  }
                   onEdit={() => setEditingExpense(expense)}
                   onDelete={() => removeExpense(expense.id)}
                 />
-              ))
-            )}
-          </GlassSurface>
-        </MotionEntrance>
+              ))}
+            </GlassSurface>
+          </MotionEntrance>
+        )}
 
         {/* Daily Expense Chart */}
-        <MotionEntrance delay={250}>
-          <DailyRhythm expenses={sortedExpenses} />
-        </MotionEntrance>
+        {sortedExpenses.length > 0 && (
+          <MotionEntrance delay={250}>
+            <DailyRhythm expenses={sortedExpenses} />
+          </MotionEntrance>
+        )}
 
         {/* Financial Insight */}
         <MotionEntrance delay={300}>
@@ -474,49 +425,31 @@ const styles = StyleSheet.create({
   },
   headerLeft: {
     flex: 1,
+    minWidth: 0,
+    paddingRight: 12,
   },
-  brandBadgeRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-  },
-  brandIconBox: {
-    width: 36,
-    height: 36,
-    borderRadius: 12,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  brandSuperText: {
-    fontSize: 9.5,
-    fontWeight: "800",
-    letterSpacing: 1.2,
-  },
-  brandTitle: {
+  headerTitle: {
     ...typography.screenTitle,
-    fontSize: 22,
-    lineHeight: 27,
-    letterSpacing: -0.4,
-    marginTop: 1,
+    fontSize: 26,
+    lineHeight: 31,
+    letterSpacing: -0.7,
+    marginTop: 6,
   },
   welcomeSubtext: {
     fontSize: 11.5,
     fontWeight: "500",
     letterSpacing: -0.1,
-    marginTop: 1,
+    marginTop: 2,
   },
   headerRightActions: {
     flexDirection: "row",
     alignItems: "center",
     gap: 10,
   },
-  headerIconBtn: {
-    ...(Platform.OS === "web" ? ({ cursor: "pointer" } as any) : {}),
-  },
-  iconCircle: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
+  iconButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 13,
     alignItems: "center",
     justifyContent: "center",
     borderWidth: 1,
@@ -530,123 +463,13 @@ const styles = StyleSheet.create({
     height: 7,
     borderRadius: 3.5,
   },
-  avatarBtn: {
-    ...(Platform.OS === "web" ? ({ cursor: "pointer" } as any) : {}),
-  },
-  avatarCircle: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
+  avatarButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 13,
     alignItems: "center",
     justifyContent: "center",
     borderWidth: 2,
-  },
-  heroCardContainer: {
-    borderRadius: 26,
-    overflow: "hidden",
-    marginBottom: 16,
-    shadowColor: "#E84A3F",
-    shadowOpacity: 0.2,
-    shadowRadius: 20,
-    shadowOffset: { width: 0, height: 8 },
-    elevation: 5,
-  },
-  heroCardGradient: {
-    padding: spacing.xl,
-    position: "relative",
-    overflow: "hidden",
-  },
-  heroAuraOne: {
-    position: "absolute",
-    top: -40,
-    right: -40,
-    width: 140,
-    height: 140,
-    borderRadius: 70,
-    backgroundColor: "rgba(255, 255, 255, 0.14)",
-  },
-  heroAuraTwo: {
-    position: "absolute",
-    bottom: -40,
-    left: -40,
-    width: 130,
-    height: 130,
-    borderRadius: 65,
-    backgroundColor: "rgba(0, 0, 0, 0.12)",
-  },
-  heroTopStrip: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    marginBottom: 6,
-  },
-  heroBalanceLabelRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    ...(Platform.OS === "web" ? ({ cursor: "pointer" } as any) : {}),
-  },
-  heroBalanceLabel: {
-    color: "rgba(255, 255, 255, 0.85)",
-    fontSize: 10.5,
-    fontWeight: "800",
-    letterSpacing: 1.2,
-  },
-  heroCurrencyPill: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 5,
-    backgroundColor: "rgba(255, 255, 255, 0.18)",
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 999,
-  },
-  currencyDot: {
-    width: 5,
-    height: 5,
-    borderRadius: 2.5,
-    backgroundColor: "#6EE7B7",
-  },
-  currencyText: {
-    color: "#FFFFFF",
-    fontSize: 11,
-    fontWeight: "700",
-  },
-  heroAmount: {
-    ...typography.moneyLarge,
-    color: "#FFFFFF",
-    marginVertical: 4,
-  },
-  heroPillRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    marginTop: 8,
-    flexWrap: "wrap",
-  },
-  heroSubPill: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-    backgroundColor: "rgba(255, 255, 255, 0.20)",
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 999,
-  },
-  heroSubPillText: {
-    color: "#FFFFFF",
-    fontSize: 11.5,
-    fontWeight: "600",
-  },
-  heroTagPill: {
-    backgroundColor: "rgba(16, 185, 129, 0.9)",
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 999,
-  },
-  heroTagText: {
-    color: "#FFFFFF",
-    fontSize: 10.5,
-    fontWeight: "700",
   },
   metricsGrid: {
     flexDirection: "row",
@@ -655,17 +478,6 @@ const styles = StyleSheet.create({
   },
   metricsGridNarrow: {
     flexWrap: "wrap",
-  },
-  metricTile: {
-    flex: 1,
-    padding: spacing.md,
-    borderRadius: radii.card,
-    borderWidth: 1,
-    shadowColor: "#1A1D20",
-    shadowOpacity: 0.04,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 2,
   },
   metricTileWrap: {
     flex: 1,
@@ -735,6 +547,11 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     marginBottom: 10,
   },
+  panelHeaderText: {
+    flex: 1,
+    minWidth: 0,
+    paddingRight: 8,
+  },
   panelSectionTitle: {
     ...typography.sectionTitle,
   },
@@ -768,31 +585,5 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     gap: 16,
     paddingVertical: 8,
-  },
-  emptyRecent: {
-    paddingVertical: 24,
-    alignItems: "center",
-  },
-  emptyIconCircle: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    alignItems: "center",
-    justifyContent: "center",
-    marginBottom: 10,
-  },
-  emptyRecentText: {
-    fontSize: 13.5,
-    fontWeight: "700",
-  },
-  emptyRecentSub: {
-    fontSize: 11.5,
-    marginTop: 4,
-    textAlign: "center",
-    maxWidth: 240,
-  },
-  pressed: {
-    opacity: 0.8,
-    transform: [{ scale: 0.98 }],
   },
 });

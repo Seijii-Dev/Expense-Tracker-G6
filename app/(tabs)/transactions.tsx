@@ -11,6 +11,7 @@ import {
   useWindowDimensions,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { router } from "expo-router";
 
 import { ScreenContainer } from "@/components/screen-container";
 import { GlassSurface } from "@/components/ui/glass-surface";
@@ -484,6 +485,9 @@ export default function TransactionsScreen() {
               <View key={item.id} style={{ paddingHorizontal: 14 }}>
                 <ExpenseRow
                   expense={item}
+                  onPress={() =>
+                    router.push({ pathname: "/transaction/[id]", params: { id: item.id } })
+                  }
                   onEdit={() => setEditingExpense(item)}
                   onDelete={() => removeExpense(item.id)}
                   isSelectable={isSelectMode}

@@ -60,25 +60,9 @@ function TabButton({ name, isFocused, onPress, onLongPress, isCompact }: TabButt
   const reduceMotion = useReducedMotion();
   const info = TAB_NAME_MAP[name] || { tab: "overview" as NavTabName, label: name };
   const scale = useSharedValue(1);
-  const active = useSharedValue(isFocused ? 1 : 0);
-
-  useEffect(() => {
-    active.value = reduceMotion
-      ? isFocused ? 1 : 0
-      : withSpring(isFocused ? 1 : 0, {
-          damping: 22,
-          stiffness: 220,
-          mass: 0.65,
-        });
-  }, [active, isFocused, reduceMotion]);
 
   const scaleStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }],
-  }));
-
-  const indicatorStyle = useAnimatedStyle(() => ({
-    opacity: active.value,
-    transform: [{ scale: 0.4 + active.value * 0.6 }],
   }));
 
   const handlePressIn = () => {
@@ -101,7 +85,7 @@ function TabButton({ name, isFocused, onPress, onLongPress, isCompact }: TabButt
     }
   };
 
-  const iconSize = isCompact ? 18 : 21;
+  const iconSize = isCompact ? 19 : 22;
 
   return (
     <Pressable
@@ -142,16 +126,6 @@ function TabButton({ name, isFocused, onPress, onLongPress, isCompact }: TabButt
         >
           {info.label}
         </Text>
-
-        {/* Active Coral Dot Indicator directly beneath label */}
-        <Animated.View
-          pointerEvents="none"
-          style={[
-            styles.activeIndicatorDot,
-            { backgroundColor: colors.primary },
-            indicatorStyle,
-          ]}
-        />
       </Animated.View>
     </Pressable>
   );
@@ -318,30 +292,15 @@ export function FloatingTabBar({ state, descriptors, navigation }: FloatingTabBa
           <Animated.View style={[styles.tabContent, fabAnimatedStyle]}>
             <View
               style={[
-                styles.fabCircle,
+                styles.fabSquare,
                 {
                   backgroundColor: colors.primary,
                   shadowColor: colors.primary,
                 },
               ]}
             >
-              <Ionicons name="add" size={17} color="#FFFFFF" />
+              <Ionicons name="add" size={26} color="#FFFFFF" />
             </View>
-            <Text
-              style={[
-                styles.label,
-                styles.fabLabel,
-                {
-                  color: colors.primary,
-                  fontSize: isSmallScreen ? 8.5 : 9.5,
-                  fontWeight: "700",
-                },
-              ]}
-              numberOfLines={1}
-            >
-              Add Expense
-            </Text>
-            <View style={styles.fabSpacerDot} />
           </Animated.View>
         </Pressable>
 
@@ -365,15 +324,15 @@ const styles = StyleSheet.create({
     zIndex: 999,
   },
   dockSurface: {
-    height: 64,
-    borderRadius: 32,
+    height: 68,
+    borderRadius: 34,
   },
   dockContent: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     height: "100%",
-    paddingHorizontal: 6,
+    paddingHorizontal: 8,
   },
   tabBtn: {
     flex: 1,
@@ -391,43 +350,27 @@ const styles = StyleSheet.create({
     position: "relative",
     paddingVertical: 2,
   },
-  activeIndicatorDot: {
-    width: 4,
-    height: 4,
-    borderRadius: 2,
-    marginTop: 2,
-  },
   iconContainer: {
-    height: 24,
+    height: 25,
     alignItems: "center",
     justifyContent: "center",
   },
   label: {
     fontFamily: "DMSans_500Medium",
     letterSpacing: -0.1,
-    marginTop: 2,
+    marginTop: 3,
     lineHeight: 13,
     textAlign: "center",
   },
-  fabCircle: {
-    width: 26,
-    height: 26,
-    borderRadius: 13,
+  fabSquare: {
+    width: 44,
+    height: 44,
+    borderRadius: 14,
     alignItems: "center",
     justifyContent: "center",
-    shadowOpacity: 0.18,
-    shadowRadius: 3,
-    shadowOffset: { width: 0, height: 1 },
-    elevation: 1,
-  },
-  fabLabel: {
-    letterSpacing: -0.2,
-  },
-  fabSpacerDot: {
-    width: 4,
-    height: 4,
-    borderRadius: 2,
-    marginTop: 2,
-    opacity: 0,
+    shadowOpacity: 0.45,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 6,
   },
 });

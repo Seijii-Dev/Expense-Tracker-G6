@@ -13,23 +13,34 @@ import {
   useWindowDimensions,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { LinearGradient } from "expo-linear-gradient";
 import { Category, Expense, NewExpenseData, Payment } from "@/types/expense";
-import { getCategoryStyle, PAYMENT_METHODS } from "@/constants/categories";
+import {
+  PAYMENT_ICON_COLORS,
+  PAYMENT_ICON_NAMES,
+  PAYMENT_METHODS,
+  getCategoryStyle,
+} from "@/constants/categories";
 import { getPhilippinesDate, getYesterdayDate, normalizeDate } from "@/utils/date";
 import { useTheme } from "@/lib/theme-store";
 import { useExpenses } from "@/lib/expense-store";
 import { CategoryIcon } from "@/components/ui/category-icon";
-import { PaymentIcon } from "@/components/ui/payment-icon";
+import { SelectField } from "@/components/ui/select-field";
+import { InlineOptionList } from "@/components/ui/inline-option-list";
+import { SuccessOverlay } from "@/components/ui/success-overlay";
 import { CustomCategoryModal } from "@/components/settings/custom-category-modal";
 import { DatePickerModal } from "@/components/common/date-picker-modal";
 import { PressableScale } from "@/components/motion";
 import { formatDate, formatMoney } from "@/utils/formatters";
-import { AppLottieView } from "@/components/ui/app-lottie-view";
-import { GlassSurface } from "@/components/ui/glass-surface";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useReducedMotion } from "react-native-reanimated";
-import { radii, spacing } from "@/constants/design-tokens";
+import { spacing } from "@/constants/design-tokens";
+
+/** Gap between category tiles in the picker grid. */
+const CATEGORY_GRID_GAP = 10;
+/** Minimum comfortable width for a tile column before dropping a column. */
+const CATEGORY_COLUMN_MIN = 56;
+/** Cap on tile artwork size; columns stretch wider than this. */
+const CATEGORY_TILE_MAX = 58;
 
 interface ExpenseModalProps {
   visible: boolean;
@@ -58,6 +69,7 @@ export function ExpenseModal({ visible, initialExpense, onClose, onSubmit }: Exp
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
+  const [showPaymentOptions, setShowPaymentOptions] = useState(false);
 
   useEffect(() => {
     if (Platform.OS === "web") return;
@@ -110,6 +122,7 @@ export function ExpenseModal({ visible, initialExpense, onClose, onSubmit }: Exp
       setValidationError(null);
       setIsSubmitting(false);
       setShowSuccessModal(false);
+      setShowPaymentOptions(false);
       if (initialExpense) {
         setAmount(String(initialExpense.amount));
         setDescription(initialExpense.description || "");
@@ -135,6 +148,7 @@ export function ExpenseModal({ visible, initialExpense, onClose, onSubmit }: Exp
     setValidationError(null);
     setIsSubmitting(false);
     setShowSuccessModal(false);
+    setShowPaymentOptions(false);
   };
 
   const numericAmount = Number(amount) || 0;
@@ -165,6 +179,7 @@ export function ExpenseModal({ visible, initialExpense, onClose, onSubmit }: Exp
     }
 
     setIsSubmitting(true);
+    setShowPaymentOptions(false);
     const submittedDate =
       initialExpense && date === normalizeDate(initialExpense.date) ? initialExpense.date : date;
     const finalDescription = description.trim() || category;
@@ -184,6 +199,35 @@ export function ExpenseModal({ visible, initialExpense, onClose, onSubmit }: Exp
 
   const today = getPhilippinesDate();
   const yesterday = getYesterdayDate();
+  const dateLabel =
+    date === today ? "Today" : date === yesterday ? "Yesterday" : formatDate(date);
+
+  // Keep the ₱ prefix hugging the amount. Web inputs have a fixed intrinsic
+  // width (which pushed the prefix off screen), so size the input to its text.
+  const amountText = amount || "0.00";
+  const amountInputWidth = Math.min(
+    Math.max(
+      90,
+      amountText.split("").reduce((w, ch) => w + (ch === "." || ch === "," ? 12 : 25), 20)
+    ),
+    Math.max(140, windowWidth - 150)
+  );
+
+  // Category grid: choose the column count that best fills the sheet width so
+  // full rows run edge-to-edge with even gutters at every screen size.
+  const sheetHorizontalPadding = windowWidth < 360 ? 14 : spacing.lg;
+  const sheetContentWidth = Math.max(
+    220,
+    Math.min(windowWidth, 540) - 2 - sheetHorizontalPadding * 2
+  );
+  const categoryColumns = Math.max(
+    3,
+    Math.floor((sheetContentWidth + CATEGORY_GRID_GAP) / (CATEGORY_GRID_GAP + CATEGORY_COLUMN_MIN))
+  );
+  const categoryItemWidth = Math.floor(
+    (sheetContentWidth - CATEGORY_GRID_GAP * (categoryColumns - 1)) / categoryColumns
+  );
+  const categoryTileSize = Math.min(CATEGORY_TILE_MAX, categoryItemWidth);
 
   return (
     <Modal
@@ -243,40 +287,42 @@ export function ExpenseModal({ visible, initialExpense, onClose, onSubmit }: Exp
 
           {/* Top Header Row */}
           <View style={styles.topBar}>
-            <Pressable
-              hitSlop={10}
-              onPress={onClose}
-              accessibilityRole="button"
-              accessibilityLabel="Close form"
-              style={[
-                styles.iconButton,
-                { backgroundColor: dark ? "rgba(255,255,255,0.06)" : colors.surfaceSubtle },
-              ]}
-            >
-              <Ionicons name="close" size={20} color={colors.foreground} />
-            </Pressable>
-
             <View style={styles.topTitleWrap}>
-              <Text style={[styles.kicker, { color: colors.muted }]}>
-                {isEditing ? "EDIT TRANSACTION" : "NEW TRANSACTION"}
-              </Text>
               <Text style={[styles.topTitle, { color: colors.foreground }]}>
-                {isEditing ? "Edit Record" : "Add Expense"}
+                {isEditing ? "Edit Transaction" : "Add Transaction"}
+              </Text>
+              <Text style={[styles.topSubtitle, { color: colors.muted }]}>
+                {isEditing ? "Update the details below" : "Log a new expense"}
               </Text>
             </View>
 
-            <Pressable
-              hitSlop={10}
-              onPress={handleReset}
-              accessibilityRole="button"
-              accessibilityLabel="Reset form"
-              style={[
-                styles.resetBtn,
-                { backgroundColor: dark ? "rgba(255,255,255,0.06)" : colors.surfaceSubtle },
-              ]}
-            >
-              <Text style={[styles.resetBtnText, { color: colors.primary }]}>Reset</Text>
-            </Pressable>
+            <View style={styles.topActions}>
+              <Pressable
+                hitSlop={8}
+                onPress={handleReset}
+                accessibilityRole="button"
+                accessibilityLabel="Reset form"
+                style={[
+                  styles.resetBtn,
+                  { backgroundColor: dark ? "rgba(255,255,255,0.06)" : colors.surfaceSubtle },
+                ]}
+              >
+                <Text style={[styles.resetBtnText, { color: colors.muted }]}>Reset</Text>
+              </Pressable>
+
+              <Pressable
+                hitSlop={10}
+                onPress={onClose}
+                accessibilityRole="button"
+                accessibilityLabel="Close form"
+                style={[
+                  styles.iconButton,
+                  { backgroundColor: dark ? "rgba(255,255,255,0.06)" : colors.surfaceSubtle },
+                ]}
+              >
+                <Ionicons name="close" size={19} color={colors.foreground} />
+              </Pressable>
+            </View>
           </View>
 
           {/* Scrollable Form Body */}
@@ -305,21 +351,8 @@ export function ExpenseModal({ visible, initialExpense, onClose, onSubmit }: Exp
               </View>
             )}
 
-            {/* Visual Centerpiece: Amount Display Card */}
-            <View
-              style={[
-                styles.amountHeroCard,
-                {
-                  backgroundColor: dark ? "rgba(255, 255, 255, 0.03)" : colors.surfaceSubtle,
-                  borderColor:
-                    validationError && (!amount || !Number.isFinite(Number(amount)) || Number(amount) <= 0)
-                      ? colors.primary
-                      : colors.border,
-                },
-              ]}
-            >
-              <Text style={[styles.amountOverline, { color: colors.muted }]}>ENTER AMOUNT</Text>
-
+            {/* Visual Centerpiece: Amount Display */}
+            <View style={styles.amountHero}>
               <View style={styles.amountInputRow}>
                 <Text style={[styles.currencyPrefix, { color: colors.primary }]}>₱</Text>
                 <TextInput
@@ -332,10 +365,23 @@ export function ExpenseModal({ visible, initialExpense, onClose, onSubmit }: Exp
                   keyboardType="decimal-pad"
                   placeholder="0.00"
                   placeholderTextColor={colors.subtle}
-                  style={[styles.amountInput, { color: colors.foreground }]}
+                  style={[
+                    styles.amountInput,
+                    {
+                      width: amountInputWidth,
+                      color: colors.foreground,
+                      borderBottomColor:
+                        validationError &&
+                        (!amount || !Number.isFinite(Number(amount)) || Number(amount) <= 0)
+                          ? colors.primary
+                          : "transparent",
+                    },
+                  ]}
                   autoFocus={!isEditing}
                 />
               </View>
+
+              <Text style={[styles.amountTypeLabel, { color: colors.muted }]}>Expense</Text>
 
               <View style={styles.presetsRow}>
                 {[50, 100, 500, 1000].map((preset) => (
@@ -345,7 +391,7 @@ export function ExpenseModal({ visible, initialExpense, onClose, onSubmit }: Exp
                     style={[
                       styles.amountPresetChip,
                       {
-                        backgroundColor: dark ? "rgba(255, 255, 255, 0.08)" : "#FFFFFF",
+                        backgroundColor: dark ? "rgba(255, 255, 255, 0.06)" : colors.surfaceSubtle,
                         borderColor: colors.border,
                       },
                     ]}
@@ -385,7 +431,6 @@ export function ExpenseModal({ visible, initialExpense, onClose, onSubmit }: Exp
               </Text>
             </View>
 
-            {/* Category Grid (4 Columns) */}
             <View style={styles.categoryGrid}>
               {allCategories.map((item) => {
                 const meta = getCategoryStyle(item, customCategories);
@@ -393,56 +438,41 @@ export function ExpenseModal({ visible, initialExpense, onClose, onSubmit }: Exp
                 return (
                   <Pressable
                     key={item}
-                    onPress={() => {
-                      setCategory(item);
-                    }}
-                    style={({ pressed }) => [
-                      styles.categoryCard,
-                      {
-                        backgroundColor: active
-                          ? colors.primary
-                          : dark
-                          ? "rgba(255, 255, 255, 0.04)"
-                          : "#FFFFFF",
-                        borderColor: active
-                          ? colors.primary
-                          : dark
-                          ? "rgba(255, 255, 255, 0.08)"
-                          : colors.border,
-                        shadowColor: active ? colors.primary : "#1A1D20",
-                        shadowOpacity: active ? 0.28 : 0.03,
-                        shadowRadius: active ? 8 : 3,
-                        elevation: active ? 3 : 1,
-                      },
-                      pressed && styles.pressed,
-                    ]}
+                    onPress={() => setCategory(item)}
+                    style={[styles.categoryItem, { width: categoryItemWidth }]}
                     accessibilityRole="button"
                     accessibilityState={{ selected: active }}
+                    accessibilityLabel={item}
                   >
                     <View
                       style={[
-                        styles.categoryIconCircle,
+                        styles.categoryTile,
                         {
+                          width: categoryTileSize,
+                          height: categoryTileSize,
                           backgroundColor: active
-                            ? "rgba(255, 255, 255, 0.22)"
+                            ? meta.color
                             : dark
-                            ? `${meta.color}20`
+                            ? `${meta.color}26`
                             : meta.soft,
+                          borderColor: active ? meta.color : colors.border,
+                          shadowColor: meta.color,
+                          shadowOpacity: active ? 0.4 : 0,
                         },
                       ]}
                     >
                       <CategoryIcon
                         category={item}
-                        size={17}
+                        size={22}
                         customCategories={customCategories}
                         color={active ? "#FFFFFF" : meta.color}
                       />
                     </View>
                     <Text
                       style={[
-                        styles.categoryCardText,
+                        styles.categoryLabel,
                         {
-                          color: active ? "#FFFFFF" : colors.foreground,
+                          color: active ? colors.foreground : colors.muted,
                           fontWeight: active ? "700" : "500",
                         },
                       ]}
@@ -454,106 +484,70 @@ export function ExpenseModal({ visible, initialExpense, onClose, onSubmit }: Exp
                 );
               })}
 
-              {/* Add Custom Category Button */}
+              {/* Add Custom Category Tile */}
               <Pressable
-                onPress={() => {
-                  setShowAddCustomModal(true);
-                }}
-                style={({ pressed }) => [
-                  styles.categoryCard,
-                  styles.addCategoryCard,
-                  {
-                    borderColor: `${colors.primary}60`,
-                    backgroundColor: dark ? "rgba(255, 255, 255, 0.02)" : colors.surfaceSubtle,
-                  },
-                  pressed && styles.pressed,
-                ]}
+                onPress={() => setShowAddCustomModal(true)}
+                style={[styles.categoryItem, { width: categoryItemWidth }]}
                 accessibilityRole="button"
+                accessibilityLabel="Add custom category"
               >
                 <View
                   style={[
-                    styles.categoryIconCircle,
-                    { backgroundColor: colors.primarySoft },
+                    styles.categoryTile,
+                    styles.categoryTileAdd,
+                    {
+                      width: categoryTileSize,
+                      height: categoryTileSize,
+                      borderColor: `${colors.primary}60`,
+                      backgroundColor: dark ? "rgba(255,255,255,0.02)" : colors.surfaceSubtle,
+                    },
                   ]}
                 >
-                  <Ionicons name="add" size={17} color={colors.primary} />
+                  <Ionicons name="add" size={22} color={colors.primary} />
                 </View>
-                <Text style={[styles.categoryCardText, { color: colors.primary, fontWeight: "700" }]}>
+                <Text style={[styles.categoryLabel, { color: colors.primary, fontWeight: "700" }]}>
                   Add
                 </Text>
               </Pressable>
             </View>
 
-            {/* Note & Description Field */}
-            <Text style={[styles.sectionLabel, { color: colors.muted, marginTop: 16 }]}>
-              NOTE & DESCRIPTION
-            </Text>
-            <View
-              style={[
-                styles.fieldContainer,
-                {
-                  backgroundColor: dark ? "rgba(255,255,255,0.04)" : colors.surfaceSubtle,
-                  borderColor:
-                    validationError && !description.trim() ? colors.primary : colors.border,
-                },
-              ]}
-            >
-              <View
-                style={[
-                  styles.fieldIconBox,
-                  { backgroundColor: dark ? "rgba(255,255,255,0.08)" : "#FFFFFF" },
-                ]}
-              >
-                <Ionicons name="create-outline" size={16} color={colors.muted} />
-              </View>
-              <TextInput
-                value={description}
-                accessibilityLabel="Expense note and description"
-                onChangeText={(val) => {
-                  setDescription(val);
-                  if (validationError) setValidationError(null);
-                }}
-                placeholder="e.g. Starbucks, Groceries (Optional, defaults to category)"
-                placeholderTextColor={colors.subtle}
-                style={[styles.fieldInput, { color: colors.foreground }]}
+            {/* Payment Method & Date */}
+            <View style={styles.fieldRow}>
+              <SelectField
+                label="PAYMENT METHOD"
+                icon={PAYMENT_ICON_NAMES[payment]}
+                value={payment}
+                expanded={showPaymentOptions}
+                onPress={() => setShowPaymentOptions((prev) => !prev)}
+                accessibilityLabel={`Payment method: ${payment}. Change payment method`}
+              />
+              <SelectField
+                label="DATE"
+                icon="calendar-outline"
+                iconColor={colors.primary}
+                value={dateLabel}
+                onPress={() => setShowDatePicker(true)}
+                expandable={false}
+                accessibilityLabel={`Date: ${formatDate(date)}. Choose date`}
               />
             </View>
 
-            {/* Date Field & Presets */}
-            <Text style={[styles.sectionLabel, { color: colors.muted, marginTop: 16 }]}>
-              DATE & TIMESTAMP
-            </Text>
-            <Pressable
-              onPress={() => setShowDatePicker(true)}
-              accessibilityRole="button"
-              accessibilityLabel={`Choose expense date. Currently ${formatDate(date)}`}
-              style={({ pressed }) => [
-                styles.fieldContainer,
-                {
-                  backgroundColor: dark ? "rgba(255,255,255,0.04)" : colors.surfaceSubtle,
-                  borderColor: colors.border,
-                },
-                pressed && styles.pressed,
-              ]}
-            >
-              <View
-                style={[
-                  styles.fieldIconBox,
-                  { backgroundColor: dark ? "rgba(255,255,255,0.08)" : "#FFFFFF" },
-                ]}
-              >
-                <Ionicons name="calendar-outline" size={16} color={colors.primary} />
-              </View>
-              <View style={styles.fieldTextWrap}>
-                <Text style={[styles.fieldValueText, { color: colors.foreground }]}>
-                  {formatDate(date)}
-                </Text>
-                <Text style={[styles.fieldHintText, { color: colors.muted }]}>
-                  {date === today ? "Today" : date === yesterday ? "Yesterday" : "Historical date"}
-                </Text>
-              </View>
-              <Ionicons name="chevron-down" size={16} color={colors.muted} />
-            </Pressable>
+            {showPaymentOptions && (
+              <InlineOptionList
+                style={styles.paymentOptions}
+                options={PAYMENT_METHODS.map((method) => ({
+                  value: method,
+                  label: method,
+                  icon: PAYMENT_ICON_NAMES[method],
+                  color: PAYMENT_ICON_COLORS[method],
+                }))}
+                selected={payment}
+                onSelect={(method) => {
+                  setPayment(method);
+                  setShowPaymentOptions(false);
+                }}
+              />
+            )}
 
             {/* Date Quick Presets */}
             <View style={styles.presetRow}>
@@ -632,114 +626,61 @@ export function ExpenseModal({ visible, initialExpense, onClose, onSubmit }: Exp
               </Pressable>
             </View>
 
-            {/* Payment Method Selection */}
-            <Text style={[styles.sectionLabel, { color: colors.muted, marginTop: 16 }]}>
-              PAYMENT METHOD
+            {/* Note & Description Field */}
+            <Text style={[styles.sectionLabel, { color: colors.muted, marginTop: 20 }]}>
+              NOTE
             </Text>
-            <View style={styles.paymentMethodRow}>
-              {PAYMENT_METHODS.map((item) => {
-                const active = payment === item;
-                return (
-                  <Pressable
-                    key={item}
-                    onPress={() => {
-                      setPayment(item);
-                    }}
-                    style={({ pressed }) => [
-                      styles.paymentMethodChip,
-                      {
-                        borderColor: active ? colors.primary : colors.border,
-                        backgroundColor: active
-                          ? dark
-                            ? "rgba(232, 74, 63, 0.20)"
-                            : colors.primarySoft
-                          : dark
-                          ? "rgba(255,255,255,0.04)"
-                          : colors.surfaceSubtle,
-                      },
-                      pressed && styles.pressed,
-                    ]}
-                    accessibilityRole="button"
-                    accessibilityState={{ selected: active }}
-                  >
-                    <PaymentIcon
-                      payment={item}
-                      size={14}
-                      color={active ? colors.primary : colors.muted}
-                    />
-                    <Text
-                      style={[
-                        styles.paymentChipText,
-                        {
-                          color: active ? colors.primary : colors.muted,
-                          fontWeight: active ? "700" : "500",
-                        },
-                      ]}
-                    >
-                      {item}
-                    </Text>
-                  </Pressable>
-                );
-              })}
+            <View
+              style={[
+                styles.noteField,
+                {
+                  backgroundColor: dark ? "rgba(255,255,255,0.04)" : colors.surfaceSubtle,
+                  borderColor: colors.border,
+                },
+              ]}
+            >
+              <TextInput
+                value={description}
+                accessibilityLabel="Expense note and description"
+                onChangeText={(val) => {
+                  setDescription(val);
+                  if (validationError) setValidationError(null);
+                }}
+                placeholder="e.g. Starbucks, Groceries (optional)"
+                placeholderTextColor={colors.subtle}
+                style={[styles.fieldInput, { color: colors.foreground }]}
+              />
             </View>
 
-            {/* Primary Action Button: Save Record */}
+            {/* Primary Action Button */}
             <PressableScale
-              style={[styles.saveBtnWrap, isSubmitting && { opacity: 0.6 }]}
+              style={[
+                styles.saveBtnWrap,
+                { backgroundColor: colors.primary, shadowColor: colors.primary },
+                isSubmitting && { opacity: 0.6 },
+              ]}
               disabled={isSubmitting}
               onPress={handleSave}
               accessibilityRole="button"
               accessibilityLabel={isEditing ? "Save expense changes" : "Save expense"}
             >
-              <LinearGradient
-                colors={["#FF5A4E", "#E84A3F", "#D43C32"]}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
-                style={styles.saveBtnGradient}
-              >
+              <View style={styles.saveBtnInner}>
                 <Ionicons name="checkmark-circle" size={19} color="#FFFFFF" />
                 <Text style={styles.saveBtnText}>
-                  {isEditing ? "Save Changes" : "Save Record"}
+                  {isEditing ? "Save Changes" : "Save Transaction"}
                 </Text>
-              </LinearGradient>
+              </View>
             </PressableScale>
           </ScrollView>
         </View>
 
         {/* Lottie Vector Success Feedback Overlay */}
-        {showSuccessModal && (
-          <Pressable
-            style={styles.successOverlay}
-            onPress={finishSuccess}
-            accessibilityRole="button"
-            accessibilityLabel="Dismiss success notification"
-          >
-            <GlassSurface
-              variant="sheet"
-              radius={24}
-              style={styles.successCard}
-              contentStyle={[
-                styles.successContent,
-                { backgroundColor: dark ? "#1E293B" : "#FFFFFF", borderColor: colors.border },
-              ]}
-            >
-              <AppLottieView
-                source={require("@/assets/lottie/success-check.json")}
-                style={{ width: 100, height: 100 }}
-                loop={false}
-                autoPlay
-                onAnimationFinish={handleSuccessAnimationFinish}
-                fallback={<Ionicons name="checkmark-circle" size={78} color={colors.primary} />}
-              />
-              <Text style={[styles.successTitle, { color: colors.foreground }]}>
-                {isEditing ? "Changes Saved!" : "Record Logged!"}
-              </Text>
-              <Text style={[styles.successSubtitle, { color: colors.muted }]}>
-                Tap anywhere to continue
-              </Text>
-            </GlassSurface>
-          </Pressable>
-        )}
+        <SuccessOverlay
+          visible={showSuccessModal}
+          title={isEditing ? "Changes Saved!" : "Record Logged!"}
+          onDismiss={finishSuccess}
+          onAnimationFinish={handleSuccessAnimationFinish}
+        />
       </KeyboardAvoidingView>
 
       {/* Inline Custom Category Creator */}
@@ -813,35 +754,42 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    marginBottom: 12,
+    gap: 12,
+    marginBottom: 14,
+  },
+  topTitleWrap: {
+    flex: 1,
+    minWidth: 0,
+  },
+  topTitle: {
+    fontFamily: "DMSans_700Bold",
+    fontSize: 20,
+    fontWeight: "700",
+    letterSpacing: -0.45,
+  },
+  topSubtitle: {
+    fontSize: 11.5,
+    fontWeight: "500",
+    marginTop: 2,
+  },
+  topActions: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    flexShrink: 0,
   },
   iconButton: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
+    width: 36,
+    height: 36,
+    borderRadius: 12,
     alignItems: "center",
     justifyContent: "center",
     ...(Platform.OS === "web" ? ({ cursor: "pointer" } as any) : {}),
   },
-  topTitleWrap: {
-    alignItems: "center",
-  },
-  kicker: {
-    fontSize: 9.5,
-    fontWeight: "800",
-    letterSpacing: 1.2,
-  },
-  topTitle: {
-    fontFamily: "DMSans_700Bold",
-    fontSize: 16,
-    fontWeight: "700",
-    letterSpacing: -0.2,
-    marginTop: 1,
-  },
   resetBtn: {
-    height: 32,
+    height: 34,
     paddingHorizontal: 12,
-    borderRadius: 16,
+    borderRadius: 12,
     alignItems: "center",
     justifyContent: "center",
     ...(Platform.OS === "web" ? ({ cursor: "pointer" } as any) : {}),
@@ -871,43 +819,41 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     flex: 1,
   },
-  amountHeroCard: {
-    borderRadius: radii.panel,
-    borderWidth: 1.5,
-    paddingVertical: 18,
-    paddingHorizontal: 16,
+  amountHero: {
     alignItems: "center",
     justifyContent: "center",
-    position: "relative",
-    overflow: "hidden",
-    marginBottom: 14,
-  },
-  amountOverline: {
-    fontSize: 9.5,
-    fontWeight: "800",
-    letterSpacing: 1.1,
-    marginBottom: 4,
+    paddingHorizontal: 4,
+    paddingTop: 6,
+    paddingBottom: 2,
+    marginBottom: 18,
   },
   amountInputRow: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    gap: 4,
+    gap: 5,
   },
   currencyPrefix: {
-    fontSize: 30,
+    fontSize: 28,
     fontWeight: "700",
   },
   amountInput: {
     fontFamily: "DMSans_700Bold",
-    fontSize: 38,
+    fontSize: 42,
     fontWeight: "800",
-    letterSpacing: -1,
-    minWidth: 120,
+    letterSpacing: -1.4,
+    minWidth: 90,
+    maxWidth: "100%",
     textAlign: "center",
     padding: 0,
     margin: 0,
+    borderBottomWidth: 2,
     ...(Platform.OS === "web" ? ({ outlineStyle: "none" } as any) : {}),
+  },
+  amountTypeLabel: {
+    fontSize: 13.5,
+    fontWeight: "500",
+    marginTop: 8,
   },
   presetsRow: {
     flexDirection: "row",
@@ -967,76 +913,61 @@ const styles = StyleSheet.create({
   categoryGrid: {
     flexDirection: "row",
     flexWrap: "wrap",
-    justifyContent: "space-between",
-    rowGap: 8,
+    gap: CATEGORY_GRID_GAP,
+    paddingTop: 2,
   },
-  categoryCard: {
-    width: "23%",
-    aspectRatio: 1,
-    borderRadius: 14,
+  categoryItem: {
+    alignItems: "center",
+    ...(Platform.OS === "web" ? ({ cursor: "pointer" } as any) : {}),
+  },
+  categoryTile: {
+    borderRadius: 18,
     borderWidth: 1,
     alignItems: "center",
     justifyContent: "center",
-    padding: 4,
-    ...(Platform.OS === "web" ? ({ cursor: "pointer" } as any) : {}),
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 3 },
   },
-  addCategoryCard: {
+  categoryTileAdd: {
     borderStyle: "dashed",
   },
-  categoryIconCircle: {
-    width: 28,
-    height: 28,
-    borderRadius: 8,
-    alignItems: "center",
-    justifyContent: "center",
-    marginBottom: 3,
-  },
-  categoryCardText: {
-    fontSize: 10,
+  categoryLabel: {
+    fontSize: 10.5,
     letterSpacing: -0.2,
     textAlign: "center",
+    marginTop: 7,
   },
-  fieldContainer: {
+  fieldRow: {
+    flexDirection: "row",
+    alignItems: "flex-end",
+    gap: 10,
+    marginTop: 20,
+  },
+  paymentOptions: {
+    marginTop: 10,
+  },
+  noteField: {
     flexDirection: "row",
     alignItems: "center",
-    minHeight: 50,
-    paddingHorizontal: 12,
+    minHeight: 52,
+    paddingHorizontal: 14,
     borderRadius: 14,
     borderWidth: 1,
-    gap: 10,
-    marginTop: 6,
+    marginTop: 8,
     ...(Platform.OS === "web" ? ({ cursor: "pointer" } as any) : {}),
-  },
-  fieldIconBox: {
-    width: 30,
-    height: 30,
-    borderRadius: 8,
-    alignItems: "center",
-    justifyContent: "center",
   },
   fieldInput: {
     flex: 1,
-    fontSize: 13,
+    fontSize: 13.5,
     fontWeight: "600",
-    height: "100%",
+    minHeight: 50,
+    paddingVertical: 12,
     ...(Platform.OS === "web" ? ({ outlineStyle: "none" } as any) : {}),
-  },
-  fieldTextWrap: {
-    flex: 1,
-  },
-  fieldValueText: {
-    fontSize: 13,
-    fontWeight: "700",
-  },
-  fieldHintText: {
-    fontSize: 10,
-    marginTop: 1,
-    fontWeight: "500",
   },
   presetRow: {
     flexDirection: "row",
     gap: 8,
-    marginTop: 8,
+    marginTop: 12,
   },
   presetChip: {
     flexDirection: "row",
@@ -1051,48 +982,28 @@ const styles = StyleSheet.create({
   presetText: {
     fontSize: 11,
   },
-  paymentMethodRow: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 7,
-    marginTop: 6,
-  },
-  paymentMethodChip: {
-    flex: 1,
-    minWidth: 68,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 5,
-    height: 38,
-    paddingHorizontal: 8,
-    borderRadius: 12,
-    borderWidth: 1,
-    ...(Platform.OS === "web" ? ({ cursor: "pointer" } as any) : {}),
-  },
-  paymentChipText: {
-    fontSize: 11.5,
-  },
   saveBtnWrap: {
     width: "100%",
-    marginTop: 20,
+    minHeight: 54,
+    marginTop: 24,
     borderRadius: 16,
-    overflow: "hidden",
-    shadowColor: "#E84A3F",
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+    borderColor: "transparent",
     shadowOpacity: 0.35,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 4 },
+    shadowRadius: 14,
+    shadowOffset: { width: 0, height: 6 },
     elevation: 4,
     ...(Platform.OS === "web" ? ({ cursor: "pointer" } as any) : {}),
   },
-  saveBtnGradient: {
-    width: "100%",
-    minHeight: 52,
+  saveBtnInner: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    gap: 7,
+    gap: 8,
     paddingHorizontal: 20,
+    minHeight: 54,
   },
   saveBtnPressed: {
     opacity: 0.9,
@@ -1108,40 +1019,5 @@ const styles = StyleSheet.create({
   pressed: {
     opacity: 0.85,
     transform: [{ scale: 0.98 }],
-  },
-  successOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(0,0,0,0.48)",
-    alignItems: "center",
-    justifyContent: "center",
-    zIndex: 9999,
-  },
-  successCard: {
-    width: 220,
-    borderRadius: 24,
-  },
-  successContent: {
-    alignItems: "center",
-    justifyContent: "center",
-    padding: 24,
-    borderRadius: 24,
-    borderWidth: 1,
-    shadowColor: "#000",
-    shadowOpacity: 0.22,
-    shadowRadius: 24,
-    elevation: 10,
-  },
-  successTitle: {
-    fontSize: 16,
-    fontWeight: "700",
-    marginTop: 10,
-    letterSpacing: -0.2,
-    textAlign: "center",
-  },
-  successSubtitle: {
-    fontSize: 12,
-    marginTop: 4,
-    fontWeight: "500",
-    textAlign: "center",
   },
 });

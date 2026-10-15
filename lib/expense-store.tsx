@@ -6,6 +6,7 @@ import { Category, CustomCategory, Expense, NewExpenseData, Payment } from "@/ty
 import { CATEGORIES, CATEGORY_META, PAYMENT_METHODS } from "@/constants/categories";
 import { STORAGE_KEYS } from "@/constants/storage";
 import { getExpenseDateKey, getPhilippinesDate, getPhilippinesMonth, normalizeDate } from "@/utils/date";
+import { migrateReceipt } from "@/utils/receipts";
 
 export type { Category, Payment, Expense };
 export const categoryMeta = CATEGORY_META;
@@ -286,6 +287,7 @@ export function ExpenseProvider({ children }: { children: React.ReactNode }) {
                   ? curr.map((expense) => (expense.id === item.tempId ? syncedExpense : expense))
                   : curr
               );
+              await migrateReceipt(accountEmail, item.tempId, res.expense.id);
             } catch {
               const wasCancelled = cancelledCreateIdsRef.current.delete(item.tempId);
               if (!wasCancelled) remainingQueue.push(item);
@@ -566,6 +568,7 @@ export function ExpenseProvider({ children }: { children: React.ReactNode }) {
                 current.map((item) => (item.id === localId ? syncedExpense : item))
               );
             }
+            await migrateReceipt(accountEmail, localId, result.expense.id);
 
             if (JSON.stringify(latestData) !== JSON.stringify(sanitized)) {
               try {

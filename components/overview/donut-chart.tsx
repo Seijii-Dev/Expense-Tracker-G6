@@ -70,22 +70,40 @@ export const DonutChart = React.memo(function DonutChart({ total, expenses }: Do
   const strokeWidth = 18;
   const radius = (size - strokeWidth) / 2;
   const circumference = 2 * Math.PI * radius;
+  const isEmpty = expenses.length === 0 || total <= 0;
   let offset = 0;
+
+  // adjustsFontSizeToFit is a no-op on web, so fit the center label to the
+  // 96px hole ourselves (digits ≈ 0.72em, separators ≈ 0.27em, ₱ ≈ 0.64em).
+  // Keeps long totals like ₱10,500.00 from ellipsizing on any renderer.
+  const totalLabel = formatMoney(total);
+  const totalEmWidth = Math.max(
+    1,
+    totalLabel
+      .split("")
+      .reduce(
+        (w, ch) => w + (ch === "." || ch === "," ? 0.27 : ch === "₱" ? 0.64 : 0.72),
+        0
+      ) - totalLabel.length * 0.027
+  );
+  const donutTotalFontSize = Math.max(9.5, Math.min(15, Math.floor((76 / totalEmWidth) * 10) / 10));
 
   return (
     <Animated.View style={[styles.donutWrap, animatedStyle]}>
       <Svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} style={styles.svg}>
-        {/* Background Track Circle */}
+        {/* Background Track: solid rail for real data, dashed placeholder when empty */}
         <Circle
           cx={size / 2}
           cy={size / 2}
           r={radius}
-          stroke={dark ? "rgba(255, 255, 255, 0.08)" : colors.surfaceSubtle}
-          strokeWidth={strokeWidth}
+          stroke={dark ? "rgba(255, 255, 255, 0.09)" : colors.border}
+          strokeWidth={isEmpty ? strokeWidth - 5 : strokeWidth}
+          strokeDasharray={isEmpty ? [3, 7] : undefined}
+          strokeLinecap={isEmpty ? "round" : undefined}
           fill="none"
         />
         {/* Category Segments */}
-        {totals.map(({ category, total: categoryTotal }) => {
+        {!isEmpty && totals.map(({ category, total: categoryTotal }) => {
           const length = total > 0 ? (categoryTotal / total) * circumference : 0;
           const segment = (
             <Circle
@@ -110,17 +128,27 @@ export const DonutChart = React.memo(function DonutChart({ total, expenses }: Do
       <View
         style={[
           styles.donutHole,
-          {
-            backgroundColor: colors.card,
-            borderColor: colors.borderSubtle,
-          },
+          isEmpty
+            ? styles.donutHoleEmpty
+            : { backgroundColor: colors.card, borderColor: colors.borderSubtle },
         ]}
       >
-        <Text style={[styles.kickerLabel, { color: colors.muted }]}>THIS MONTH</Text>
-        <Text style={[styles.donutTotal, { color: colors.foreground }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.68}>
-          {formatMoney(total)}
-        </Text>
-        <Text style={[styles.donutLabel, { color: colors.muted }]}>tracked</Text>
+        {isEmpty ? (
+          <Text style={[styles.emptyLabel, { color: colors.subtle }]}>EMPTY</Text>
+        ) : (
+          <>
+            <Text style={[styles.kickerLabel, { color: colors.muted }]}>THIS MONTH</Text>
+            <Text
+              style={[styles.donutTotal, { color: colors.foreground, fontSize: donutTotalFontSize }]}
+              numberOfLines={1}
+              adjustsFontSizeToFit
+              minimumFontScale={0.68}
+            >
+              {totalLabel}
+            </Text>
+            <Text style={[styles.donutLabel, { color: colors.muted }]}>tracked</Text>
+          </>
+        )}
       </View>
     </Animated.View>
   );
@@ -151,6 +179,18 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     elevation: 2,
     paddingHorizontal: 6,
+  },
+  donutHoleEmpty: {
+    backgroundColor: "transparent",
+    borderWidth: 0,
+    shadowOpacity: 0,
+    shadowRadius: 0,
+    elevation: 0,
+  },
+  emptyLabel: {
+    fontSize: 10.5,
+    fontWeight: "800",
+    letterSpacing: 1.5,
   },
   kickerLabel: {
     fontSize: 7.5,

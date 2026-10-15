@@ -14,4 +14,5 @@ export const STORAGE_KEYS = {
   userPassword: (email: string) => `expense-tracker-password-${sanitizeKey(email)}`,
   userCustomCategories: (email: string) => `expense-tracker:${sanitizeKey(email)}:custom-categories`,
   globalCustomCategories: "expense-tracker:global-custom-categories",
+  userReceipts: (email: string) => `expense-tracker:${sanitizeKey(email)}:receipts`,
 } as const;
