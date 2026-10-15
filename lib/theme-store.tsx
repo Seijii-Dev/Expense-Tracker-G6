@@ -21,13 +21,23 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const key = account ? STORAGE_KEYS.darkMode(account.email) : null;
 
   useEffect(() => {
+    let active = true;
     if (!key) {
       setDark(false);
-      return;
+      return () => {
+        active = false;
+      };
     }
     AsyncStorage.getItem(key)
-      .then((value) => setDark(value === "true"))
-      .catch(() => setDark(false));
+      .then((value) => {
+        if (active) setDark(value === "true");
+      })
+      .catch(() => {
+        if (active) setDark(false);
+      });
+    return () => {
+      active = false;
+    };
   }, [key]);
 
   const update = (value: boolean) => {

@@ -52,8 +52,9 @@ export function MotionNumber({
       const nextVal = startVal + (endVal - startVal) * eased;
       currentValRef.current = nextVal;
 
-      // Smooth frame updates synced to display refresh rate (16ms = 60/120fps)
-      if (now - lastRender >= 16 || progress >= 1) {
+      // Keep React updates near 30fps so several counters can animate together
+      // without flooding the JS thread on entry-level phones.
+      if (now - lastRender >= 32 || progress >= 1) {
         setDisplayValue(nextVal);
         lastRender = now;
       }

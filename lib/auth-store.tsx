@@ -86,6 +86,48 @@ function isNetworkError(message?: string): boolean {
   );
 }
 
+function isAccount(value: unknown): value is Account {
+  if (!value || typeof value !== "object") return false;
+  const account = value as Partial<Account>;
+  return (
+    typeof account.id === "string" &&
+    typeof account.name === "string" &&
+    typeof account.email === "string" &&
+    Number.isFinite(account.budget)
+  );
+}
+
+async function getOfflineAccounts(): Promise<Account[]> {
+  try {
+    const value = await AsyncStorage.getItem(STORAGE_KEYS.localAccounts);
+    const parsed: unknown = value ? JSON.parse(value) : [];
+    return Array.isArray(parsed) ? parsed.filter(isAccount) : [];
+  } catch {
+    return [];
+  }
+}
+
+async function rememberOfflineAccount(account: Account): Promise<void> {
+  const accounts = await getOfflineAccounts();
+  const updated = accounts.filter((saved) => saved.email.toLowerCase() !== account.email.toLowerCase());
+  updated.push(account);
+  await AsyncStorage.setItem(STORAGE_KEYS.localAccounts, JSON.stringify(updated));
+}
+
+async function getOfflineAccount(email: string): Promise<Account | null> {
+  const accounts = await getOfflineAccounts();
+  const saved = accounts.find((item) => item.email.toLowerCase() === email.toLowerCase());
+  if (saved) return saved;
+
+  try {
+    const cached = await AsyncStorage.getItem(STORAGE_KEYS.cachedAccount);
+    const parsed: unknown = cached ? JSON.parse(cached) : null;
+    return isAccount(parsed) && parsed.email.toLowerCase() === email.toLowerCase() ? parsed : null;
+  } catch {
+    return null;
+  }
+}
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [account, setAccount] = useState<Account | null>(null);
   const [token, setToken] = useState<string | null>(null);
@@ -104,14 +146,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     ])
       .then(([uri, savedBanner]) => {
         if (!mounted) return;
-        const profileBanner = parseProfileBanner(savedBanner);
+        const profileBanner = savedBanner ? parseProfileBanner(savedBanner) : null;
         setAccount((current) =>
           current?.email === email &&
-          (current.profilePictureUri !== uri || current.profileBanner?.uri !== profileBanner?.uri)
+          (current.profilePictureUri !== uri ||
+            current.profileBanner?.uri !== profileBanner?.uri ||
+            current.profileBanner?.type !== profileBanner?.type)
             ? {
                 ...current,
-                profilePictureUri: uri ?? current.profilePictureUri ?? null,
-                profileBanner: profileBanner ?? current.profileBanner ?? null,
+                profilePictureUri: uri,
+                profileBanner,
               }
             : current
         );
@@ -137,7 +181,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         let localAccount: Account | null = null;
         if (cachedAccountStr) {
           try {
-            localAccount = JSON.parse(cachedAccountStr) as Account;
+            const parsed: unknown = JSON.parse(cachedAccountStr);
+            localAccount = isAccount(parsed) ? parsed : null;
           } catch {
             localAccount = null;
           }
@@ -177,11 +222,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           const refreshedAccount: Account = {
             ...result.account,
             profilePictureUri,
-            profileBanner: parseProfileBanner(savedBanner) ?? cachedBanner ?? null,
+            profileBanner: savedBanner === null ? null : parseProfileBanner(savedBanner) ?? cachedBanner,
           };
           setToken(savedToken);
           setAccount(refreshedAccount);
           await AsyncStorage.setItem(STORAGE_KEYS.cachedAccount, JSON.stringify(refreshedAccount));
+          await rememberOfflineAccount(refreshedAccount);
         } else {
           // If server explicitly rejected token (not a network error), clear session
           if (!isNetworkError(result.message)) {
@@ -210,6 +256,33 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const cleanEmail = email.trim().toLowerCase();
     const cleanName = name.trim();
 
+    const registerOffline = async () => {
+      const [savedPassword, offlineAccount] = await Promise.all([
+        safeSecureGet(STORAGE_KEYS.userPassword(cleanEmail)),
+        getOfflineAccount(cleanEmail),
+      ]);
+      if (savedPassword || offlineAccount) {
+        return { ok: false, message: "An account for this email is already saved on this device. Sign in instead." };
+      }
+
+      const localAccount: Account = {
+        id: `local-${Date.now()}`,
+        name: cleanName,
+        email: cleanEmail,
+        budget: 5000,
+      };
+      const localToken = `local-token-${cleanEmail}`;
+      await Promise.all([
+        rememberOfflineAccount(localAccount),
+        AsyncStorage.setItem(STORAGE_KEYS.cachedAccount, JSON.stringify(localAccount)),
+        safeSecureSet(STORAGE_KEYS.authToken, localToken),
+        safeSecureSet(STORAGE_KEYS.userPassword(cleanEmail), password),
+      ]);
+      setToken(localToken);
+      setAccount(localAccount);
+      return { ok: true };
+    };
+
     try {
       const result = await api.register(cleanName, cleanEmail, password);
       if (result.ok) {
@@ -217,6 +290,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           safeSecureSet(STORAGE_KEYS.authToken, result.token),
           AsyncStorage.setItem(STORAGE_KEYS.cachedAccount, JSON.stringify(result.account)),
           safeSecureSet(STORAGE_KEYS.userPassword(cleanEmail), password),
+          rememberOfflineAccount(result.account),
         ]);
         setToken(result.token);
         setAccount(result.account);
@@ -225,46 +299,47 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       // If network is unreachable, register locally so user is never blocked offline
       if (isNetworkError(result.message)) {
-        const localAccount: Account = {
-          id: `local-${Date.now()}`,
-          name: cleanName,
-          email: cleanEmail,
-          budget: 5000,
-        };
-        const localToken = `local-token-${Date.now()}`;
-        await Promise.all([
-          safeSecureSet(STORAGE_KEYS.authToken, localToken),
-          AsyncStorage.setItem(STORAGE_KEYS.cachedAccount, JSON.stringify(localAccount)),
-          safeSecureSet(STORAGE_KEYS.userPassword(cleanEmail), password),
-        ]);
-        setToken(localToken);
-        setAccount(localAccount);
-        return { ok: true };
+        return await registerOffline();
       }
 
       return { ok: false, message: result.message };
     } catch {
-      // Local fallback on exception
-      const localAccount: Account = {
-        id: `local-${Date.now()}`,
-        name: cleanName,
-        email: cleanEmail,
-        budget: 5000,
-      };
-      const localToken = `local-token-${Date.now()}`;
-      await Promise.all([
-        safeSecureSet(STORAGE_KEYS.authToken, localToken),
-        AsyncStorage.setItem(STORAGE_KEYS.cachedAccount, JSON.stringify(localAccount)),
-        safeSecureSet(STORAGE_KEYS.userPassword(cleanEmail), password),
-      ]);
-      setToken(localToken);
-      setAccount(localAccount);
-      return { ok: true };
+      return { ok: false, message: "We couldn’t save your account on this device. Please try again." };
     }
   }, []);
 
   const login = useCallback(async (email: string, password: string) => {
     const cleanEmail = email.trim().toLowerCase();
+
+    const loginOffline = async (
+      knownAccount?: Account | null,
+      knownPassword?: string | null
+    ) => {
+      const savedPassword = knownPassword ?? await safeSecureGet(STORAGE_KEYS.userPassword(cleanEmail));
+      if (!savedPassword || savedPassword !== password) {
+        return {
+          ok: false,
+          message: "Could not reach the server and no offline sign-in matches this email and password.",
+        };
+      }
+
+      const savedAccount = knownAccount ?? await getOfflineAccount(cleanEmail);
+      const localAccount: Account = savedAccount ?? {
+        id: `local-${Date.now()}`,
+        name: cleanEmail.split("@")[0],
+        email: cleanEmail,
+        budget: 5000,
+      };
+      const localToken = `local-token-${cleanEmail}`;
+      await Promise.all([
+        rememberOfflineAccount(localAccount),
+        AsyncStorage.setItem(STORAGE_KEYS.cachedAccount, JSON.stringify(localAccount)),
+        safeSecureSet(STORAGE_KEYS.authToken, localToken),
+      ]);
+      setToken(localToken);
+      setAccount(localAccount);
+      return { ok: true };
+    };
 
     try {
       const result = await api.login(cleanEmail, password);
@@ -273,6 +348,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           safeSecureSet(STORAGE_KEYS.authToken, result.token),
           AsyncStorage.setItem(STORAGE_KEYS.cachedAccount, JSON.stringify(result.account)),
           safeSecureSet(STORAGE_KEYS.userPassword(cleanEmail), password),
+          rememberOfflineAccount(result.account),
         ]);
         setToken(result.token);
         setAccount(result.account);
@@ -281,74 +357,33 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       // If server unreachable, check offline credentials
       if (isNetworkError(result.message)) {
-        const savedPassword = await safeSecureGet(STORAGE_KEYS.userPassword(cleanEmail));
-        const cachedAccountStr = await AsyncStorage.getItem(STORAGE_KEYS.cachedAccount);
-        const cached = cachedAccountStr ? (JSON.parse(cachedAccountStr) as Account) : null;
+        return await loginOffline();
+      }
 
-        if (savedPassword && savedPassword === password) {
-          const localAccount: Account =
-            cached && cached.email === cleanEmail
-              ? cached
-              : {
-                  id: `local-${Date.now()}`,
-                  name: cleanEmail.split("@")[0],
-                  email: cleanEmail,
-                  budget: 5000,
-                };
-          const localToken = `local-token-${cleanEmail}`;
-          await Promise.all([
-            safeSecureSet(STORAGE_KEYS.authToken, localToken),
-            AsyncStorage.setItem(STORAGE_KEYS.cachedAccount, JSON.stringify(localAccount)),
-          ]);
-          setToken(localToken);
-          setAccount(localAccount);
-          return { ok: true };
-        }
-
-        return {
-          ok: false,
-          message:
-            "Could not reach server and no offline record matches this login. Create an account to start offline.",
-        };
+      // A device-only account may be used while online too; the API correctly
+      // rejects it because it has no remote record.
+      const [offlineAccount, savedPassword] = await Promise.all([
+        getOfflineAccount(cleanEmail),
+        safeSecureGet(STORAGE_KEYS.userPassword(cleanEmail)).catch(() => null),
+      ]);
+      if (offlineAccount?.id.startsWith("local-") && savedPassword === password) {
+        return await loginOffline(offlineAccount, savedPassword);
       }
 
       return { ok: false, message: result.message };
     } catch {
-      // Local check fallback
-      const savedPassword = await safeSecureGet(STORAGE_KEYS.userPassword(cleanEmail));
-      if (savedPassword && savedPassword === password) {
-        const cachedAccountStr = await AsyncStorage.getItem(STORAGE_KEYS.cachedAccount);
-        const cached = cachedAccountStr ? (JSON.parse(cachedAccountStr) as Account) : null;
-        const localAccount: Account =
-          cached && cached.email === cleanEmail
-            ? cached
-            : {
-                id: `local-${Date.now()}`,
-                name: cleanEmail.split("@")[0],
-                email: cleanEmail,
-                budget: 5000,
-              };
-        const localToken = `local-token-${cleanEmail}`;
-        await Promise.all([
-          safeSecureSet(STORAGE_KEYS.authToken, localToken),
-          AsyncStorage.setItem(STORAGE_KEYS.cachedAccount, JSON.stringify(localAccount)),
-        ]);
-        setToken(localToken);
-        setAccount(localAccount);
-        return { ok: true };
-      }
-      return { ok: false, message: "Couldn't reach the server. Please check your connection and try again." };
+      return { ok: false, message: "We couldn’t complete sign-in on this device. Please try again." };
     }
   }, []);
 
   const logout = useCallback(async () => {
-    await Promise.all([
-      safeSecureDelete(STORAGE_KEYS.authToken),
-      AsyncStorage.removeItem(STORAGE_KEYS.cachedAccount),
-    ]);
     accountRef.current = null;
     setToken(null);
     setAccount(null);
+    await Promise.all([
+      safeSecureDelete(STORAGE_KEYS.authToken).catch(() => undefined),
+      AsyncStorage.removeItem(STORAGE_KEYS.cachedAccount).catch(() => undefined),
+    ]);
   }, []);
 
   const refreshAccount = useCallback((updated: RemoteAccount) => {
@@ -374,6 +409,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     accountRef.current = nextAccount;
     setAccount(nextAccount);
     AsyncStorage.setItem(STORAGE_KEYS.cachedAccount, JSON.stringify(nextAccount)).catch(() => undefined);
+    rememberOfflineAccount(nextAccount).catch(() => undefined);
   }, []);
 
   const updateProfilePicture = useCallback(async (uri: string | null) => {
@@ -396,6 +432,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     accountRef.current = updated;
     setAccount(updated);
     AsyncStorage.setItem(STORAGE_KEYS.cachedAccount, JSON.stringify(updated)).catch(() => undefined);
+    rememberOfflineAccount(updated).catch(() => undefined);
   }, []);
 
   const updateProfileBanner = useCallback(async (banner: ProfileBannerMedia | null) => {
@@ -418,6 +455,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     accountRef.current = updated;
     setAccount(updated);
     AsyncStorage.setItem(STORAGE_KEYS.cachedAccount, JSON.stringify(updated)).catch(() => undefined);
+    rememberOfflineAccount(updated).catch(() => undefined);
   }, []);
 
   const value = useMemo(

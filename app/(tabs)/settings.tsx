@@ -25,7 +25,6 @@ import { useAuth } from "@/lib/auth-store";
 import { formatMoney } from "@/utils/formatters";
 import { exportExpensesToCsv } from "@/utils/export-csv";
 import { parseExpenseCsv } from "@/utils/import-csv";
-import { StoragePermissionDialog } from "@/components/common/storage-permission-dialog";
 import { CustomCategoryModal } from "@/components/settings/custom-category-modal";
 import { ConfirmDialog } from "@/components/common/confirm-dialog";
 import { AboutDialog } from "@/components/common/about-dialog";
@@ -43,7 +42,7 @@ export default function SettingsScreen() {
     budget,
     setBudget,
     expenses,
-    addExpense,
+    addExpenses,
     syncing,
     syncError,
     refreshExpenses,
@@ -57,7 +56,6 @@ export default function SettingsScreen() {
 
   const [budgetText, setBudgetText] = useState(String(budget));
   const [budgetNudges, setBudgetNudges] = useState(true);
-  const [showStorageDialog, setShowStorageDialog] = useState(false);
   const [showCategoryModal, setShowCategoryModal] = useState(false);
   const [showBudgetModal, setShowBudgetModal] = useState(false);
   const [showBackupModal, setShowBackupModal] = useState(false);
@@ -73,7 +71,7 @@ export default function SettingsScreen() {
   const [importNotice, setImportNotice] = useState<{
     title: string;
     message: string;
-    variant?: "success" | "danger";
+    variant?: "success" | "danger" | "warning";
   } | null>(null);
 
   useEffect(() => {
@@ -82,12 +80,16 @@ export default function SettingsScreen() {
 
   useEffect(() => {
     if (!account) return;
+    let active = true;
     const nudgeKey = STORAGE_KEYS.budgetNudges(account.email);
     AsyncStorage.getItem(nudgeKey)
       .then((val) => {
-        if (val !== null) setBudgetNudges(val === "true");
+        if (active && val !== null) setBudgetNudges(val === "true");
       })
       .catch(() => undefined);
+    return () => {
+      active = false;
+    };
   }, [account?.email]);
 
   const toggleBudgetNudges = (value: boolean) => {
@@ -103,8 +105,8 @@ export default function SettingsScreen() {
   };
 
   const commitBudget = (amount?: number) => {
-    const target = amount !== undefined ? amount : parseFloat(budgetText);
-    if (isNaN(target) || target < 0) {
+    const target = amount !== undefined ? amount : Number(budgetText);
+    if (!Number.isFinite(target) || target < 0) {
       setBudgetNotice("Please enter a valid monthly budget amount (₱0 or greater).");
       setBudgetText(String(budget));
       return;
@@ -132,7 +134,7 @@ export default function SettingsScreen() {
       return;
     }
 
-    const result = parseExpenseCsv(importCsvText);
+    const result = parseExpenseCsv(importCsvText, allCategories);
     if (!result.success || result.expenses.length === 0) {
       setImportNotice({
         title: "Import Failed",
@@ -142,9 +144,7 @@ export default function SettingsScreen() {
       return;
     }
 
-    result.expenses.forEach((expense) => {
-      addExpense(expense);
-    });
+    addExpenses(result.expenses);
 
     setShowImportModal(false);
     setImportCsvText("");
@@ -152,8 +152,12 @@ export default function SettingsScreen() {
       title: "Import Completed",
       message: `Successfully imported ${result.importedCount} transaction ${
         result.importedCount === 1 ? "record" : "records"
-      } into your ledger.`,
-      variant: "success",
+      } into your ledger.${
+        result.errors.length
+          ? ` ${result.errors.length} row${result.errors.length === 1 ? " was" : "s were"} skipped. ${result.errors[0]}`
+          : ""
+      }`,
+      variant: result.errors.length ? "warning" : "success",
     });
   };
 
@@ -794,31 +798,9 @@ export default function SettingsScreen() {
               </LinearGradient>
             </Pressable>
 
-            <Pressable
-              style={({ pressed }) => [
-                styles.secondaryModalBtn,
-                {
-                  borderColor: colors.border,
-                  backgroundColor: dark ? "rgba(255,255,255,0.04)" : colors.surfaceSubtle,
-                  marginTop: 10,
-                },
-                pressed && { opacity: 0.85 },
-              ]}
-              onPress={() => {
-                setShowBackupModal(false);
-                setShowStorageDialog(true);
-              }}
-            >
-              <Ionicons
-                name="shield-checkmark-outline"
-                size={16}
-                color={colors.foreground}
-                style={{ marginRight: 6 }}
-              />
-              <Text style={[styles.secondaryModalBtnText, { color: colors.foreground }]}>
-                Storage Permissions
-              </Text>
-            </Pressable>
+            <Text style={[styles.modalHint, { color: colors.muted }]}>
+              CSV files are created in the app’s private storage, then opened in your device’s share sheet.
+            </Text>
           </View>
         </View>
       </Modal>
@@ -829,11 +811,6 @@ export default function SettingsScreen() {
         onClose={() => setShowCategoryModal(false)}
         onSave={addCustomCategory}
         existingCategories={allCategories}
-      />
-
-      <StoragePermissionDialog
-        visible={showStorageDialog}
-        onClose={() => setShowStorageDialog(false)}
       />
 
       <AboutDialog visible={showAboutModal} onClose={() => setShowAboutModal(false)} />
@@ -1332,18 +1309,11 @@ const styles = StyleSheet.create({
     textAlign: "center",
     lineHeight: 17,
   },
-  secondaryModalBtn: {
-    width: "100%",
-    height: 48,
-    borderRadius: 14,
-    borderWidth: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    flexDirection: "row",
-  },
-  secondaryModalBtnText: {
-    fontSize: 13.5,
-    fontWeight: "600",
+  modalHint: {
+    fontSize: 12,
+    lineHeight: 17,
+    marginTop: 12,
+    textAlign: "center",
   },
   importGuideText: {
     fontSize: 12,

@@ -22,9 +22,11 @@ Then open the project with Expo Go, an Android emulator, or an iOS simulator.
 
 The app includes a mobile welcome landing page, local registration and login, a dashboard, add and edit expense flows, transaction search and category filters, live spending reports, budget settings, persistent light/dark mode, CSV export and local persistence for expenses and account session state.
 
-## Local authentication note
+## Authentication and offline use
 
-Registration and login are intentionally local-only for this version. The profile, session flag, budget, and expenses are stored on the device using AsyncStorage; passwords are stored in Expo SecureStore. No network API, cloud database, or remote authentication provider is used. This is suitable for a school-project MVP, but production authentication should still use a secure backend.
+Registration and login use the configured API first. If the server cannot be reached, the app can create a device-only account or sign in with credentials previously saved on that device. Offline-created accounts stay on that device and do not sync to the server. Remote accounts keep a local profile and expense cache so the app remains usable without a connection; expense and budget changes are queued for the next successful sync.
+
+The API URL defaults to the deployed service and can be overridden with `EXPO_PUBLIC_API_URL`. Native builds store credentials in Expo SecureStore when available; web builds use browser storage. Profile details, budgets, categories, session data, and expense caches use AsyncStorage.
 
 ## GitHub Actions builds
 

@@ -38,6 +38,7 @@ export function GlassSurface({
   const { dark, colors } = useTheme();
   const tint: BlurTint = dark ? "dark" : "light";
   const isWeb = Platform.OS === "web";
+  const useNativeBlur = Platform.OS === "ios";
   const blurVal = intensity ?? BLUR_INTENSITY[variant];
 
   // Dynamic frosted backgrounds for clean glass look
@@ -91,8 +92,8 @@ export function GlassSurface({
           pointerEvents="none"
           style={[StyleSheet.absoluteFill, { backgroundColor: glassBackground }, webBlurStyle]}
         />
-      ) : (
-        // Native BlurView for iOS and Android
+      ) : useNativeBlur ? (
+        // iOS blur is hardware accelerated; Android uses a static glass fill below
         <>
           <BlurView
             intensity={blurVal}
@@ -104,6 +105,13 @@ export function GlassSurface({
             style={[StyleSheet.absoluteFill, { backgroundColor: glassBackground }]}
           />
         </>
+      ) : (
+        // Avoid stacking live BlurViews on Android; this keeps scrolling and tab
+        // transitions responsive on entry-level devices.
+        <View
+          pointerEvents="none"
+          style={[StyleSheet.absoluteFill, { backgroundColor: glassBackground }]}
+        />
       )}
 
       {/* Subtle specular top-edge reflection for depth */}

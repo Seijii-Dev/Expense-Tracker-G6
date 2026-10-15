@@ -2,7 +2,6 @@ import { Alert, Platform, Share } from "react-native";
 import * as FileSystem from "expo-file-system/legacy";
 import * as Sharing from "expo-sharing";
 import { Expense } from "@/types/expense";
-import { requestStoragePermission } from "@/utils/storage-permission";
 import { getPhilippinesDate } from "@/utils/date";
 
 function escapeCsvField(value: string | number | undefined | null): string {
@@ -46,8 +45,6 @@ export async function exportExpensesToCsv(
     return res;
   }
 
-  await requestStoragePermission();
-
   const csv = generateExpenseCsv(expenses);
   const filename = `ledgerly-export-${getPhilippinesDate()}.csv`;
 
@@ -61,7 +58,7 @@ export async function exportExpensesToCsv(
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      URL.revokeObjectURL(url);
+      window.setTimeout(() => URL.revokeObjectURL(url), 1000);
       const res: ExportResult = {
         success: true,
         title: "Export completed",

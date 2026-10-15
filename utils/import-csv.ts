@@ -1,6 +1,6 @@
 import { Category, NewExpenseData, Payment } from "@/types/expense";
 import { CATEGORIES, PAYMENT_METHODS } from "@/constants/categories";
-import { getPhilippinesDate, normalizeDate } from "@/utils/date";
+import { getExpenseDateKey, getPhilippinesDate, normalizeDate } from "@/utils/date";
 
 export interface CsvImportResult {
   success: boolean;
@@ -9,39 +9,83 @@ export interface CsvImportResult {
   errors: string[];
 }
 
-function parseCsvLine(line: string): string[] {
-  const result: string[] = [];
-  let current = "";
+function parseCsvRecords(content: string): { records: string[][]; malformed: boolean } {
+  const records: string[][] = [];
+  let record: string[] = [];
+  let field = "";
   let inQuotes = false;
 
-  for (let i = 0; i < line.length; i++) {
-    const char = line[i];
+  for (let index = 0; index < content.length; index += 1) {
+    const char = content[index];
+
     if (char === '"') {
-      if (inQuotes && line[i + 1] === '"') {
-        current += '"';
-        i++; // skip escaped quote
+      if (inQuotes && content[index + 1] === '"') {
+        field += '"';
+        index += 1;
+      } else if (inQuotes) {
+        inQuotes = false;
+      } else if (field.trim().length === 0) {
+        field = "";
+        inQuotes = true;
       } else {
-        inQuotes = !inQuotes;
+        field += char;
       }
-    } else if (char === "," && !inQuotes) {
-      result.push(current.trim());
-      current = "";
-    } else {
-      current += char;
+      continue;
     }
+
+    if (!inQuotes && (char === "\n" || char === "\r")) {
+      record.push(field.trim());
+      if (record.some((value) => value.length > 0)) records.push(record);
+      record = [];
+      field = "";
+      if (char === "\r" && content[index + 1] === "\n") index += 1;
+      continue;
+    }
+
+    field += char;
   }
-  result.push(current.trim());
-  return result;
+
+  if (field.length > 0 || record.length > 0) {
+    record.push(field.trim());
+    if (record.some((value) => value.length > 0)) records.push(record);
+  }
+
+  return { records, malformed: inQuotes };
 }
 
-export function parseExpenseCsv(csvContent: string): CsvImportResult {
-  const errors: string[] = [];
-  const lines = csvContent
-    .split(/\r?\n/)
-    .map((line) => line.trim())
-    .filter((line) => line.length > 0);
+function parseImportDate(value: string): string | null {
+  const clean = value.trim();
+  if (!clean) return getPhilippinesDate();
 
-  if (lines.length < 2) {
+  const storedDate = getExpenseDateKey(clean);
+  if (storedDate) return storedDate;
+  if (/^\d{4}-\d{2}-\d{2}(?:$|[T ])/.test(clean)) return null;
+
+  const timestamp = Date.parse(clean);
+  if (!Number.isFinite(timestamp)) return null;
+
+  const parsed = new Date(timestamp);
+  const dateKey = `${parsed.getUTCFullYear()}-${String(parsed.getUTCMonth() + 1).padStart(2, "0")}-${String(
+    parsed.getUTCDate()
+  ).padStart(2, "0")}`;
+  return normalizeDate(dateKey) === dateKey ? dateKey : null;
+}
+
+export function parseExpenseCsv(
+  csvContent: string,
+  availableCategories: readonly string[] = CATEGORIES
+): CsvImportResult {
+  const { records, malformed } = parseCsvRecords(csvContent);
+  if (malformed) {
+    return {
+      success: false,
+      importedCount: 0,
+      expenses: [],
+      errors: ["The CSV contains a quoted field that was not closed."],
+    };
+  }
+
+  if (records.length < 2) {
     return {
       success: false,
       importedCount: 0,
@@ -50,16 +94,18 @@ export function parseExpenseCsv(csvContent: string): CsvImportResult {
     };
   }
 
-  const rawHeaders = parseCsvLine(lines[0]).map((h) => h.toLowerCase().replace(/[^a-z0-9]/g, ""));
-  
-  // Find column indices
-  const dateIdx = rawHeaders.findIndex((h) => h.includes("date"));
-  const descIdx = rawHeaders.findIndex((h) => h.includes("desc") || h.includes("note") || h.includes("title"));
-  const catIdx = rawHeaders.findIndex((h) => h.includes("cat"));
-  const payIdx = rawHeaders.findIndex((h) => h.includes("pay") || h.includes("method"));
-  const amtIdx = rawHeaders.findIndex((h) => h.includes("amount") || h.includes("cost") || h.includes("price") || h.includes("total"));
+  const headers = records[0].map((header) => header.toLowerCase().replace(/[^a-z0-9]/g, ""));
+  const dateIndex = headers.findIndex((header) => header.includes("date"));
+  const descriptionIndex = headers.findIndex((header) =>
+    ["desc", "note", "title"].some((key) => header.includes(key))
+  );
+  const categoryIndex = headers.findIndex((header) => header.includes("cat"));
+  const paymentIndex = headers.findIndex((header) => header.includes("pay") || header.includes("method"));
+  const amountIndex = headers.findIndex((header) =>
+    ["amount", "cost", "price", "total"].some((key) => header.includes(key))
+  );
 
-  if (amtIdx === -1) {
+  if (amountIndex === -1) {
     return {
       success: false,
       importedCount: 0,
@@ -68,46 +114,48 @@ export function parseExpenseCsv(csvContent: string): CsvImportResult {
     };
   }
 
-  const validCategories = new Set<string>(CATEGORIES);
-  const validPayments = new Set<string>(PAYMENT_METHODS);
-  const parsedExpenses: NewExpenseData[] = [];
+  const categoriesByName = new Map(availableCategories.map((category) => [category.toLowerCase(), category]));
+  const paymentsByName = new Map(PAYMENT_METHODS.map((payment) => [payment.toLowerCase(), payment]));
+  const expenses: NewExpenseData[] = [];
+  const errors: string[] = [];
 
-  for (let i = 1; i < lines.length; i++) {
-    const fields = parseCsvLine(lines[i]);
-    if (fields.length <= 1) continue;
+  for (let index = 1; index < records.length; index += 1) {
+    const fields = records[index];
+    const rawAmount = fields[amountIndex] ?? "";
+    const amount = Number(rawAmount.replace(/[^0-9.-]/g, ""));
+    const roundedAmount = Math.round(amount * 100) / 100;
 
-    const rawAmt = fields[amtIdx]?.replace(/[^0-9.-]/g, "");
-    const amount = parseFloat(rawAmt || "0");
-    if (isNaN(amount) || amount <= 0) {
-      errors.push(`Row ${i + 1}: Invalid or zero amount "${fields[amtIdx]}".`);
+    if (!Number.isFinite(amount) || !Number.isFinite(roundedAmount) || roundedAmount <= 0) {
+      errors.push(`Row ${index + 1}: Invalid or zero amount "${rawAmount}".`);
       continue;
     }
 
-    const rawDate = dateIdx !== -1 ? fields[dateIdx] : "";
-    const parsedDate = rawDate && !isNaN(Date.parse(rawDate)) ? normalizeDate(rawDate) : getPhilippinesDate();
+    const rawDate = dateIndex === -1 ? "" : fields[dateIndex] ?? "";
+    const date = parseImportDate(rawDate);
+    if (!date) {
+      errors.push(`Row ${index + 1}: Invalid date "${rawDate}".`);
+      continue;
+    }
 
-    const rawCat = catIdx !== -1 ? fields[catIdx] : "";
-    const category: Category = validCategories.has(rawCat) ? (rawCat as Category) : "Other";
+    const rawCategory = categoryIndex === -1 ? "" : fields[categoryIndex] ?? "";
+    const category = categoriesByName.get(rawCategory.trim().toLowerCase()) ?? "Other";
+    const rawPayment = paymentIndex === -1 ? "" : fields[paymentIndex] ?? "";
+    const payment = paymentsByName.get(rawPayment.trim().toLowerCase()) ?? "Cash";
+    const rawDescription = descriptionIndex === -1 ? "" : fields[descriptionIndex] ?? "";
 
-    const rawPay = payIdx !== -1 ? fields[payIdx] : "";
-    const payment: Payment = validPayments.has(rawPay) ? (rawPay as Payment) : "Cash";
-
-    const rawDesc = descIdx !== -1 ? fields[descIdx] : "";
-    const description = rawDesc.trim() || category;
-
-    parsedExpenses.push({
-      amount: Math.round(amount * 100) / 100,
-      description,
-      category,
-      payment,
-      date: parsedDate,
+    expenses.push({
+      amount: roundedAmount,
+      description: rawDescription.trim() || category,
+      category: category as Category,
+      payment: payment as Payment,
+      date,
     });
   }
 
   return {
-    success: parsedExpenses.length > 0,
-    importedCount: parsedExpenses.length,
-    expenses: parsedExpenses,
+    success: expenses.length > 0,
+    importedCount: expenses.length,
+    expenses,
     errors,
   };
 }

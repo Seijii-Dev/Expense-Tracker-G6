@@ -1,5 +1,6 @@
 import React from "react";
 import Svg, { Circle, Path, Rect } from "react-native-svg";
+import { AppLottieView } from "@/components/ui/app-lottie-view";
 
 export type NavTabName = "overview" | "records" | "reports" | "settings" | "account";
 
@@ -16,6 +17,33 @@ export const NavIcon = React.memo(function NavIcon({
   color,
   size = 22,
 }: NavIconProps) {
+  const animationSource = name === "account" ? null : NAV_ICON_ANIMATIONS[name];
+
+  if (focused && animationSource) {
+    return (
+      <AppLottieView
+        key={name}
+        source={animationSource}
+        style={{ width: size, height: size }}
+        autoPlay
+        loop={false}
+        speed={1.2}
+        fallback={<StaticNavIcon name={name} focused color={color} size={size} />}
+      />
+    );
+  }
+
+  return <StaticNavIcon name={name} focused={focused} color={color} size={size} />;
+});
+
+const NAV_ICON_ANIMATIONS: Record<Exclude<NavTabName, "account">, object> = {
+  overview: require("@/assets/lottie/nav-overview.json"),
+  records: require("@/assets/lottie/nav-records.json"),
+  reports: require("@/assets/lottie/nav-reports.json"),
+  settings: require("@/assets/lottie/nav-settings.json"),
+};
+
+function StaticNavIcon({ name, focused, color, size }: NavIconProps) {
   const strokeW = focused ? 2.1 : 1.75;
 
   switch (name) {
@@ -157,4 +185,4 @@ export const NavIcon = React.memo(function NavIcon({
     default:
       return null;
   }
-});
+}

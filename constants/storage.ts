@@ -12,7 +12,6 @@ export const STORAGE_KEYS = {
   profileBanner: (email: string) => `expense-tracker:${sanitizeKey(email)}:profile-banner`,
   localAccounts: "expense-tracker-local-accounts",
   userPassword: (email: string) => `expense-tracker-password-${sanitizeKey(email)}`,
-  storagePermissionPrompted: "expense-tracker-storage-permission-prompted",
   userCustomCategories: (email: string) => `expense-tracker:${sanitizeKey(email)}:custom-categories`,
   globalCustomCategories: "expense-tracker:global-custom-categories",
 } as const;

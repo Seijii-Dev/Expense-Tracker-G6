@@ -1,5 +1,5 @@
 import React from "react";
-import { Easing } from "react-native";
+import { Easing, Platform } from "react-native";
 import { Redirect, Tabs } from "expo-router";
 import { useAuth } from "@/lib/auth-store";
 import { useExpenses } from "@/lib/expense-store";
@@ -41,8 +41,9 @@ export default function TabsLayout() {
         tabBar={(props) => <FloatingTabBar {...props} />}
         screenOptions={{
           headerShown: false,
-          lazy: false,
-          animation: "fade",
+          lazy: true,
+          freezeOnBlur: Platform.OS !== "web",
+          animation: Platform.OS === "web" ? "none" : "shift",
           transitionSpec: fluidTabTransitionSpec,
         }}
       >

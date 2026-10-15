@@ -137,7 +137,7 @@ export function ExpenseModal({ visible, initialExpense, onClose, onSubmit }: Exp
     setShowSuccessModal(false);
   };
 
-  const numericAmount = parseFloat(amount) || 0;
+  const numericAmount = Number(amount) || 0;
   const originalAmount = initialExpense?.amount || 0;
   const netAddedAmount = isEditing ? numericAmount - originalAmount : numericAmount;
   const projectedMonthTotal = monthTotal + netAddedAmount;
@@ -145,7 +145,7 @@ export function ExpenseModal({ visible, initialExpense, onClose, onSubmit }: Exp
   const overBudgetAmount = projectedMonthTotal - budget;
 
   const handleAddPreset = (preset: number) => {
-    const current = parseFloat(amount) || 0;
+    const current = Number(amount) || 0;
     const next = current + preset;
     setAmount(String(Math.round(next * 100) / 100));
     if (validationError) setValidationError(null);
@@ -153,9 +153,14 @@ export function ExpenseModal({ visible, initialExpense, onClose, onSubmit }: Exp
 
   const handleSave = () => {
     if (isSubmitting) return; // Prevent duplicate submissions caused by repeated taps
-    const numeric = parseFloat(amount);
-    if (isNaN(numeric) || numeric <= 0) {
-      setValidationError("Please enter an amount greater than ₱0.");
+    const numeric = Number(amount);
+    if (!Number.isFinite(numeric) || numeric <= 0) {
+      setValidationError("Please enter a valid amount of at least ₱0.01.");
+      return;
+    }
+    const roundedAmount = Math.round(numeric * 100) / 100;
+    if (!Number.isFinite(roundedAmount) || roundedAmount <= 0) {
+      setValidationError("Please enter a valid amount of at least ₱0.01.");
       return;
     }
 
@@ -166,7 +171,7 @@ export function ExpenseModal({ visible, initialExpense, onClose, onSubmit }: Exp
 
     // Save operation executed first
     onSubmit({
-      amount: Math.round(numeric * 100) / 100,
+      amount: roundedAmount,
       description: finalDescription,
       category,
       payment,
@@ -307,7 +312,7 @@ export function ExpenseModal({ visible, initialExpense, onClose, onSubmit }: Exp
                 {
                   backgroundColor: dark ? "rgba(255, 255, 255, 0.03)" : colors.surfaceSubtle,
                   borderColor:
-                    validationError && (!amount || parseFloat(amount) <= 0)
+                    validationError && (!amount || !Number.isFinite(Number(amount)) || Number(amount) <= 0)
                       ? colors.primary
                       : colors.border,
                 },

@@ -35,7 +35,12 @@ export default function AuthScreen() {
 
   const [mode, setMode] = useState<"welcome" | "login" | "register">("welcome");
   const [busy, setBusy] = useState(false);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [authError, setAuthError] = useState<{ title: string; message: string } | null>(null);
+
+  const changeMode = (nextMode: "welcome" | "login" | "register") => {
+    setAuthError(null);
+    setMode(nextMode);
+  };
 
   // If already authenticated or just authenticated, route to dashboard automatically
   React.useEffect(() => {
@@ -45,14 +50,16 @@ export default function AuthScreen() {
   }, [account]);
 
   const handleSubmit = async (values: { name: string; email: string; password: string }) => {
+    if (busy) return;
     const activeMode = mode === "welcome" ? "register" : mode;
     const validationError = validateAuthInput(activeMode, values);
 
     if (validationError) {
-      setErrorMessage(validationError);
+      setAuthError({ title: "Check your details", message: validationError });
       return;
     }
 
+    setAuthError(null);
     setBusy(true);
     try {
       const result =
@@ -61,7 +68,10 @@ export default function AuthScreen() {
           : await login(values.email.trim(), values.password);
 
       if (!result.ok) {
-        setErrorMessage(result.message || "Please check your details and try again.");
+        setAuthError({
+          title: activeMode === "register" ? "Account not created" : "Unable to sign in",
+          message: result.message || "Please check your details and try again.",
+        });
         return;
       }
 
@@ -70,7 +80,10 @@ export default function AuthScreen() {
       router.replace("/(tabs)");
     } catch (err) {
       console.warn("Auth submit exception:", err);
-      setErrorMessage("We couldn’t complete your request. Please check your connection and try again.");
+      setAuthError({
+        title: activeMode === "register" ? "Account not created" : "Unable to sign in",
+        message: "We couldn’t complete that request. Please try again.",
+      });
     } finally {
       setBusy(false);
     }
@@ -80,14 +93,14 @@ export default function AuthScreen() {
     <>
       {mode === "welcome" ? (
         <WelcomeHero
-          onSignIn={() => setMode("login")}
-          onRegister={() => setMode("register")}
+          onSignIn={() => changeMode("login")}
+          onRegister={() => changeMode("register")}
         />
       ) : (
         <AuthForm
           mode={mode}
-          onModeChange={setMode}
-          onBack={() => setMode("welcome")}
+          onModeChange={(nextMode) => changeMode(nextMode)}
+          onBack={() => changeMode("welcome")}
           onSubmit={handleSubmit}
           busy={busy}
         />
@@ -95,14 +108,15 @@ export default function AuthScreen() {
 
       {/* Error Dialog Modal */}
       <ConfirmDialog
-        visible={Boolean(errorMessage)}
-        title={mode === "register" ? "Registration Notice" : "Sign In Notice"}
-        message={errorMessage || ""}
+        visible={Boolean(authError)}
+        title={authError?.title || "Authentication"}
+        message={authError?.message || ""}
         icon="alert-circle-outline"
         iconColor={colors.primary}
         iconBgColor={colors.primarySoft}
-        confirmText="Got It"
-        onConfirm={() => setErrorMessage(null)}
+        variant="info"
+        confirmText="Okay"
+        onConfirm={() => setAuthError(null)}
       />
     </>
   );

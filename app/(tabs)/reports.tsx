@@ -16,7 +16,7 @@ import { GlassSurface } from "@/components/ui/glass-surface";
 
 import { SpendingTrendChart } from "@/components/reports/spending-trend-chart";
 import { MotionEntrance, MotionSegmentedControl, PressableScale } from "@/components/motion";
-import { getPhilippinesDate } from "@/utils/date";
+import { getExpenseDateKey, getPhilippinesDate } from "@/utils/date";
 import { DatePickerModal } from "@/components/common/date-picker-modal";
 import { radii, spacing, typography } from "@/constants/design-tokens";
 import {
@@ -63,10 +63,18 @@ export default function ReportsScreen() {
   }, [periodExpenses]);
 
   const dailyAvg = periodExpenses.length
-    ? formatMoney(timeline.total / Math.max(1, timeline.points.length))
+    ? formatMoney(timeline.total / countCalendarDays(timeline.startDate, timeline.endDate))
     : formatMoney(0);
 
-  const budgetLeft = Math.max(0, budget - periodTotal);
+  const selectedMonth = selectedDate.slice(0, 7);
+  const selectedMonthTotal = expenses.reduce(
+    (total, expense) =>
+      getExpenseDateKey(expense.date).startsWith(selectedMonth)
+        ? total + (Number(expense.amount) || 0)
+        : total,
+    0
+  );
+  const budgetLeft = Math.max(0, budget - selectedMonthTotal);
 
   const navigateDate = (direction: -1 | 1) => {
     const nextDate = shiftTrajectoryAnchorDate(timeframe, selectedDate, direction);
@@ -74,7 +82,7 @@ export default function ReportsScreen() {
   };
 
   const handleExportStatement = async () => {
-    const res = await exportExpensesToCsv(periodExpenses.length ? periodExpenses : expenses, false);
+    const res = await exportExpensesToCsv(periodExpenses, false);
     setExportNotice({
       title: res.title,
       message: res.message,
@@ -438,6 +446,20 @@ export default function ReportsScreen() {
       )}
     </ScreenContainer>
   );
+}
+
+function countCalendarDays(startDate: string, endDate: string): number {
+  const parseDate = (value: string) => {
+    const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
+    if (!match) return null;
+    const [, year, month, day] = match;
+    return Date.UTC(Number(year), Number(month) - 1, Number(day));
+  };
+
+  const start = parseDate(startDate);
+  const end = parseDate(endDate);
+  if (start === null || end === null || end < start) return 1;
+  return Math.floor((end - start) / 86_400_000) + 1;
 }
 
 const styles = StyleSheet.create({

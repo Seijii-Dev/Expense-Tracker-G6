@@ -39,6 +39,7 @@ interface FloatingInputProps {
   autoCorrect?: boolean;
   returnKeyType?: TextInput["props"]["returnKeyType"];
   onSubmitEditing?: () => void;
+  inputRef?: React.RefObject<TextInput | null>;
   trailingContent?: React.ReactNode;
 }
 
@@ -56,31 +57,44 @@ function FloatingInput({
   autoCorrect,
   returnKeyType,
   onSubmitEditing,
+  inputRef,
   trailingContent,
 }: FloatingInputProps) {
   const { colors, dark } = useTheme();
   const reduceMotion = useReducedMotion();
-  const inputRef = useRef<TextInput>(null);
+  const localInputRef = useRef<TextInput | null>(null);
+  const setInputRef = useCallback((input: TextInput | null) => {
+    localInputRef.current = input;
+    if (inputRef) inputRef.current = input;
+  }, [inputRef]);
   const [isFocused, setIsFocused] = useState(false);
-
-  const focusProgress = useSharedValue(0);
   const hasValue = value.length > 0;
+  const focusProgress = useSharedValue(0);
+  const labelProgress = useSharedValue(hasValue ? 1 : 0);
   const isFloated = isFocused || hasValue;
 
   const handleFocus = useCallback(() => {
     setIsFocused(true);
     focusProgress.value = reduceMotion ? 1 : withSpring(1, springConfig);
-  }, [focusProgress, reduceMotion]);
+    labelProgress.value = reduceMotion ? 1 : withSpring(1, springConfig);
+  }, [focusProgress, labelProgress, reduceMotion]);
 
   const handleBlur = useCallback(() => {
     setIsFocused(false);
-    if (!value) {
-      focusProgress.value = reduceMotion ? 0 : withSpring(0, springConfig);
-    }
-  }, [focusProgress, value, reduceMotion]);
+    focusProgress.value = reduceMotion ? 0 : withSpring(0, springConfig);
+    labelProgress.value = reduceMotion
+      ? value.length > 0 ? 1 : 0
+      : withSpring(value.length > 0 ? 1 : 0, springConfig);
+  }, [focusProgress, labelProgress, reduceMotion, value]);
+
+  React.useEffect(() => {
+    if (isFocused) return;
+    const nextValue = hasValue ? 1 : 0;
+    labelProgress.value = reduceMotion ? nextValue : withSpring(nextValue, springConfig);
+  }, [hasValue, isFocused, labelProgress, reduceMotion]);
 
   const labelStyle = useAnimatedStyle(() => {
-    const floated = isFloated ? 1 : focusProgress.value;
+    const floated = labelProgress.value;
     return {
       transform: [
         { translateY: interpolate(floated, [0, 1], [0, -22]) },
@@ -108,7 +122,7 @@ function FloatingInput({
 
   return (
     <Pressable
-      onPress={() => inputRef.current?.focus()}
+      onPress={() => localInputRef.current?.focus()}
       accessibilityRole="none"
     >
       <Animated.View
@@ -157,7 +171,7 @@ function FloatingInput({
             {label}
           </Animated.Text>
           <TextInput
-            ref={inputRef}
+            ref={setInputRef}
             value={value}
             onChangeText={onChangeText}
             onFocus={handleFocus}
@@ -178,6 +192,7 @@ function FloatingInput({
               },
             ]}
             accessibilityLabel={label}
+            accessibilityHint={placeholder}
           />
         </View>
 
@@ -270,8 +285,8 @@ export function AuthForm({ mode, onModeChange, onBack, onSubmit, busy }: AuthFor
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
 
-  const emailRef = useRef<TextInput>(null);
-  const passwordRef = useRef<TextInput>(null);
+  const emailRef = useRef<TextInput | null>(null);
+  const passwordRef = useRef<TextInput | null>(null);
 
   const handleSubmit = () => {
     onSubmit({ name, email, password });
@@ -431,6 +446,7 @@ export function AuthForm({ mode, onModeChange, onBack, onSubmit, busy }: AuthFor
             autoCapitalize="none"
             autoCorrect={false}
             returnKeyType="next"
+            inputRef={emailRef}
             onSubmitEditing={() => passwordRef.current?.focus()}
           />
 
@@ -444,6 +460,7 @@ export function AuthForm({ mode, onModeChange, onBack, onSubmit, busy }: AuthFor
               secureTextEntry={!showPassword}
               autoCapitalize="none"
               returnKeyType="done"
+              inputRef={passwordRef}
               onSubmitEditing={handleSubmit}
               trailingContent={
                 <Pressable
@@ -658,7 +675,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "600",
     letterSpacing: 0.1,
-    transformOrigin: "left top",
   },
   floatingInput: {
     flex: 1,

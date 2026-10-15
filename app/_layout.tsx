@@ -1,4 +1,3 @@
-import { useEffect } from "react";
 import { Ionicons } from "@expo/vector-icons";
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
@@ -9,8 +8,6 @@ import { Platform, View, StyleSheet } from "react-native";
 import { ExpenseProvider } from "@/lib/expense-store";
 import { AuthProvider } from "@/lib/auth-store";
 import { ThemeProvider, useTheme } from "@/lib/theme-store";
-import { FontsLoadedProvider } from "@/lib/fonts-loaded-store";
-import { StoragePermissionPrompt } from "@/components/common/storage-permission-dialog";
 import { SplashScreen } from "@/components/common/splash-screen";
 
 function ThemedStatusBar() {
@@ -24,7 +21,7 @@ function BrandedSplashScreen({ isReady }: { isReady: boolean }) {
 }
 
 export default function RootLayout() {
-  const [fontsLoaded] = useFonts({
+  const [fontsLoaded, fontError] = useFonts({
     DMSans_400Regular,
     DMSans_500Medium,
     DMSans_700Bold,
@@ -33,50 +30,25 @@ export default function RootLayout() {
     Ionicons: require("@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/Ionicons.ttf"),
   });
 
-  useEffect(() => {
-    if (Platform.OS === "web" && typeof document !== "undefined") {
-      // Belt-and-suspenders: ensure ionicons @font-face is always declared in DOM
-      const styleId = "expo-vector-icons-ionicons";
-      if (!document.getElementById(styleId)) {
-        const style = document.createElement("style");
-        style.id = styleId;
-        style.textContent = `
-          @font-face {
-            font-family: 'ionicons';
-            src: url('https://cdn.jsdelivr.net/npm/@expo/vector-icons@15.1.1/build/vendor/react-native-vector-icons/Fonts/Ionicons.ttf') format('truetype');
-            font-display: block;
-          }
-          @font-face {
-            font-family: 'Ionicons';
-            src: url('https://cdn.jsdelivr.net/npm/@expo/vector-icons@15.1.1/build/vendor/react-native-vector-icons/Fonts/Ionicons.ttf') format('truetype');
-            font-display: block;
-          }
-        `;
-        document.head.appendChild(style);
-      }
-    }
-  }, []);
+  const fontsReady = Boolean(fontsLoaded || fontError);
 
   return (
     <SafeAreaProvider>
       <AuthProvider>
         <ThemeProvider>
           <ExpenseProvider>
-            <FontsLoadedProvider loaded={Boolean(fontsLoaded)}>
-              <ThemedStatusBar />
-              <View style={styles.rootWrap}>
-                <Stack
-                  screenOptions={{
-                    headerShown: false,
-                    // Use none on web to avoid the JS-animated fade which is laggy
-                    animation: Platform.OS === "web" ? "none" : "default",
-                  }}
-                />
-                <StoragePermissionPrompt />
-                {/* Branded Application Launch Screen with Theme Awareness */}
-                <BrandedSplashScreen isReady={Boolean(fontsLoaded)} />
-              </View>
-            </FontsLoadedProvider>
+            <ThemedStatusBar />
+            <View style={styles.rootWrap}>
+              <Stack
+                screenOptions={{
+                  headerShown: false,
+                  // Use none on web to avoid the JS-animated fade which is laggy
+                  animation: Platform.OS === "web" ? "none" : "default",
+                }}
+              />
+              {/* Branded Application Launch Screen with Theme Awareness */}
+              <BrandedSplashScreen isReady={fontsReady} />
+            </View>
           </ExpenseProvider>
         </ThemeProvider>
       </AuthProvider>
