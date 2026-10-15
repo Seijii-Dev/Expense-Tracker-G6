@@ -1,6 +1,7 @@
-import React, { useEffect, useRef } from "react";
+import React from "react";
 import { Pressable, StyleProp, StyleSheet, Text, View, ViewStyle } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { AppLottieView } from "@/components/ui/app-lottie-view";
 import { useTheme } from "@/lib/theme-store";
 
 interface SuccessOverlayProps {
@@ -8,26 +9,23 @@ interface SuccessOverlayProps {
   title: string;
   subtitle?: string;
   onDismiss: () => void;
+  onAnimationFinish?: (isCancelled: boolean) => void;
   style?: StyleProp<ViewStyle>;
 }
 
-/** Full-surface confirmation overlay with tap and timed dismissal. */
+/**
+ * Full-surface confirmation overlay used after a record is created, updated,
+ * or deleted. Tapping anywhere (or the Lottie finish callback) dismisses it.
+ */
 export function SuccessOverlay({
   visible,
   title,
   subtitle = "Tap anywhere to continue",
   onDismiss,
+  onAnimationFinish,
   style,
 }: SuccessOverlayProps) {
   const { colors, dark } = useTheme();
-  const onDismissRef = useRef(onDismiss);
-  onDismissRef.current = onDismiss;
-
-  useEffect(() => {
-    if (!visible) return;
-    const timer = setTimeout(() => onDismissRef.current(), 2500);
-    return () => clearTimeout(timer);
-  }, [visible]);
 
   if (!visible) return null;
 
@@ -47,9 +45,14 @@ export function SuccessOverlay({
           },
         ]}
       >
-        <View style={styles.iconWrap}>
-          <Ionicons name="checkmark-circle" size={78} color={colors.primary} />
-        </View>
+        <AppLottieView
+          source={require("@/assets/lottie/success-check.json")}
+          style={styles.lottie}
+          loop={false}
+          autoPlay
+          onAnimationFinish={onAnimationFinish}
+          fallback={<Ionicons name="checkmark-circle" size={78} color={colors.primary} />}
+        />
         <Text style={[styles.title, { color: colors.foreground }]}>{title}</Text>
         {subtitle ? (
           <Text style={[styles.subtitle, { color: colors.muted }]}>{subtitle}</Text>
@@ -79,11 +82,9 @@ const styles = StyleSheet.create({
     shadowRadius: 24,
     elevation: 10,
   },
-  iconWrap: {
+  lottie: {
     width: 100,
     height: 100,
-    alignItems: "center",
-    justifyContent: "center",
   },
   title: {
     fontFamily: "DMSans_700Bold",

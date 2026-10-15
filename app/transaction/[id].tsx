@@ -501,6 +501,12 @@ export default function TransactionDetailsScreen() {
           setShowSuccess(false);
           goBack();
         }}
+        onAnimationFinish={(isCancelled) => {
+          if (!isCancelled) {
+            setShowSuccess(false);
+            goBack();
+          }
+        }}
       />
 
       <ConfirmDialog

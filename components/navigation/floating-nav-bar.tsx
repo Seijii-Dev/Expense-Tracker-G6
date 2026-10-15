@@ -8,6 +8,12 @@ import {
   View,
   useWindowDimensions,
 } from "react-native";
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  useReducedMotion,
+  withSpring,
+} from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 
@@ -51,7 +57,33 @@ interface TabButtonProps {
 
 function TabButton({ name, isFocused, onPress, onLongPress, isCompact }: TabButtonProps) {
   const { colors } = useTheme();
+  const reduceMotion = useReducedMotion();
   const info = TAB_NAME_MAP[name] || { tab: "overview" as NavTabName, label: name };
+  const scale = useSharedValue(1);
+
+  const scaleStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+  }));
+
+  const handlePressIn = () => {
+    if (!reduceMotion) {
+      scale.value = withSpring(0.92, {
+        damping: 20,
+        stiffness: 280,
+        mass: 0.6,
+      });
+    }
+  };
+
+  const handlePressOut = () => {
+    if (!reduceMotion) {
+      scale.value = withSpring(1, {
+        damping: 18,
+        stiffness: 200,
+        mass: 0.7,
+      });
+    }
+  };
 
   const iconSize = isCompact ? 19 : 22;
 
@@ -62,12 +94,14 @@ function TabButton({ name, isFocused, onPress, onLongPress, isCompact }: TabButt
       accessibilityLabel={info.label}
       onPress={onPress}
       onLongPress={onLongPress}
+      onPressIn={handlePressIn}
+      onPressOut={handlePressOut}
       style={[
         styles.tabBtn,
         Platform.OS === "web" ? ({ cursor: "pointer", userSelect: "none" } as any) : {},
       ]}
     >
-      <View style={styles.tabContent}>
+      <Animated.View style={[styles.tabContent, scaleStyle]}>
         {/* Icon */}
         <View style={styles.iconContainer}>
           <NavIcon
@@ -92,7 +126,7 @@ function TabButton({ name, isFocused, onPress, onLongPress, isCompact }: TabButt
         >
           {info.label}
         </Text>
-      </View>
+      </Animated.View>
     </Pressable>
   );
 }
@@ -102,7 +136,13 @@ export function FloatingTabBar({ state, descriptors, navigation }: FloatingTabBa
   const insets = useSafeAreaInsets();
   const { width: windowWidth } = useWindowDimensions();
   const { openAddExpenseModal } = useExpenses();
+  const reduceMotion = useReducedMotion();
   const [keyboardVisible, setKeyboardVisible] = useState(false);
+  const fabScale = useSharedValue(1);
+
+  const fabAnimatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: fabScale.value }],
+  }));
 
   // Auto-hide floating nav bar when virtual keyboard opens on mobile
   useEffect(() => {
@@ -139,6 +179,26 @@ export function FloatingTabBar({ state, descriptors, navigation }: FloatingTabBa
 
   const handleFabPress = () => {
     openAddExpenseModal();
+  };
+
+  const handleFabPressIn = () => {
+    if (!reduceMotion) {
+      fabScale.value = withSpring(0.90, {
+        damping: 20,
+        stiffness: 300,
+        mass: 0.6,
+      });
+    }
+  };
+
+  const handleFabPressOut = () => {
+    if (!reduceMotion) {
+      fabScale.value = withSpring(1, {
+        damping: 16,
+        stiffness: 220,
+        mass: 0.7,
+      });
+    }
   };
 
   const renderTab = (routeName: string) => {
@@ -222,12 +282,14 @@ export function FloatingTabBar({ state, descriptors, navigation }: FloatingTabBa
           accessibilityRole="button"
           accessibilityLabel="Add Expense"
           onPress={handleFabPress}
+          onPressIn={handleFabPressIn}
+          onPressOut={handleFabPressOut}
           style={[
             styles.tabBtn,
             Platform.OS === "web" ? ({ cursor: "pointer", userSelect: "none" } as any) : {},
           ]}
         >
-          <View style={styles.tabContent}>
+          <Animated.View style={[styles.tabContent, fabAnimatedStyle]}>
             <View
               style={[
                 styles.fabSquare,
@@ -239,7 +301,7 @@ export function FloatingTabBar({ state, descriptors, navigation }: FloatingTabBa
             >
               <Ionicons name="add" size={26} color="#FFFFFF" />
             </View>
-          </View>
+          </Animated.View>
         </Pressable>
 
         {/* 4. Reports */}

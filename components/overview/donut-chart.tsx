@@ -1,5 +1,11 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { StyleSheet, Text, View } from "react-native";
+import Animated, {
+  interpolate,
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring,
+} from "react-native-reanimated";
 import Svg, { Circle } from "react-native-svg";
 import { Expense } from "@/types/expense";
 import { getCategoryStyle } from "@/constants/categories";
@@ -16,6 +22,36 @@ interface DonutChartProps {
 export const DonutChart = React.memo(function DonutChart({ total, expenses }: DonutChartProps) {
   const { colors, dark } = useTheme();
   const { customCategories } = useExpenses();
+  const progress = useSharedValue(0);
+
+  const isFirstRender = React.useRef(true);
+
+  useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      progress.value = withSpring(1, {
+        damping: 20,
+        stiffness: 220,
+        mass: 0.7,
+      });
+    } else {
+      progress.value = 0.92;
+      progress.value = withSpring(1, {
+        damping: 18,
+        stiffness: 260,
+        mass: 0.6,
+      });
+    }
+  }, [total, progress]);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    opacity: progress.value,
+    transform: [
+      {
+        scale: interpolate(progress.value, [0, 1], [0.92, 1]),
+      },
+    ],
+  }));
 
   const totals = React.useMemo(() => {
     const map = new Map<string, number>();
@@ -53,7 +89,7 @@ export const DonutChart = React.memo(function DonutChart({ total, expenses }: Do
   const donutTotalFontSize = Math.max(9.5, Math.min(15, Math.floor((76 / totalEmWidth) * 10) / 10));
 
   return (
-    <View style={styles.donutWrap}>
+    <Animated.View style={[styles.donutWrap, animatedStyle]}>
       <Svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} style={styles.svg}>
         {/* Background Track: solid rail for real data, dashed placeholder when empty */}
         <Circle
@@ -114,7 +150,7 @@ export const DonutChart = React.memo(function DonutChart({ total, expenses }: Do
           </>
         )}
       </View>
-    </View>
+    </Animated.View>
   );
 });
 

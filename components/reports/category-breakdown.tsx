@@ -1,5 +1,10 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { StyleSheet, Text, View } from "react-native";
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring,
+} from "react-native-reanimated";
 import { Ionicons } from "@expo/vector-icons";
 import { GlassSurface } from "@/components/ui/glass-surface";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -25,11 +30,25 @@ const CategoryProgressFill = React.memo(function CategoryProgressFill({
   fillPct: number;
   color: string;
 }) {
+  const widthAnim = useSharedValue(0);
+
+  useEffect(() => {
+    widthAnim.value = withSpring(Math.min(100, Math.max(0, fillPct)), {
+      damping: 22,
+      stiffness: 200,
+    });
+  }, [fillPct, widthAnim]);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    width: `${widthAnim.value}%`,
+  }));
+
   return (
-    <View
+    <Animated.View
       style={[
         styles.miniFill,
-        { backgroundColor: color, width: `${Math.min(100, Math.max(0, fillPct))}%` },
+        { backgroundColor: color },
+        animatedStyle,
       ]}
     />
   );
@@ -75,6 +94,7 @@ export function CategoryBreakdown({
       {activeCount === 0 ? (
         <EmptyState
           icon="pie-chart-outline"
+          lottieSource={require("@/assets/lottie/empty-charts.json")}
           title="No spending in this period"
           description="Log expenses to see your category breakdown and spending share."
         />
@@ -305,8 +325,10 @@ const styles = StyleSheet.create({
     overflow: "hidden",
   },
   miniFill: {
+    width: "100%",
     height: "100%",
     borderRadius: 2,
+    transformOrigin: "left center",
   },
   rightGroup: {
     alignItems: "flex-end",

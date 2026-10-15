@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import {
   Image,
   Linking,
@@ -10,6 +10,13 @@ import {
   Text,
   View,
 } from "react-native";
+import Animated, {
+  Easing,
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
+  useReducedMotion,
+} from "react-native-reanimated";
 import { Ionicons } from "@expo/vector-icons";
 
 import { useTheme } from "@/lib/theme-store";
@@ -24,6 +31,25 @@ const WEBSITE_URL = "https://ledgerly-web-g6.netlify.app/";
 
 export function AboutDialog({ visible, onClose }: AboutDialogProps) {
   const { colors, dark } = useTheme();
+  const reduceMotion = useReducedMotion();
+
+  const fade = useSharedValue(0);
+  const scale = useSharedValue(0.92);
+
+  useEffect(() => {
+    if (visible) {
+      fade.value = reduceMotion ? 1 : withTiming(1, { duration: 180, easing: Easing.out(Easing.quad) });
+      scale.value = reduceMotion ? 1 : withTiming(1, { duration: 180, easing: Easing.out(Easing.quad) });
+    } else {
+      fade.value = 0;
+      scale.value = 0.92;
+    }
+  }, [visible, fade, scale, reduceMotion]);
+
+  const dialogAnimatedStyle = useAnimatedStyle(() => ({
+    opacity: fade.value,
+    transform: [{ scale: scale.value }],
+  }));
 
   const handleVisitWebsite = async () => {
     try {
@@ -47,7 +73,7 @@ export function AboutDialog({ visible, onClose }: AboutDialogProps) {
           accessibilityLabel="Dismiss dialog"
           accessibilityRole="button"
         />
-        <View style={styles.cardWrap}>
+        <Animated.View style={[styles.cardWrap, dialogAnimatedStyle]}>
           <GlassSurface
             variant="sheet"
             radius={28}
@@ -142,7 +168,7 @@ export function AboutDialog({ visible, onClose }: AboutDialogProps) {
               <Text style={[styles.closeBtnText, { color: colors.foreground }]}>Close</Text>
             </Pressable>
           </GlassSurface>
-        </View>
+        </Animated.View>
       </View>
     </Modal>
   );

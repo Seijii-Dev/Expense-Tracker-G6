@@ -1,5 +1,5 @@
 import React from "react";
-import { Platform } from "react-native";
+import { Easing, Platform } from "react-native";
 import { Redirect, Tabs } from "expo-router";
 import { useAuth } from "@/lib/auth-store";
 import { useExpenses } from "@/lib/expense-store";
@@ -7,6 +7,16 @@ import { ScreenContainer } from "@/components/screen-container";
 import { DashboardSkeleton } from "@/components/ui/dashboard-skeleton";
 import { FloatingTabBar } from "@/components/navigation/floating-nav-bar";
 import { ExpenseModal } from "@/components/expense-modal";
+
+const tabEase = Easing.bezier(0.2, 0, 0, 1);
+
+const tabTransitionSpec = {
+  animation: "timing" as const,
+  config: {
+    duration: 170,
+    easing: tabEase,
+  },
+};
 
 export default function TabsLayout() {
   const { account, loading } = useAuth();
@@ -32,7 +42,8 @@ export default function TabsLayout() {
           headerShown: false,
           lazy: true,
           freezeOnBlur: Platform.OS !== "web",
-          animation: "none",
+          animation: Platform.OS === "web" ? "none" : "shift",
+          transitionSpec: tabTransitionSpec,
         }}
       >
         <Tabs.Screen

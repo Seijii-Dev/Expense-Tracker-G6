@@ -4,7 +4,7 @@ import { StatusBar } from "expo-status-bar";
 import { useFonts } from "expo-font";
 import { DMSans_400Regular, DMSans_500Medium, DMSans_700Bold } from "@expo-google-fonts/dm-sans";
 import { SafeAreaProvider } from "react-native-safe-area-context";
-import { View, StyleSheet } from "react-native";
+import { Platform, View, StyleSheet } from "react-native";
 import { ExpenseProvider } from "@/lib/expense-store";
 import { AuthProvider } from "@/lib/auth-store";
 import { ThemeProvider, useTheme } from "@/lib/theme-store";
@@ -42,7 +42,8 @@ export default function RootLayout() {
               <Stack
                 screenOptions={{
                   headerShown: false,
-                  animation: "none",
+                  // Use none on web to avoid the JS-animated fade which is laggy
+                  animation: Platform.OS === "web" ? "none" : "default",
                 }}
               />
               {/* Branded Application Launch Screen with Theme Awareness */}

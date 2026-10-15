@@ -1,5 +1,10 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { Pressable, StyleSheet, Text, View, useWindowDimensions } from "react-native";
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring,
+} from "react-native-reanimated";
 import { Ionicons } from "@expo/vector-icons";
 
 import { Expense } from "@/types/expense";
@@ -33,7 +38,19 @@ const RhythmBarItem = React.memo(function RhythmBarItem({
   dark: boolean;
   onPress: () => void;
 }) {
-  const barHeight = `${Math.max(pct, 6)}%` as `${number}%`;
+  const heightAnim = useSharedValue(0);
+
+  useEffect(() => {
+    heightAnim.value = withSpring(Math.max((pct / 100) * 100, 6), {
+      damping: 18,
+      stiffness: 220,
+      mass: 0.8,
+    });
+  }, [heightAnim, pct]);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    height: `${heightAnim.value}%`,
+  }));
 
   return (
     <Pressable
@@ -43,11 +60,11 @@ const RhythmBarItem = React.memo(function RhythmBarItem({
       accessibilityLabel={`${day.dayName}: ${formatMoney(day.total)}`}
     >
       <View style={styles.barTrack}>
-        <View
+        <Animated.View
           style={[
             styles.bar,
+            animatedStyle,
             {
-              height: barHeight,
               width: isNarrow ? 16 : 22,
               backgroundColor: isToday || isSelected
                 ? colors.primary
