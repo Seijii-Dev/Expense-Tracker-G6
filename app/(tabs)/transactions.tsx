@@ -29,7 +29,7 @@ import { useFilteredExpenses } from "@/hooks/useFilteredExpenses";
 import { MotionEntrance, MotionNumber, MotionSegmentedControl, PressableScale } from "@/components/motion";
 import { TransactionsSkeleton } from "@/components/ui/transactions-skeleton";
 import { DatePickerModal } from "@/components/common/date-picker-modal";
-import { addCalendarDays, getExpenseDateKey, getPhilippinesDate, getYesterdayDate } from "@/utils/date";
+import { addCalendarDays, getExpenseDateKey, getPhilippinesDate } from "@/utils/date";
 import { exportExpensesToCsv } from "@/utils/export-csv";
 import { ConfirmDialog } from "@/components/common/confirm-dialog";
 import { radii, spacing, typography } from "@/constants/design-tokens";
@@ -59,7 +59,6 @@ export default function TransactionsScreen() {
   const [showBulkDeleteConfirm, setShowBulkDeleteConfirm] = useState(false);
 
   const todayDate = getPhilippinesDate();
-  const yesterdayDate = getYesterdayDate();
 
   const {
     query,
@@ -139,30 +138,6 @@ export default function TransactionsScreen() {
       variant: res.success ? "success" : "danger",
     });
   };
-
-  // Group filtered expenses by date key
-  const groupedExpenses = useMemo(() => {
-    const groups: { dateKey: string; label: string; items: Expense[]; subtotal: number }[] = [];
-    const map = new Map<string, { dateKey: string; label: string; items: Expense[]; subtotal: number }>();
-
-    for (const exp of filtered) {
-      const k = getExpenseDateKey(exp.date);
-      let group = map.get(k);
-      if (!group) {
-        let label = formatDate(k).toUpperCase();
-        if (k === todayDate) label = "TODAY";
-        else if (k === yesterdayDate) label = "YESTERDAY";
-
-        group = { dateKey: k, label, items: [], subtotal: 0 };
-        map.set(k, group);
-        groups.push(group);
-      }
-      group.items.push(exp);
-      group.subtotal += exp.amount || 0;
-    }
-
-    return groups;
-  }, [filtered, todayDate, yesterdayDate]);
 
   const categoryCounts = useMemo(() => {
     const counts: Record<string, number> = { All: sortedExpenses.length };
@@ -461,48 +436,44 @@ export default function TransactionsScreen() {
     [category, categoryCounts, colors, dark, filtered.length, handleExport, hasActiveFilters, isNarrowScreen, navigateDate, query, selectedDate, setCategory, setQuery, setSortBy, showSortFilter, sortBy, todayDate, total]
   );
 
-  const renderGroup = useCallback(
-    ({ item: group }: { item: { dateKey: string; label: string; items: Expense[]; subtotal: number } }) => {
+  const renderItem = useCallback(
+    ({ item, index }: { item: Expense; index: number }) => {
+      const isFirst = index === 0;
+      const isLast = index === filtered.length - 1;
       return (
-        <View style={styles.dateGroupContainer}>
-          {/* Date Header Ribbon */}
-          <View style={styles.dateHeaderRibbon}>
-            <View style={styles.dateHeaderLeft}>
-              <Text style={[styles.dateGroupLabel, { color: colors.foreground }]}>
-                {group.label}
-              </Text>
-              <Text style={[styles.dateGroupCount, { color: colors.muted }]}>
-                {group.items.length} {group.items.length === 1 ? "record" : "records"}
-              </Text>
-            </View>
-            <Text style={[styles.dateGroupSubtotal, { color: colors.primary }]}>
-              −{formatMoney(group.subtotal)}
-            </Text>
-          </View>
-
-          {/* Grouped Transaction Card Surface */}
-          <GlassSurface variant="card" radius={18} style={styles.transactionGroupCard}>
-            {group.items.map((item) => (
-              <View key={item.id} style={{ paddingHorizontal: 14 }}>
-                <ExpenseRow
-                  expense={item}
-                  onPress={() =>
-                    router.push({ pathname: "/transaction/[id]", params: { id: item.id } })
-                  }
-                  onEdit={() => setEditingExpense(item)}
-                  onDelete={() => removeExpense(item.id)}
-                  isSelectable={isSelectMode}
-                  isSelected={selectedIds.has(item.id)}
-                  onToggleSelect={() => toggleSelectExpense(item.id)}
-                  showActions={!isSelectMode}
-                />
-              </View>
-            ))}
-          </GlassSurface>
+        <View
+          style={[
+            styles.listItem,
+            {
+              backgroundColor: colors.surface,
+              borderColor: colors.border,
+              borderTopWidth: isFirst ? 1 : 0,
+              borderBottomWidth: 1,
+              borderLeftWidth: 1,
+              borderRightWidth: 1,
+              borderTopLeftRadius: isFirst ? 16 : 0,
+              borderTopRightRadius: isFirst ? 16 : 0,
+              borderBottomLeftRadius: isLast ? 16 : 0,
+              borderBottomRightRadius: isLast ? 16 : 0,
+            },
+          ]}
+        >
+          <ExpenseRow
+            expense={item}
+            onPress={() =>
+              router.push({ pathname: "/transaction/[id]", params: { id: item.id } })
+            }
+            onEdit={() => setEditingExpense(item)}
+            onDelete={() => removeExpense(item.id)}
+            isSelectable={isSelectMode}
+            isSelected={selectedIds.has(item.id)}
+            onToggleSelect={() => toggleSelectExpense(item.id)}
+            showActions={!isSelectMode}
+          />
         </View>
       );
     },
-    [colors.foreground, colors.muted, colors.primary, isSelectMode, removeExpense, selectedIds, toggleSelectExpense]
+    [colors.border, colors.surface, filtered.length, isSelectMode, removeExpense, selectedIds, toggleSelectExpense]
   );
 
   const ListEmpty = useMemo(
@@ -584,9 +555,9 @@ export default function TransactionsScreen() {
   return (
     <ScreenContainer>
       <FlatList
-        data={groupedExpenses}
-        renderItem={renderGroup}
-        keyExtractor={(item) => item.dateKey}
+        data={filtered}
+        renderItem={renderItem}
+        keyExtractor={(item) => item.id}
         ListHeaderComponent={ListHeader}
         ListEmptyComponent={ListEmpty}
         showsVerticalScrollIndicator={false}
@@ -919,36 +890,8 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: "700",
   },
-  dateGroupContainer: {
-    marginBottom: 16,
-  },
-  dateHeaderRibbon: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: 4,
-    marginBottom: 8,
-  },
-  dateHeaderLeft: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-  },
-  dateGroupLabel: {
-    fontSize: 11,
-    fontWeight: "800",
-    letterSpacing: 0.8,
-  },
-  dateGroupCount: {
-    fontSize: 11,
-    fontWeight: "500",
-  },
-  dateGroupSubtotal: {
-    fontSize: 12,
-    fontWeight: "700",
-  },
-  transactionGroupCard: {
-    overflow: "hidden",
+  listItem: {
+    paddingHorizontal: 16,
   },
   emptyContainer: {
     marginTop: 16,

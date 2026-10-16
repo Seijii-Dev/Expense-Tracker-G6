@@ -59,7 +59,6 @@ export default function OverviewScreen() {
   const { width: windowWidth } = useWindowDimensions();
 
   const isNarrowMobile = windowWidth < 380;
-  const isCompactChart = windowWidth < 600;
 
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
@@ -325,12 +324,9 @@ export default function OverviewScreen() {
               )}
             </View>
 
-            <View style={[styles.overviewRow, isCompactChart && styles.overviewRowNarrow]}>
+            <View style={styles.overviewRow}>
               <DonutChart total={monthTotal} expenses={monthExpenses} />
-              <CategoryLegend
-                expenses={monthExpenses}
-                style={isCompactChart ? styles.categoryLegendFullWidth : undefined}
-              />
+              <CategoryLegend expenses={monthExpenses} />
             </View>
           </GlassSurface>
         </MotionEntrance>
@@ -575,16 +571,5 @@ const styles = StyleSheet.create({
     minHeight: 170,
     gap: 12,
     marginVertical: 6,
-  },
-  overviewRowNarrow: {
-    flexDirection: "column",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 16,
-    paddingVertical: 8,
-  },
-  categoryLegendFullWidth: {
-    flex: 0,
-    width: "100%",
   },
 });
