@@ -21,7 +21,7 @@ import Svg, { Path, Circle } from "react-native-svg";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ConfirmDialog } from "@/components/common/confirm-dialog";
 import { AccountSkeleton } from "@/components/ui/account-skeleton";
-import { GlassSurface } from "@/components/ui/glass-surface";
+import { NeumorphicSurface } from "@/components/ui/neumorphic-surface";
 import { useAuth } from "@/lib/auth-store";
 import { useExpenses } from "@/lib/expense-store";
 import { useTheme } from "@/lib/theme-store";
@@ -440,7 +440,7 @@ export default function AccountScreen() {
         <MotionEntrance delay={120}>
           <View style={[styles.snapshotGrid, windowWidth < 380 && styles.snapshotGridNarrow]}>
             {/* 1. Total Tracked */}
-            <GlassSurface
+            <NeumorphicSurface
               variant="card"
               radius={16}
               style={[
@@ -462,10 +462,10 @@ export default function AccountScreen() {
                   minimumFontScale={0.72}
                 />
               </View>
-            </GlassSurface>
+            </NeumorphicSurface>
 
             {/* 2. Active Budget */}
-            <GlassSurface
+            <NeumorphicSurface
               variant="card"
               radius={16}
               style={[
@@ -487,10 +487,10 @@ export default function AccountScreen() {
                   minimumFontScale={0.72}
                 />
               </View>
-            </GlassSurface>
+            </NeumorphicSurface>
 
             {/* 3. Remaining Balance */}
-            <GlassSurface
+            <NeumorphicSurface
               variant="card"
               radius={16}
               style={[
@@ -527,7 +527,7 @@ export default function AccountScreen() {
                   />
                 )}
               </View>
-            </GlassSurface>
+            </NeumorphicSurface>
           </View>
         </MotionEntrance>
 
@@ -538,7 +538,7 @@ export default function AccountScreen() {
               <Text style={[styles.sectionTitle, { color: colors.muted }]}>PERSONAL DETAILS</Text>
             </View>
 
-            <GlassSurface
+            <NeumorphicSurface
               variant="card"
               radius={20}
               style={styles.groupedCard}
@@ -618,7 +618,7 @@ export default function AccountScreen() {
                 </View>
                 <Ionicons name="chevron-forward" size={16} color={colors.muted} />
               </Pressable>
-            </GlassSurface>
+            </NeumorphicSurface>
           </View>
         </MotionEntrance>
 

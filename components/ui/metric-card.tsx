@@ -1,7 +1,7 @@
 import React from "react";
 import { StyleProp, StyleSheet, Text, View, ViewStyle } from "react-native";
 import { useTheme } from "@/lib/theme-store";
-import { GlassSurface } from "@/components/ui/glass-surface";
+import { NeumorphicSurface } from "@/components/ui/neumorphic-surface";
 import { radii, spacing, typography } from "@/constants/design-tokens";
 
 export type MetricTone = "coral" | "blue" | "green" | "warning";
@@ -47,7 +47,7 @@ export function MetricCard({
       : colors.success);
 
   return (
-    <GlassSurface radius={20} style={style} contentStyle={styles.card}>
+    <NeumorphicSurface radius={20} style={style} contentStyle={styles.card}>
       <View style={styles.topRow}>
         <View style={styles.labelRow}>
           <View style={[styles.toneDot, { backgroundColor: toneColor }]} />
@@ -99,7 +99,7 @@ export function MetricCard({
           <Text style={[styles.foot, { color: colors.muted }]}>{foot}</Text>
         </View>
       ) : null}
-    </GlassSurface>
+    </NeumorphicSurface>
   );
 }
 

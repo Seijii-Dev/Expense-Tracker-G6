@@ -19,7 +19,7 @@ import Animated, {
 import { Ionicons } from "@expo/vector-icons";
 
 import { useTheme } from "@/lib/theme-store";
-import { GlassSurface } from "@/components/ui/glass-surface";
+import { NeumorphicSurface } from "@/components/ui/neumorphic-surface";
 import { PressableScale } from "@/components/motion";
 
 export type DialogVariant = "danger" | "warning" | "success" | "info" | "neutral";
@@ -160,7 +160,7 @@ export function ConfirmDialog({
           accessibilityRole="button"
         />
         <Animated.View style={[styles.cardWrap, dialogAnimatedStyle]}>
-          <GlassSurface
+          <NeumorphicSurface
             variant="sheet"
             radius={26}
             style={styles.cardContainer}
@@ -274,7 +274,7 @@ export function ConfirmDialog({
               )}
             </View>
 
-          </GlassSurface>
+          </NeumorphicSurface>
         </Animated.View>
       </View>
     </Modal>

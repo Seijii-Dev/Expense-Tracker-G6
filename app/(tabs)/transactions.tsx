@@ -14,7 +14,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 
 import { ScreenContainer } from "@/components/screen-container";
-import { GlassSurface } from "@/components/ui/glass-surface";
+import { NeumorphicSurface } from "@/components/ui/neumorphic-surface";
 import { ExpenseRow } from "@/components/ui/expense-row";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ExpenseModal } from "@/components/expense-modal";
@@ -245,7 +245,7 @@ export default function TransactionsScreen() {
 
         {/* Multi-Select Action Bar (when active) */}
         {isSelectMode && (
-          <GlassSurface variant="card" radius={14} style={styles.selectionBar}>
+          <NeumorphicSurface variant="card" radius={14} style={styles.selectionBar}>
             <Pressable onPress={handleSelectAll} style={styles.selectActionBtn}>
               <Ionicons
                 name={
@@ -283,7 +283,7 @@ export default function TransactionsScreen() {
               <Ionicons name="trash-outline" size={13} color="#FFFFFF" />
               <Text style={styles.bulkDeleteText}>Delete ({selectedIds.size})</Text>
             </PressableScale>
-          </GlassSurface>
+          </NeumorphicSurface>
         )}
 
         {/* Search Bar */}
@@ -394,7 +394,7 @@ export default function TransactionsScreen() {
 
         {/* Summary Ribbon */}
         <MotionEntrance delay={60}>
-          <GlassSurface
+          <NeumorphicSurface
             variant="card"
             radius={18}
             style={styles.monthlySummaryRibbon}
@@ -427,7 +427,7 @@ export default function TransactionsScreen() {
                 {getCategoryDisplayName(category)}
               </Text>
             </View>
-          </GlassSurface>
+          </NeumorphicSurface>
         </MotionEntrance>
 
         <View style={{ height: 12 }} />
@@ -478,7 +478,7 @@ export default function TransactionsScreen() {
 
   const ListEmpty = useMemo(
     () => (
-      <GlassSurface
+      <NeumorphicSurface
         variant="card"
         radius={20}
         style={styles.emptyContainer}
@@ -538,7 +538,7 @@ export default function TransactionsScreen() {
             </Text>
           </PressableScale>
         )}
-      </GlassSurface>
+      </NeumorphicSurface>
     ),
     [colors.primary, colors.primarySoft, hasActiveFilters, hasTransactionsForSelectedDate, resetFilters, selectedDate, setShowAddModal]
   );

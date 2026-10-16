@@ -6,7 +6,7 @@ import Animated, {
   withSpring,
 } from "react-native-reanimated";
 import { Ionicons } from "@expo/vector-icons";
-import { GlassSurface } from "@/components/ui/glass-surface";
+import { NeumorphicSurface } from "@/components/ui/neumorphic-surface";
 import { EmptyState } from "@/components/ui/empty-state";
 import { CategoryIcon } from "@/components/ui/category-icon";
 import { getCategoryDisplayName, getCategoryStyle } from "@/constants/categories";
@@ -64,7 +64,7 @@ export function CategoryBreakdown({
   const { colors, dark } = useTheme();
 
   return (
-    <GlassSurface
+    <NeumorphicSurface
       variant="card"
       radius={24}
       style={styles.panel}
@@ -214,7 +214,7 @@ export function CategoryBreakdown({
           </View>
         </View>
       )}
-    </GlassSurface>
+    </NeumorphicSurface>
   );
 }
 

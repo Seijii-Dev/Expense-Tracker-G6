@@ -12,7 +12,7 @@ import {
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { ScreenContainer } from "@/components/screen-container";
-import { GlassSurface } from "@/components/ui/glass-surface";
+import { NeumorphicSurface } from "@/components/ui/neumorphic-surface";
 import { BrandWordmark } from "@/components/ui/brand-wordmark";
 import { ExpenseRow } from "@/components/ui/expense-row";
 import { BalanceCard } from "@/components/overview/balance-card";
@@ -212,7 +212,7 @@ export default function OverviewScreen() {
             <MotionEntrance delay={100}>
               <View style={[styles.metricsGrid, isNarrowMobile && styles.metricsGridNarrow]}>
                 {/* Monthly Budget Target */}
-                <GlassSurface
+                <NeumorphicSurface
                   variant="card"
                   radius={18}
                   style={[styles.metricTileWrap, isNarrowMobile && styles.metricTileNarrow]}
@@ -233,10 +233,10 @@ export default function OverviewScreen() {
                     minimumFontScale={0.75}
                   />
                   <Text style={[styles.metricTileSub, { color: colors.success }]}>Monthly Target</Text>
-                </GlassSurface>
+                </NeumorphicSurface>
 
                 {/* Total Spending */}
-                <GlassSurface
+                <NeumorphicSurface
                   variant="card"
                   radius={18}
                   style={[styles.metricTileWrap, isNarrowMobile && styles.metricTileNarrow]}
@@ -259,10 +259,10 @@ export default function OverviewScreen() {
                   <Text style={[styles.metricTileSub, { color: colors.primary }]}>
                     {monthExpenses.length} transactions
                   </Text>
-                </GlassSurface>
+                </NeumorphicSurface>
 
                 {/* Remaining Savings */}
-                <GlassSurface
+                <NeumorphicSurface
                   variant="card"
                   radius={18}
                   style={[styles.metricTileWrap, isNarrowMobile && styles.metricTileWide]}
@@ -293,7 +293,7 @@ export default function OverviewScreen() {
                       ]}
                     />
                   </View>
-                </GlassSurface>
+                </NeumorphicSurface>
               </View>
             </MotionEntrance>
           </>
@@ -301,7 +301,7 @@ export default function OverviewScreen() {
 
         {/* Spending Breakdown */}
         <MotionEntrance delay={150}>
-          <GlassSurface variant="card" radius={24} style={styles.panel} contentStyle={styles.panelInner}>
+          <NeumorphicSurface variant="card" radius={24} style={styles.panel} contentStyle={styles.panelInner}>
             <View style={styles.panelHeader}>
               <View style={styles.panelHeaderText}>
                 <Text style={[styles.panelSectionTitle, { color: colors.foreground }]}>
@@ -328,13 +328,13 @@ export default function OverviewScreen() {
               <DonutChart total={monthTotal} expenses={monthExpenses} />
               <CategoryLegend expenses={monthExpenses} />
             </View>
-          </GlassSurface>
+          </NeumorphicSurface>
         </MotionEntrance>
 
         {/* Recent Transactions */}
         {recentExpenses.length > 0 && (
           <MotionEntrance delay={200}>
-            <GlassSurface variant="card" radius={24} style={styles.panel} contentStyle={styles.panelInner}>
+            <NeumorphicSurface variant="card" radius={24} style={styles.panel} contentStyle={styles.panelInner}>
               <View style={styles.panelHeader}>
                 <View style={styles.panelHeaderText}>
                   <Text style={[styles.panelSectionTitle, { color: colors.foreground }]}>
@@ -366,7 +366,7 @@ export default function OverviewScreen() {
                   onDelete={() => removeExpense(expense.id)}
                 />
               ))}
-            </GlassSurface>
+            </NeumorphicSurface>
           </MotionEntrance>
         )}
 

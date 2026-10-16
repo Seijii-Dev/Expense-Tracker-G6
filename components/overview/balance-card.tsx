@@ -1,7 +1,7 @@
 import React, { useMemo } from "react";
 import { Platform, StyleSheet, Text, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { GlassSurface } from "@/components/ui/glass-surface";
+import { NeumorphicSurface } from "@/components/ui/neumorphic-surface";
 import { MotionNumber, PressableScale } from "@/components/motion";
 import { useTheme } from "@/lib/theme-store";
 import { formatMoney } from "@/utils/formatters";
@@ -101,7 +101,7 @@ export function BalanceCard({
   const amountColor = amount > 0 ? colors.foreground : colors.muted;
 
   return (
-    <GlassSurface
+    <NeumorphicSurface
       variant="card"
       radius={radii.panel}
       style={styles.card}
@@ -175,7 +175,7 @@ export function BalanceCard({
           <Text style={[styles.healthChipText, { color: toneStyles.fg }]}>{health.chip}</Text>
         </View>
       </PressableScale>
-    </GlassSurface>
+    </NeumorphicSurface>
   );
 }
 

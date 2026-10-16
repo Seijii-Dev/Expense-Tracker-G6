@@ -14,7 +14,7 @@ import { Ionicons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
 
 import { ScreenContainer } from "@/components/screen-container";
-import { GlassSurface } from "@/components/ui/glass-surface";
+import { NeumorphicSurface } from "@/components/ui/neumorphic-surface";
 import { CategoryIcon } from "@/components/ui/category-icon";
 import { SelectField } from "@/components/ui/select-field";
 import { InlineOptionList } from "@/components/ui/inline-option-list";
@@ -344,7 +344,7 @@ export default function TransactionDetailsScreen() {
         {/* Transaction Details */}
         <MotionEntrance delay={120}>
           <Text style={[styles.sectionLabel, { color: colors.muted }]}>TRANSACTION DETAILS</Text>
-          <GlassSurface
+          <NeumorphicSurface
             variant="card"
             radius={radii.panel}
             style={styles.detailsCard}
@@ -401,7 +401,7 @@ export default function TransactionDetailsScreen() {
               <Text style={[styles.detailLabel, { color: colors.foreground }]}>Type</Text>
               <Text style={[styles.detailValue, { color: colors.muted }]}>Expense</Text>
             </View>
-          </GlassSurface>
+          </NeumorphicSurface>
 
           {showPaymentOptions && (
             <InlineOptionList

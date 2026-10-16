@@ -20,7 +20,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "@/lib/theme-store";
 import { useExpenses } from "@/lib/expense-store";
 import { NavIcon, NavTabName } from "@/components/navigation/nav-icons";
-import { GlassSurface } from "@/components/ui/glass-surface";
+import { NeumorphicSurface } from "@/components/ui/neumorphic-surface";
 
 export interface FloatingTabBarProps {
   state: {
@@ -132,7 +132,7 @@ function TabButton({ name, isFocused, onPress, onLongPress, isCompact }: TabButt
 }
 
 export function FloatingTabBar({ state, descriptors, navigation }: FloatingTabBarProps) {
-  const { colors, dark } = useTheme();
+  const { colors } = useTheme();
   const insets = useSafeAreaInsets();
   const { width: windowWidth } = useWindowDimensions();
   const { openAddExpenseModal } = useExpenses();
@@ -254,19 +254,13 @@ export function FloatingTabBar({ state, descriptors, navigation }: FloatingTabBa
         },
       ]}
     >
-      <GlassSurface
+      <NeumorphicSurface
         variant="nav"
         radius={32}
         style={[
           styles.dockSurface,
           {
             width: dockWidth,
-            borderColor: dark ? "rgba(255, 255, 255, 0.12)" : "rgba(241, 243, 245, 0.95)",
-            shadowColor: dark ? "#000000" : "#1A1D20",
-            shadowOpacity: dark ? 0.12 : 0.025,
-            shadowRadius: 8,
-            shadowOffset: { width: 0, height: 3 },
-            elevation: 2,
           },
         ]}
         contentStyle={styles.dockContent}
@@ -309,7 +303,7 @@ export function FloatingTabBar({ state, descriptors, navigation }: FloatingTabBa
 
         {/* 5. Settings */}
         {renderTab("settings")}
-      </GlassSurface>
+      </NeumorphicSurface>
     </View>
   );
 }

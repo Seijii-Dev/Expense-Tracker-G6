@@ -12,7 +12,7 @@ import { formatMoney } from "@/utils/formatters";
 import { SpendingTimeline } from "@/utils/spending-trajectory";
 import { radii, spacing } from "@/constants/design-tokens";
 
-import { GlassSurface } from "@/components/ui/glass-surface";
+import { NeumorphicSurface } from "@/components/ui/neumorphic-surface";
 
 interface SpendingTrendChartProps {
   timeline: SpendingTimeline;
@@ -86,7 +86,7 @@ export function SpendingTrendChart({ timeline }: SpendingTrendChartProps) {
 
   return (
     <Animated.View style={animatedContainerStyle}>
-      <GlassSurface
+      <NeumorphicSurface
         variant="card"
         radius={24}
         style={styles.container}
@@ -264,7 +264,7 @@ export function SpendingTrendChart({ timeline }: SpendingTrendChartProps) {
           );
         })}
       </View>
-      </GlassSurface>
+      </NeumorphicSurface>
     </Animated.View>
   );
 }

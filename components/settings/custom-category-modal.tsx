@@ -13,7 +13,7 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 
-import { GlassSurface } from "@/components/ui/glass-surface";
+import { NeumorphicSurface } from "@/components/ui/neumorphic-surface";
 import { PRESET_CATEGORY_COLORS, PRESET_CATEGORY_ICONS } from "@/constants/categories";
 import { useTheme } from "@/lib/theme-store";
 
@@ -100,7 +100,7 @@ export function CustomCategoryModal({
         style={styles.backdrop}
       >
         <Pressable style={styles.overlay} onPress={handleClose} />
-        <GlassSurface
+        <NeumorphicSurface
           variant="sheet"
           radius={28}
           contentStyle={[styles.modalCard, { backgroundColor: colors.card }]}
@@ -256,7 +256,7 @@ export function CustomCategoryModal({
               </Text>
             </Pressable>
           </ScrollView>
-        </GlassSurface>
+        </NeumorphicSurface>
       </KeyboardAvoidingView>
     </Modal>
   );

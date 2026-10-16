@@ -31,7 +31,7 @@ import { AboutDialog } from "@/components/common/about-dialog";
 import { ProfileAvatar } from "@/components/account/profile-avatar";
 import { AppLottieView } from "@/components/ui/app-lottie-view";
 import { MotionEntrance, PressableScale } from "@/components/motion";
-import { GlassSurface } from "@/components/ui/glass-surface";
+import { NeumorphicSurface } from "@/components/ui/neumorphic-surface";
 import { DayNightSwitch } from "@/components/ui/day-night-switch";
 import { radii, spacing, typography } from "@/constants/design-tokens";
 
@@ -219,7 +219,7 @@ export default function SettingsScreen() {
             accessibilityLabel="Open Account and Profile"
             style={{ marginBottom: 20 }}
           >
-            <GlassSurface
+            <NeumorphicSurface
               variant="card"
               radius={radii.panel}
               contentStyle={styles.profileHeroCard}
@@ -271,7 +271,7 @@ export default function SettingsScreen() {
                   <Ionicons name="chevron-forward" size={14} color={colors.primary} />
                 </View>
               </View>
-            </GlassSurface>
+            </NeumorphicSurface>
           </PressableScale>
         </MotionEntrance>
 
@@ -281,7 +281,7 @@ export default function SettingsScreen() {
             <Text style={[styles.sectionTitle, { color: colors.muted }]}>PREFERENCES & DISPLAY</Text>
           </View>
 
-          <GlassSurface
+          <NeumorphicSurface
             variant="card"
             radius={radii.panel}
             style={styles.groupedCard}
@@ -347,7 +347,7 @@ export default function SettingsScreen() {
                 accessibilityLabel="Budget reminders"
               />
             </Pressable>
-          </GlassSurface>
+          </NeumorphicSurface>
         </MotionEntrance>
 
         {/* SECTION 2: BUDGET & FINANCIALS */}
@@ -356,7 +356,7 @@ export default function SettingsScreen() {
             <Text style={[styles.sectionTitle, { color: colors.muted }]}>BUDGET & FINANCIALS</Text>
           </View>
 
-          <GlassSurface
+          <NeumorphicSurface
             variant="card"
             radius={radii.panel}
             style={styles.groupedCard}
@@ -413,7 +413,7 @@ export default function SettingsScreen() {
                 <Text style={styles.currencyPillText}>PHP</Text>
               </View>
             </View>
-          </GlassSurface>
+          </NeumorphicSurface>
         </MotionEntrance>
 
         {/* SECTION 3: DATA & STORAGE */}
@@ -422,7 +422,7 @@ export default function SettingsScreen() {
             <Text style={[styles.sectionTitle, { color: colors.muted }]}>DATA & STORAGE</Text>
           </View>
 
-          <GlassSurface
+          <NeumorphicSurface
             variant="card"
             radius={radii.panel}
             style={styles.groupedCard}
@@ -505,7 +505,7 @@ export default function SettingsScreen() {
               </View>
               <Ionicons name="chevron-forward" size={18} color={colors.muted} />
             </Pressable>
-          </GlassSurface>
+          </NeumorphicSurface>
         </MotionEntrance>
 
         {/* SECTION 4: ABOUT */}
@@ -514,7 +514,7 @@ export default function SettingsScreen() {
             <Text style={[styles.sectionTitle, { color: colors.muted }]}>ABOUT LEDGERLY</Text>
           </View>
 
-          <GlassSurface
+          <NeumorphicSurface
             variant="card"
             radius={radii.panel}
             style={styles.groupedCard}
@@ -543,7 +543,7 @@ export default function SettingsScreen() {
               </View>
               <Ionicons name="chevron-forward" size={18} color={colors.muted} />
             </Pressable>
-          </GlassSurface>
+          </NeumorphicSurface>
         </MotionEntrance>
       </ScrollView>
 

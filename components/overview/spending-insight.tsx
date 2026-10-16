@@ -24,7 +24,7 @@ function getTopCategoryInfo(expenses: Expense[]): TopCategoryInfo | null {
   return top ? { name: top[0], total: top[1] } : null;
 }
 
-import { GlassSurface } from "@/components/ui/glass-surface";
+import { NeumorphicSurface } from "@/components/ui/neumorphic-surface";
 
 export const SpendingInsight = React.memo(function SpendingInsight({ expenses }: SpendingInsightProps) {
   const { colors, dark } = useTheme();
@@ -32,7 +32,7 @@ export const SpendingInsight = React.memo(function SpendingInsight({ expenses }:
   const topInfo = React.useMemo(() => getTopCategoryInfo(expenses), [expenses]);
 
   return (
-    <GlassSurface
+    <NeumorphicSurface
       radius={20}
       variant="card"
       style={styles.card}
@@ -57,7 +57,7 @@ export const SpendingInsight = React.memo(function SpendingInsight({ expenses }:
             : "Once you start logging, we'll provide personalized tips to help you save more every month."}
         </Text>
       </View>
-    </GlassSurface>
+    </NeumorphicSurface>
   );
 });
 

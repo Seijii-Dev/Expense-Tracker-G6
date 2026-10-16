@@ -10,7 +10,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { Expense } from "@/types/expense";
 import { useTheme } from "@/lib/theme-store";
 import { getCategoryDisplayName } from "@/constants/categories";
-import { GlassSurface } from "@/components/ui/glass-surface";
+import { NeumorphicSurface } from "@/components/ui/neumorphic-surface";
 import { formatDate, formatMoney } from "@/utils/formatters";
 import { addCalendarDays, getExpenseDateKey, getPhilippinesDate, getWeekdayShort } from "@/utils/date";
 import { DatePickerModal } from "@/components/common/date-picker-modal";
@@ -148,7 +148,7 @@ export const DailyRhythm = React.memo(function DailyRhythm({ expenses }: DailyRh
   };
 
   return (
-    <GlassSurface style={styles.panel} contentStyle={styles.panelInner}>
+    <NeumorphicSurface style={styles.panel} contentStyle={styles.panelInner}>
       {/* Header */}
       <View style={styles.panelHeader}>
         <View>
@@ -313,7 +313,7 @@ export const DailyRhythm = React.memo(function DailyRhythm({ expenses }: DailyRh
           setShowDatePicker(false);
         }}
       />
-    </GlassSurface>
+    </NeumorphicSurface>
   );
 });
 

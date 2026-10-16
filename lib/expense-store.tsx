@@ -158,6 +158,11 @@ function syncItemKey(item: PendingSyncItem): string {
 
 async function addToSyncQueue(email: string, item: PendingSyncItem): Promise<void> {
   await mutateSyncQueue(email, (queue) => {
+    // A delete supersedes an update even when the update request fails later.
+    if (item.action === "update" && queue.some((queued) => queued.action === "delete" && queued.id === item.id)) {
+      return queue;
+    }
+
     const key = syncItemKey(item);
     const withoutSuperseded = queue.filter((queued) => {
       if (syncItemKey(queued) === key) return false;
@@ -325,12 +330,29 @@ export function ExpenseProvider({ children }: { children: React.ReactNode }) {
       if (!sessionIsCurrent()) return;
 
       if (expensesResult.ok) {
-        const remote: Expense[] = expensesResult.expenses.map((e) => ({
-          ...e,
-          date: e.date,
-          category: e.category as Category,
-          payment: e.payment as Payment,
-        }));
+        // Keep optimistic edits and deletes visible until their queued mutations
+        // have actually reached the server. The server list may still be stale
+        // when a queued request failed earlier in this refresh.
+        const pendingQueue = await getSyncQueue(accountEmail);
+        const deletedIds = new Set(
+          pendingQueue.flatMap((item) => (item.action === "delete" ? [item.id] : []))
+        );
+        const pendingUpdates = new Map(
+          pendingQueue.flatMap((item) => (item.action === "update" ? [[item.id, item.data] as const] : []))
+        );
+        const remote: Expense[] = expensesResult.expenses
+          .filter((expense) => !deletedIds.has(expense.id))
+          .map((expense) => {
+            const pendingUpdate = pendingUpdates.get(expense.id);
+            return {
+              ...expense,
+              ...pendingUpdate,
+              id: expense.id,
+              date: pendingUpdate?.date ?? expense.date,
+              category: (pendingUpdate?.category ?? expense.category) as Category,
+              payment: (pendingUpdate?.payment ?? expense.payment) as Payment,
+            };
+          });
 
         // Preserve any local un-synced expenses (starting with local-)
         setExpenses((current) => {

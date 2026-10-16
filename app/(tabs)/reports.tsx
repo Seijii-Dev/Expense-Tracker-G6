@@ -12,7 +12,7 @@ import { useReportMetrics } from "@/hooks/useReportMetrics";
 import { ReportsSkeleton } from "@/components/ui/reports-skeleton";
 import { exportExpensesToCsv } from "@/utils/export-csv";
 import { ConfirmDialog } from "@/components/common/confirm-dialog";
-import { GlassSurface } from "@/components/ui/glass-surface";
+import { NeumorphicSurface } from "@/components/ui/neumorphic-surface";
 
 import { SpendingTrendChart } from "@/components/reports/spending-trend-chart";
 import { MotionEntrance, MotionSegmentedControl, PressableScale } from "@/components/motion";
@@ -224,7 +224,7 @@ export default function ReportsScreen() {
           <View style={styles.metricsGrid}>
             <View style={styles.metricsRow}>
               {/* Top Expense */}
-              <GlassSurface variant="card" radius={16} style={styles.metricCard}>
+              <NeumorphicSurface variant="card" radius={16} style={styles.metricCard}>
                 <View style={styles.metricTop}>
                   <Text style={[styles.metricKicker, { color: colors.muted }]}>TOP EXPENSE</Text>
                   <View
@@ -242,10 +242,10 @@ export default function ReportsScreen() {
                 <Text style={[styles.metricSub, { color: colors.muted }]} numberOfLines={1}>
                   {topExpense ? getCategoryDisplayName(topExpense.category) : "No spend logged"}
                 </Text>
-              </GlassSurface>
+              </NeumorphicSurface>
 
               {/* Activity / Transactions */}
-              <GlassSurface variant="card" radius={16} style={styles.metricCard}>
+              <NeumorphicSurface variant="card" radius={16} style={styles.metricCard}>
                 <View style={styles.metricTop}>
                   <Text style={[styles.metricKicker, { color: colors.muted }]}>RECORDS</Text>
                   <View
@@ -263,12 +263,12 @@ export default function ReportsScreen() {
                 <Text style={[styles.metricSub, { color: colors.muted }]} numberOfLines={1}>
                   Avg: {averageExpenseSize}
                 </Text>
-              </GlassSurface>
+              </NeumorphicSurface>
             </View>
 
             <View style={styles.metricsRow}>
               {/* Remaining Budget */}
-              <GlassSurface variant="card" radius={16} style={styles.metricCard}>
+              <NeumorphicSurface variant="card" radius={16} style={styles.metricCard}>
                 <View style={styles.metricTop}>
                   <Text style={[styles.metricKicker, { color: colors.muted }]}>REMAINING BUDGET</Text>
                   <View
@@ -286,7 +286,7 @@ export default function ReportsScreen() {
                 <Text style={[styles.metricSub, { color: colors.muted }]} numberOfLines={1}>
                   of {formatMoney(budget)} target
                 </Text>
-              </GlassSurface>
+              </NeumorphicSurface>
             </View>
           </View>
         </MotionEntrance>
@@ -309,7 +309,7 @@ export default function ReportsScreen() {
 
         {/* Spending Health Insight Banner */}
         <MotionEntrance delay={240}>
-          <GlassSurface
+          <NeumorphicSurface
             variant="card"
             radius={18}
             style={[
@@ -336,10 +336,10 @@ export default function ReportsScreen() {
                   : "Your spending summary will appear here after you add expenses."}
               </Text>
             </View>
-          </GlassSurface>
+          </NeumorphicSurface>
 
           {/* Observations Panel */}
-          <GlassSurface
+          <NeumorphicSurface
             variant="card"
             radius={radii.panel}
             style={styles.panel}
@@ -393,7 +393,7 @@ export default function ReportsScreen() {
               }
               last
             />
-          </GlassSurface>
+          </NeumorphicSurface>
         </MotionEntrance>
       </ScrollView>
 

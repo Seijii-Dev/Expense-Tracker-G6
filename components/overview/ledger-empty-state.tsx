@@ -1,7 +1,7 @@
 import React from "react";
 import { Platform, StyleSheet, Text, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { GlassSurface } from "@/components/ui/glass-surface";
+import { NeumorphicSurface } from "@/components/ui/neumorphic-surface";
 import { PressableScale } from "@/components/motion";
 import { useTheme } from "@/lib/theme-store";
 import { radii } from "@/constants/design-tokens";
@@ -20,7 +20,7 @@ export function LedgerEmptyState({ onLogExpense, onSetBudget }: LedgerEmptyState
   const { colors } = useTheme();
 
   return (
-    <GlassSurface
+    <NeumorphicSurface
       variant="card"
       radius={radii.panel}
       style={styles.card}
@@ -80,7 +80,7 @@ export function LedgerEmptyState({ onLogExpense, onSetBudget }: LedgerEmptyState
           Set a monthly budget
         </Text>
       </PressableScale>
-    </GlassSurface>
+    </NeumorphicSurface>
   );
 }
 

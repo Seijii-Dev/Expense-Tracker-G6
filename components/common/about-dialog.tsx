@@ -20,7 +20,7 @@ import Animated, {
 import { Ionicons } from "@expo/vector-icons";
 
 import { useTheme } from "@/lib/theme-store";
-import { GlassSurface } from "@/components/ui/glass-surface";
+import { NeumorphicSurface } from "@/components/ui/neumorphic-surface";
 
 interface AboutDialogProps {
   visible: boolean;
@@ -74,10 +74,10 @@ export function AboutDialog({ visible, onClose }: AboutDialogProps) {
           accessibilityRole="button"
         />
         <Animated.View style={[styles.cardWrap, dialogAnimatedStyle]}>
-          <GlassSurface
+          <NeumorphicSurface
             variant="sheet"
             radius={28}
-            style={styles.glassWrap}
+            style={styles.surfaceWrap}
             contentStyle={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}
           >
             {/* Header with App Logo and Badges */}
@@ -167,7 +167,7 @@ export function AboutDialog({ visible, onClose }: AboutDialogProps) {
             >
               <Text style={[styles.closeBtnText, { color: colors.foreground }]}>Close</Text>
             </Pressable>
-          </GlassSurface>
+          </NeumorphicSurface>
         </Animated.View>
       </View>
     </Modal>
@@ -186,7 +186,7 @@ const styles = StyleSheet.create({
     maxWidth: 380,
     maxHeight: "84%",
   },
-  glassWrap: {
+  surfaceWrap: {
     width: "100%",
   },
   card: {

@@ -23,9 +23,8 @@ export type ThemeColors = {
   errorSoft: string;
   inputBg: string;
   dialogBackdrop: string;
-  glassFill: string;
-  glassBorder: string;
-  glassRim: string;
+  surfaceHighlight: string;
+  surfaceShade: string;
   blobCoral: string;
   blobSage: string;
   blobSky: string;
@@ -33,16 +32,16 @@ export type ThemeColors = {
 };
 
 export const lightColors: ThemeColors = {
-  background: "#F8F9FD",
-  surface: "#FFFFFF",
-  surfaceSubtle: "#F2F3F8",
-  card: "#FFFFFF",
-  cardElevated: "#FFFFFF",
-  foreground: "#0F172A",
+  background: "#F1F3F7",
+  surface: "#F1F3F7",
+  surfaceSubtle: "#E9ECF2",
+  card: "#F1F3F7",
+  cardElevated: "#F1F3F7",
+  foreground: "#18212D",
   muted: "#64748B",
   subtle: "#94A3B8",
-  border: "#E9ECEF",
-  borderSubtle: "#F1F3F5",
+  border: "#E2E6ED",
+  borderSubtle: "#E8EBF0",
   primary: "#E84A3F",
   primaryHover: "#D43C32",
   primarySoft: "#FEECEB",
@@ -55,11 +54,10 @@ export const lightColors: ThemeColors = {
   warningSoft: "#FFFBEB",
   error: "#E84A3F",
   errorSoft: "#FEECEB",
-  inputBg: "#F2F3F8",
+  inputBg: "#E9ECF2",
   dialogBackdrop: "rgba(15, 23, 42, 0.52)",
-  glassFill: "rgba(255, 255, 255, 0.92)",
-  glassBorder: "rgba(241, 243, 245, 0.90)",
-  glassRim: "rgba(255, 255, 255, 0.96)",
+  surfaceHighlight: "#FFFFFF",
+  surfaceShade: "#C9CFD9",
   blobCoral: "rgba(232, 74, 63, 0.08)",
   blobSage: "rgba(16, 185, 129, 0.06)",
   blobSky: "rgba(14, 165, 233, 0.06)",
@@ -67,16 +65,16 @@ export const lightColors: ThemeColors = {
 };
 
 export const darkColors: ThemeColors = {
-  background: "#0E1214",
-  surface: "#171B1F",
-  surfaceSubtle: "#1F2429",
-  card: "#171B1F",
-  cardElevated: "#21272D",
+  background: "#171A1F",
+  surface: "#1C2026",
+  surfaceSubtle: "#171A1F",
+  card: "#1C2026",
+  cardElevated: "#22272E",
   foreground: "#F8F9FA",
   muted: "#94A3B8",
   subtle: "#64748B",
-  border: "rgba(255, 255, 255, 0.10)",
-  borderSubtle: "rgba(255, 255, 255, 0.06)",
+  border: "rgba(255, 255, 255, 0.07)",
+  borderSubtle: "rgba(255, 255, 255, 0.045)",
   primary: "#FF5A4E",
   primaryHover: "#E84A3F",
   primarySoft: "rgba(232, 74, 63, 0.20)",
@@ -89,11 +87,10 @@ export const darkColors: ThemeColors = {
   warningSoft: "rgba(245, 158, 11, 0.18)",
   error: "#FF5A4E",
   errorSoft: "rgba(232, 74, 63, 0.20)",
-  inputBg: "rgba(255, 255, 255, 0.05)",
+  inputBg: "#171A1F",
   dialogBackdrop: "rgba(3, 7, 10, 0.85)",
-  glassFill: "rgba(23, 27, 31, 0.92)",
-  glassBorder: "rgba(255, 255, 255, 0.10)",
-  glassRim: "rgba(255, 255, 255, 0.18)",
+  surfaceHighlight: "#2A3038",
+  surfaceShade: "#0B0D10",
   blobCoral: "rgba(232, 74, 63, 0.10)",
   blobSage: "rgba(52, 211, 153, 0.08)",
   blobSky: "rgba(56, 189, 248, 0.08)",

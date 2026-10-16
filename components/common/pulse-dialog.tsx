@@ -17,7 +17,7 @@ import Animated, {
 import { Ionicons } from "@expo/vector-icons";
 
 import { useTheme } from "@/lib/theme-store";
-import { GlassSurface } from "@/components/ui/glass-surface";
+import { NeumorphicSurface } from "@/components/ui/neumorphic-surface";
 
 import { formatMoney as defaultFormatMoney } from "@/utils/formatters";
 
@@ -110,7 +110,7 @@ export function PulseDialog({
           accessibilityRole="button"
         />
         <Animated.View style={[styles.cardWrap, dialogAnimatedStyle]}>
-          <GlassSurface
+          <NeumorphicSurface
             variant="sheet"
             radius={28}
             style={styles.cardContainer}
@@ -204,7 +204,7 @@ export function PulseDialog({
           >
             <Text style={styles.dismissBtnText}>Got it</Text>
           </Pressable>
-          </GlassSurface>
+          </NeumorphicSurface>
         </Animated.View>
       </View>
     </Modal>

@@ -1,7 +1,7 @@
 import React from "react";
 import { StyleSheet, Text, View, useWindowDimensions } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { GlassSurface } from "@/components/ui/glass-surface";
+import { NeumorphicSurface } from "@/components/ui/neumorphic-surface";
 import { PaymentIcon } from "@/components/ui/payment-icon";
 import { PaymentTotal } from "@/hooks/useReportMetrics";
 import { useTheme } from "@/lib/theme-store";
@@ -21,7 +21,7 @@ export function PaymentMethods({ paymentTotals, periodTotal }: PaymentMethodsPro
   if (paymentTotals.length === 0) return null;
 
   return (
-    <GlassSurface
+    <NeumorphicSurface
       variant="card"
       radius={24}
       style={styles.panel}
@@ -122,7 +122,7 @@ export function PaymentMethods({ paymentTotals, periodTotal }: PaymentMethodsPro
           );
         })}
       </View>
-    </GlassSurface>
+    </NeumorphicSurface>
   );
 }
 
