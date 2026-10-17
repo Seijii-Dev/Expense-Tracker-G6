@@ -567,7 +567,6 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     flex: 1,
-    fontFamily: "DMSans_700Bold",
     fontSize: 17,
     fontWeight: "700",
     textAlign: "center",
@@ -598,7 +597,6 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   heroCurrency: {
-    fontFamily: "DMSans_700Bold",
     fontSize: 24,
     fontWeight: "700",
   },
@@ -623,7 +621,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   titleInput: {
-    fontFamily: "DMSans_700Bold",
     fontSize: 14,
     fontWeight: "700",
     minHeight: 50,
@@ -681,12 +678,10 @@ const styles = StyleSheet.create({
   detailLabel: {
     flex: 1,
     minWidth: 0,
-    fontFamily: "DMSans_500Medium",
     fontSize: 13.5,
     fontWeight: "600",
   },
   detailValue: {
-    fontFamily: "DMSans_700Bold",
     fontSize: 12.5,
     fontWeight: "700",
     maxWidth: "46%",
@@ -767,7 +762,6 @@ const styles = StyleSheet.create({
     ...(Platform.OS === "web" ? ({ cursor: "pointer" } as any) : {}),
   },
   saveBtnText: {
-    fontFamily: "DMSans_700Bold",
     color: "#FFFFFF",
     fontSize: 15,
     fontWeight: "700",
@@ -781,7 +775,6 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   missingTitle: {
-    fontFamily: "DMSans_700Bold",
     fontSize: 17,
     fontWeight: "700",
     marginTop: 6,
@@ -801,7 +794,6 @@ const styles = StyleSheet.create({
     ...(Platform.OS === "web" ? ({ cursor: "pointer" } as any) : {}),
   },
   missingBtnText: {
-    fontFamily: "DMSans_700Bold",
     color: "#FFFFFF",
     fontSize: 13.5,
     fontWeight: "700",

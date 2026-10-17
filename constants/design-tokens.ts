@@ -20,44 +20,37 @@ export const radii = {
 
 export const typography: Record<string, TextStyle> = {
   screenTitle: {
-    fontFamily: "DMSans_700Bold",
     fontSize: 28,
     fontWeight: "700",
     lineHeight: 34,
     letterSpacing: -0.6,
   },
   sectionTitle: {
-    fontFamily: "DMSans_700Bold",
     fontSize: 16,
     fontWeight: "700",
     lineHeight: 22,
     letterSpacing: -0.25,
   },
   body: {
-    fontFamily: "DMSans_400Regular",
     fontSize: 14,
     lineHeight: 20,
   },
   bodyMedium: {
-    fontFamily: "DMSans_500Medium",
     fontSize: 13,
     lineHeight: 18,
   },
   label: {
-    fontFamily: "DMSans_700Bold",
     fontSize: 11,
     fontWeight: "700",
     letterSpacing: 0.45,
   },
   money: {
-    fontFamily: "DMSans_700Bold",
     fontSize: 22,
     fontWeight: "700",
     letterSpacing: -0.4,
     fontVariant: ["tabular-nums"],
   },
   moneyLarge: {
-    fontFamily: "DMSans_700Bold",
     fontSize: 34,
     fontWeight: "700",
     lineHeight: 42,

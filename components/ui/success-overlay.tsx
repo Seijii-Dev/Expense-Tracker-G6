@@ -87,7 +87,6 @@ const styles = StyleSheet.create({
     height: 100,
   },
   title: {
-    fontFamily: "DMSans_700Bold",
     fontSize: 16,
     fontWeight: "700",
     marginTop: 10,

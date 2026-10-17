@@ -3,8 +3,7 @@ import { type PropsWithChildren } from "react";
 
 /**
  * Root HTML template for Expo Router Web.
- * Injects Plus Jakarta Sans (Ledgerly primary typography) and Ionicons font preloads
- * so fonts and vector glyphs render with 100% visual fidelity without FOUC.
+ * Uses platform system typography and preloads Ionicons to avoid font flashes.
  */
 export default function RootHtml({ children }: PropsWithChildren) {
   return (
@@ -22,14 +21,6 @@ export default function RootHtml({ children }: PropsWithChildren) {
 
         {/* Reset styles */}
         <ScrollViewStyleReset />
-
-        {/* Primary Typography */}
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link
-          href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&display=swap"
-          rel="stylesheet"
-        />
 
         {/* Preload vector icon font */}
         <link
@@ -51,7 +42,7 @@ export default function RootHtml({ children }: PropsWithChildren) {
                 -webkit-font-smoothing: antialiased;
                 -moz-osx-font-smoothing: grayscale;
                 background-color: #F8F9FD;
-                font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+                font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
               }
               #root {
                 display: flex;
@@ -61,7 +52,7 @@ export default function RootHtml({ children }: PropsWithChildren) {
 
               /* Default font-family for all text and form inputs */
               *, input, button, textarea, select {
-                font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+                font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
               }
 
               /* Global @font-face declarations for Ionicons (both lowercase and uppercase keys) */

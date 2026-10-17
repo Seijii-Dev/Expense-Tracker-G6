@@ -492,7 +492,6 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   metricTileLabel: {
-    fontFamily: "DMSans_700Bold",
     fontSize: 9.5,
     fontWeight: "800",
     letterSpacing: 0.8,
@@ -505,14 +504,12 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   metricTileValue: {
-    fontFamily: "DMSans_700Bold",
     fontSize: 16,
     fontWeight: "700",
     letterSpacing: -0.25,
     fontVariant: ["tabular-nums"],
   },
   metricTileSub: {
-    fontFamily: "DMSans_500Medium",
     fontSize: 9.5,
     fontWeight: "600",
     marginTop: 4,

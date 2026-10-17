@@ -648,7 +648,6 @@ const styles = StyleSheet.create({
     flexBasis: "100%",
   },
   kicker: {
-    fontFamily: "DMSans_700Bold",
     fontSize: 9.5,
     fontWeight: "800",
     letterSpacing: 1.2,
@@ -684,7 +683,6 @@ const styles = StyleSheet.create({
     ...(Platform.OS === "web" ? ({ cursor: "pointer" } as any) : {}),
   },
   monthPickerText: {
-    fontFamily: "DMSans_700Bold",
     fontSize: 12,
     fontWeight: "700",
   },
@@ -734,7 +732,6 @@ const styles = StyleSheet.create({
     ...(Platform.OS === "web" ? ({ cursor: "pointer" } as any) : {}),
   },
   rangePillText: {
-    fontFamily: "DMSans_700Bold",
     fontSize: 11.5,
     fontWeight: "700",
   },
@@ -753,12 +750,10 @@ const styles = StyleSheet.create({
     ...(Platform.OS === "web" ? ({ cursor: "pointer" } as any) : {}),
   },
   selectActionText: {
-    fontFamily: "DMSans_700Bold",
     fontSize: 12,
     fontWeight: "700",
   },
   selectedCountText: {
-    fontFamily: "DMSans_500Medium",
     fontSize: 11.5,
     fontWeight: "500",
   },
@@ -773,7 +768,6 @@ const styles = StyleSheet.create({
   },
   bulkDeleteText: {
     color: "#FFFFFF",
-    fontFamily: "DMSans_700Bold",
     fontSize: 11.5,
     fontWeight: "700",
   },
@@ -812,7 +806,6 @@ const styles = StyleSheet.create({
     ...(Platform.OS === "web" ? ({ cursor: "pointer" } as any) : {}),
   },
   datePickerText: {
-    fontFamily: "DMSans_700Bold",
     fontSize: 12.5,
     fontWeight: "700",
     flexShrink: 1,
@@ -868,7 +861,6 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   ribbonAmount: {
-    fontFamily: "DMSans_700Bold",
     fontVariant: ["tabular-nums"],
     fontSize: 16,
     fontWeight: "800",

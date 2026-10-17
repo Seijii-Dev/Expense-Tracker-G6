@@ -198,7 +198,7 @@ const styles = StyleSheet.create({
   },
   headerText: { flex: 1 },
   eyebrow: { fontSize: 9, fontWeight: "800", letterSpacing: 1.1 },
-  title: { fontFamily: "DMSans_700Bold", fontSize: 22, fontWeight: "700", marginTop: 3 },
+  title: { fontSize: 22, fontWeight: "700", marginTop: 3 },
   closeButton: {
     width: 38,
     height: 38,

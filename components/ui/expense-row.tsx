@@ -222,7 +222,6 @@ const styles = StyleSheet.create({
     minWidth: 0,
   },
   title: {
-    fontFamily: "DMSans_700Bold",
     fontSize: 14,
     fontWeight: "600",
     letterSpacing: -0.2,
@@ -235,7 +234,6 @@ const styles = StyleSheet.create({
     marginTop: 3,
   },
   metaCategory: {
-    fontFamily: "DMSans_500Medium",
     fontSize: 11.5,
     fontWeight: "500",
   },
@@ -245,7 +243,6 @@ const styles = StyleSheet.create({
     borderRadius: 4,
   },
   paymentText: {
-    fontFamily: "DMSans_500Medium",
     fontSize: 10,
     fontWeight: "600",
   },
@@ -253,7 +250,6 @@ const styles = StyleSheet.create({
     fontSize: 8,
   },
   metaDate: {
-    fontFamily: "DMSans_500Medium",
     fontSize: 11,
     fontWeight: "500",
   },
@@ -266,7 +262,6 @@ const styles = StyleSheet.create({
     maxWidth: "36%",
   },
   amount: {
-    fontFamily: "DMSans_700Bold",
     fontSize: 15,
     fontWeight: "700",
     letterSpacing: -0.2,

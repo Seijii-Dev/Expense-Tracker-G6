@@ -6,7 +6,6 @@ import {
   RefreshControl,
   ScrollView,
   StyleSheet,
-  Switch,
   Text,
   TextInput,
   View,
@@ -32,7 +31,7 @@ import { ProfileAvatar } from "@/components/account/profile-avatar";
 import { AppLottieView } from "@/components/ui/app-lottie-view";
 import { MotionEntrance, PressableScale } from "@/components/motion";
 import { NeumorphicSurface } from "@/components/ui/neumorphic-surface";
-import { DayNightSwitch } from "@/components/ui/day-night-switch";
+import { SettingToggleRow } from "@/components/settings/setting-toggle-row";
 import { radii, spacing, typography } from "@/constants/design-tokens";
 
 const BUDGET_PRESETS = [3000, 5000, 10000, 15000, 20000] as const;
@@ -217,16 +216,13 @@ export default function SettingsScreen() {
             onPress={() => router.push("/(tabs)/account")}
             accessibilityRole="button"
             accessibilityLabel="Open Account and Profile"
-            style={{ marginBottom: 20 }}
+            style={{ marginBottom: spacing.lg }}
           >
             <NeumorphicSurface
               variant="card"
               radius={radii.panel}
               contentStyle={styles.profileHeroCard}
             >
-              {/* Subtle warm glow circle */}
-              <View style={styles.glowCircle} pointerEvents="none" />
-
               <View style={styles.profileHeroLeft}>
                 <View style={styles.avatarWrap}>
                   <ProfileAvatar
@@ -287,66 +283,25 @@ export default function SettingsScreen() {
             style={styles.groupedCard}
           >
             {/* 1. Appearance */}
-            <Pressable
-              style={({ pressed }) => [
-                styles.settingRow,
-                { borderBottomColor: dark ? "rgba(255,255,255,0.05)" : colors.border },
-                pressed && styles.pressed,
-              ]}
-              onPress={() => toggleDarkMode(!dark)}
-              accessibilityRole="button"
-            >
-              <View
-                style={[
-                  styles.iconContainer,
-                  { backgroundColor: colors.warningSoft },
-                ]}
-              >
-                <Ionicons name={dark ? "moon" : "sunny"} size={19} color={colors.warning} />
-              </View>
-              <View style={styles.rowContent}>
-                <Text style={[styles.rowTitle, { color: colors.foreground }]}>Appearance</Text>
-                <Text style={[styles.rowSubtitle, { color: colors.muted }]}>
-                  {dark ? "Dark mode active" : "Light mode active"}
-                </Text>
-              </View>
-              <DayNightSwitch
-                value={dark}
-                onValueChange={toggleDarkMode}
-              />
-            </Pressable>
+            <SettingToggleRow
+              icon={dark ? "moon" : "sunny"}
+              iconColor={colors.warning}
+              iconBackgroundColor={colors.warningSoft}
+              title="Appearance"
+              description={dark ? "Dark mode active" : "Light mode active"}
+              value={dark}
+              onValueChange={toggleDarkMode}
+            />
 
             {/* 2. Notifications */}
-            <Pressable
-              style={({ pressed }) => [styles.settingRow, styles.lastRow, pressed && styles.pressed]}
-              onPress={() => toggleBudgetNudges(!budgetNudges)}
-              accessibilityRole="button"
-            >
-              <View
-                style={[
-                  styles.iconContainer,
-                  { backgroundColor: colors.primarySoft },
-                ]}
-              >
-                <Ionicons name="notifications" size={19} color={colors.primary} />
-              </View>
-              <View style={styles.rowContent}>
-                <Text style={[styles.rowTitle, { color: colors.foreground }]}>Notifications</Text>
-                <Text style={[styles.rowSubtitle, { color: colors.muted }]}>
-                  {budgetNudges ? "Budget alerts enabled" : "Manage spending notifications"}
-                </Text>
-              </View>
-              <Switch
-                value={budgetNudges}
-                onValueChange={toggleBudgetNudges}
-                trackColor={{
-                  false: colors.border,
-                  true: colors.primary,
-                }}
-                thumbColor="#FFFFFF"
-                accessibilityLabel="Budget reminders"
-              />
-            </Pressable>
+            <SettingToggleRow
+              icon="notifications"
+              title="Notifications"
+              description={budgetNudges ? "Budget alerts enabled" : "Manage spending notifications"}
+              value={budgetNudges}
+              onValueChange={toggleBudgetNudges}
+              last
+            />
           </NeumorphicSurface>
         </MotionEntrance>
 
@@ -965,7 +920,6 @@ const styles = StyleSheet.create({
     marginBottom: spacing.lg,
   },
   kicker: {
-    fontFamily: "DMSans_700Bold",
     fontSize: 10,
     fontWeight: "700",
     letterSpacing: 1.2,
@@ -1007,15 +961,6 @@ const styles = StyleSheet.create({
     overflow: "hidden",
     ...(Platform.OS === "web" ? ({ cursor: "pointer" } as any) : {}),
   },
-  glowCircle: {
-    position: "absolute",
-    right: -20,
-    top: -20,
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    backgroundColor: "rgba(232, 74, 63, 0.08)",
-  },
   profileHeroLeft: {
     flexDirection: "row",
     alignItems: "center",
@@ -1042,7 +987,6 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   profileHeroName: {
-    fontFamily: "DMSans_700Bold",
     fontSize: 16,
     fontWeight: "700",
     letterSpacing: -0.2,
@@ -1073,12 +1017,11 @@ const styles = StyleSheet.create({
     borderRadius: radii.pill,
   },
   viewProfileText: {
-    fontFamily: "DMSans_700Bold",
     fontSize: 12,
     fontWeight: "700",
   },
   sectionHeader: {
-    marginBottom: 8,
+    marginBottom: spacing.sm,
     paddingHorizontal: 4,
   },
   sectionTitle: {
@@ -1089,16 +1032,16 @@ const styles = StyleSheet.create({
   },
   groupedCard: {
     overflow: "hidden",
-    marginBottom: 18,
+    marginBottom: spacing.lg,
   },
   settingRow: {
     flexDirection: "row",
     alignItems: "center",
     paddingVertical: spacing.md,
-    paddingHorizontal: 16,
-    borderBottomWidth: 1,
+    paddingHorizontal: spacing.lg,
+    borderBottomWidth: StyleSheet.hairlineWidth,
     minHeight: 64,
-    ...(Platform.OS === "web" ? ({ cursor: "pointer" } as any) : {}),
+    ...(Platform.OS === "web" ? { cursor: "pointer" as const } : {}),
   },
   lastRow: {
     borderBottomWidth: 0,
@@ -1119,7 +1062,6 @@ const styles = StyleSheet.create({
     paddingRight: 10,
   },
   rowTitle: {
-    fontFamily: "DMSans_700Bold",
     fontSize: 14,
     fontWeight: "600",
     letterSpacing: -0.1,
@@ -1347,7 +1289,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   fileUploadBtnText: {
-    fontFamily: "DMSans_700Bold",
     fontSize: 12,
     fontWeight: "700",
   },

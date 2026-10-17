@@ -51,7 +51,6 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   headingTitle: {
-    fontFamily: "DMSans_700Bold",
     fontSize: 17,
     fontWeight: "700",
     letterSpacing: -0.2,

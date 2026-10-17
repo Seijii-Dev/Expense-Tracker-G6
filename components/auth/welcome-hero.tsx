@@ -139,7 +139,6 @@ const styles = StyleSheet.create({
     borderRadius: 12,
   },
   brandTitle: {
-    fontFamily: "DMSans_700Bold",
     fontSize: 20,
     fontWeight: "700",
     letterSpacing: -0.5,
@@ -166,7 +165,6 @@ const styles = StyleSheet.create({
     marginTop: 6,
   },
   heroTitle: {
-    fontFamily: "DMSans_700Bold",
     fontSize: 36,
     fontWeight: "700",
     letterSpacing: -1.2,

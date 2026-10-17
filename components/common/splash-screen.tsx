@@ -183,7 +183,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
   },
   brandTitle: {
-    fontFamily: "DMSans_700Bold",
     fontSize: 32,
     fontWeight: "700",
     letterSpacing: -0.8,

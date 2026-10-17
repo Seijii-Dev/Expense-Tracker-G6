@@ -37,7 +37,6 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   text: {
-    fontFamily: "DMSans_700Bold",
     fontWeight: "800",
     letterSpacing: 1.7,
   },

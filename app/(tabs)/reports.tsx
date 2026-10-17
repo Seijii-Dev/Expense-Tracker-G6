@@ -436,7 +436,6 @@ const styles = StyleSheet.create({
     marginBottom: spacing.lg,
   },
   kicker: {
-    fontFamily: "DMSans_700Bold",
     fontSize: 10,
     fontWeight: "700",
     letterSpacing: 1.2,
@@ -572,7 +571,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   metricValue: {
-    fontFamily: "DMSans_700Bold",
     fontSize: 17,
     fontWeight: "800",
     letterSpacing: -0.4,

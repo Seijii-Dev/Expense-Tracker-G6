@@ -199,7 +199,6 @@ const styles = StyleSheet.create({
     marginBottom: 2,
   },
   donutTotal: {
-    fontFamily: "DMSans_700Bold",
     fontSize: 15,
     fontWeight: "800",
     letterSpacing: -0.4,

@@ -106,7 +106,6 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   title: {
-    fontFamily: "DMSans_700Bold",
     fontSize: 18,
     fontWeight: "700",
     textAlign: "center",

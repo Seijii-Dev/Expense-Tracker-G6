@@ -350,7 +350,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   label: {
-    fontFamily: "DMSans_500Medium",
+    fontWeight: "500",
     letterSpacing: -0.1,
     marginTop: 3,
     lineHeight: 13,

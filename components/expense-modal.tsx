@@ -763,7 +763,6 @@ const styles = StyleSheet.create({
     minWidth: 0,
   },
   topTitle: {
-    fontFamily: "DMSans_700Bold",
     fontSize: 20,
     fontWeight: "700",
     letterSpacing: -0.45,
@@ -839,7 +838,6 @@ const styles = StyleSheet.create({
     fontWeight: "700",
   },
   amountInput: {
-    fontFamily: "DMSans_700Bold",
     fontSize: 42,
     fontWeight: "800",
     letterSpacing: -1.4,
@@ -1011,7 +1009,6 @@ const styles = StyleSheet.create({
     transform: [{ scale: 0.985 }],
   },
   saveBtnText: {
-    fontFamily: "DMSans_700Bold",
     color: "#FFFFFF",
     fontSize: 14.5,
     fontWeight: "700",

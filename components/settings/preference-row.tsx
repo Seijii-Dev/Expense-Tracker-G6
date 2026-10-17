@@ -82,13 +82,11 @@ const styles = StyleSheet.create({
     paddingRight: 8,
   },
   preferenceTitle: {
-    fontFamily: "DMSans_700Bold",
     fontSize: 14,
     fontWeight: "700",
     letterSpacing: -0.2,
   },
   preferenceCopy: {
-    fontFamily: "DMSans_400Regular",
     fontSize: 11,
     lineHeight: 16,
     marginTop: 2,

@@ -302,7 +302,6 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   amountText: {
-    fontFamily: "DMSans_700Bold",
     fontSize: 26,
     fontWeight: "800",
     letterSpacing: -0.6,
@@ -349,7 +348,6 @@ const styles = StyleSheet.create({
     fontWeight: "500",
   },
   floatingBadgeText: {
-    fontFamily: "DMSans_700Bold",
     flexShrink: 1,
     color: "#FFFFFF",
     fontSize: 11,

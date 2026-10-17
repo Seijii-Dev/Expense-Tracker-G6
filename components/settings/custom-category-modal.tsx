@@ -287,7 +287,6 @@ const styles = StyleSheet.create({
     letterSpacing: 1.4,
   },
   title: {
-    fontFamily: "DMSans_700Bold",
     fontSize: 22,
     fontWeight: "700",
     marginTop: 4,

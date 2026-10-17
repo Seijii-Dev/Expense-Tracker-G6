@@ -202,7 +202,6 @@ const styles = StyleSheet.create({
     opacity: 0.75,
   },
   tabText: {
-    fontFamily: "DMSans_700Bold",
     fontSize: 12.5,
     letterSpacing: -0.1,
   },

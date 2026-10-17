@@ -1103,7 +1103,6 @@ const styles = StyleSheet.create({
     ...(Platform.OS === "web" ? ({ cursor: "pointer" } as any) : {}),
   },
   topSubBarTitle: {
-    fontFamily: "DMSans_700Bold",
     fontSize: 17,
     fontWeight: "700",
     letterSpacing: -0.2,
@@ -1186,7 +1185,6 @@ const styles = StyleSheet.create({
     width: "100%",
   },
   userName: {
-    fontFamily: "DMSans_700Bold",
     fontSize: 21,
     fontWeight: "700",
     letterSpacing: -0.3,
@@ -1199,7 +1197,6 @@ const styles = StyleSheet.create({
     marginTop: 3,
   },
   userHandle: {
-    fontFamily: "DMSans_500Medium",
     fontSize: 13,
     fontWeight: "500",
   },
@@ -1281,14 +1278,12 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   snapshotLabel: {
-    fontFamily: "DMSans_700Bold",
     fontSize: 9,
     fontWeight: "700",
     letterSpacing: 0.8,
     textTransform: "uppercase",
   },
   snapshotAmount: {
-    fontFamily: "DMSans_700Bold",
     fontVariant: ["tabular-nums"],
     fontSize: 14,
     fontWeight: "800",

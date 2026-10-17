@@ -131,7 +131,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   title: {
-    fontFamily: "DMSans_700Bold",
     fontSize: 18,
     fontWeight: "700",
     letterSpacing: -0.35,
@@ -162,7 +161,6 @@ const styles = StyleSheet.create({
     ...(Platform.OS === "web" ? ({ cursor: "pointer" } as any) : {}),
   },
   primaryBtnText: {
-    fontFamily: "DMSans_700Bold",
     color: "#FFFFFF",
     fontSize: 14.5,
     fontWeight: "700",

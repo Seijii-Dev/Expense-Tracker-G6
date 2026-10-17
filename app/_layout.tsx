@@ -2,7 +2,6 @@ import { Ionicons } from "@expo/vector-icons";
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { useFonts } from "expo-font";
-import { DMSans_400Regular, DMSans_500Medium, DMSans_700Bold } from "@expo-google-fonts/dm-sans";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { Platform, View, StyleSheet } from "react-native";
 import { ExpenseProvider } from "@/lib/expense-store";
@@ -22,9 +21,6 @@ function BrandedSplashScreen({ isReady }: { isReady: boolean }) {
 
 export default function RootLayout() {
   const [fontsLoaded, fontError] = useFonts({
-    DMSans_400Regular,
-    DMSans_500Medium,
-    DMSans_700Bold,
     // Load Ionicons under both casing keys so Font.isLoaded('ionicons') resolves on web
     ...Ionicons.font,
     Ionicons: require("@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/Ionicons.ttf"),

@@ -47,7 +47,6 @@ const styles = StyleSheet.create({
     paddingRight: 12,
   },
   kicker: {
-    fontFamily: "DMSans_700Bold",
     fontSize: 10,
     fontWeight: "800",
     letterSpacing: 1.2,

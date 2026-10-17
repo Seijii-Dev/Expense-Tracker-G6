@@ -230,7 +230,6 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   appName: {
-    fontFamily: "DMSans_700Bold",
     fontSize: 22,
     fontWeight: "700",
     letterSpacing: -0.3,

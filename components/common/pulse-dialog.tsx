@@ -256,7 +256,6 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
   },
   title: {
-    fontFamily: "DMSans_700Bold",
     fontSize: 22,
     fontWeight: "700",
     letterSpacing: -0.4,
@@ -286,7 +285,6 @@ const styles = StyleSheet.create({
   },
   gaugePercent: {
     fontSize: 14,
-    fontFamily: "DMSans_700Bold",
     fontWeight: "700",
   },
   progressBarTrack: {

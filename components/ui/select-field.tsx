@@ -96,7 +96,6 @@ const styles = StyleSheet.create({
   value: {
     flex: 1,
     minWidth: 0,
-    fontFamily: "DMSans_700Bold",
     fontSize: 13,
     fontWeight: "700",
   },

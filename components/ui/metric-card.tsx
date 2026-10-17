@@ -125,7 +125,6 @@ const styles = StyleSheet.create({
     borderRadius: 3,
   },
   label: {
-    fontFamily: "DMSans_700Bold",
     fontSize: 10,
     fontWeight: "700",
     letterSpacing: 0.6,
@@ -158,7 +157,6 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   foot: {
-    fontFamily: "DMSans_500Medium",
     fontSize: 11,
     fontWeight: "600",
   },
