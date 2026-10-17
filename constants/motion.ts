@@ -3,15 +3,15 @@ import { Easing as ReanimatedEasing } from "react-native-reanimated";
 
 /** Shared motion language: quick feedback, calm transitions, and soft landings. */
 export const motionDuration = {
-  pressIn: 90,
-  control: 220,
-  standard: 260,
-  section: 280,
+  pressIn: 80,
+  control: 190,
+  standard: 220,
+  section: 220,
   modal: 220,
-  number: 420,
-  splashIn: 420,
-  splashOut: 320,
-  layout: 220,
+  number: 180,
+  splashIn: 360,
+  splashOut: 220,
+  layout: 200,
 } as const;
 
 export const motionEasing = {
