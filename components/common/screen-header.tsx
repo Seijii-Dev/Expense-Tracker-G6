@@ -47,7 +47,7 @@ const styles = StyleSheet.create({
     paddingRight: 12,
   },
   kicker: {
-    fontSize: 10,
+    fontSize: 11,
     fontWeight: "800",
     letterSpacing: 1.2,
     marginBottom: 4,
@@ -67,3 +67,4 @@ const styles = StyleSheet.create({
     paddingTop: 2,
   },
 });
+

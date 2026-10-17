@@ -118,7 +118,7 @@ function TabButton({ name, isFocused, onPress, onLongPress, isCompact }: TabButt
             styles.label,
             {
               color: isFocused ? colors.primary : colors.muted,
-              fontSize: isCompact ? 9 : 10,
+              fontSize: isCompact ? 10 : 11,
               fontWeight: isFocused ? "700" : "500",
             },
           ]}
@@ -317,7 +317,7 @@ const styles = StyleSheet.create({
     zIndex: 999,
   },
   dockSurface: {
-    height: 68,
+    height: 72,
     borderRadius: 34,
   },
   dockContent: {
@@ -363,3 +363,4 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
 });
+

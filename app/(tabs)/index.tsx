@@ -58,7 +58,7 @@ export default function OverviewScreen() {
   const { colors, dark } = useTheme();
   const { width: windowWidth } = useWindowDimensions();
 
-  const isNarrowMobile = windowWidth < 380;
+  const isNarrowMobile = windowWidth < 440;
 
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
@@ -492,7 +492,7 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   metricTileLabel: {
-    fontSize: 9.5,
+    fontSize: 11,
     fontWeight: "800",
     letterSpacing: 0.8,
   },
@@ -504,13 +504,13 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   metricTileValue: {
-    fontSize: 16,
+    fontSize: 17,
     fontWeight: "700",
     letterSpacing: -0.25,
     fontVariant: ["tabular-nums"],
   },
   metricTileSub: {
-    fontSize: 9.5,
+    fontSize: 11,
     fontWeight: "600",
     marginTop: 4,
   },
@@ -546,7 +546,7 @@ const styles = StyleSheet.create({
     ...typography.sectionTitle,
   },
   panelSubText: {
-    fontSize: 11.5,
+    fontSize: 13,
     fontWeight: "500",
     marginTop: 2,
   },
@@ -570,3 +570,4 @@ const styles = StyleSheet.create({
     marginVertical: 6,
   },
 });
+

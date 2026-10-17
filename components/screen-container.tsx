@@ -14,7 +14,7 @@ export function ScreenContainer({
   // ScreenContainer lets scrollable children fill full height so content scrolls under the floating dock.
   // bottomClearance is only applied when noBottomPadding is explicitly passed as false.
   const bottomClearance = noBottomPadding ? 0 : Math.max(insets.bottom + 84, 108);
-  const horizontalPadding = windowWidth < 360 ? 12 : windowWidth < 480 ? 16 : 24;
+  const horizontalPadding = windowWidth < 360 ? 16 : windowWidth < 600 ? 20 : 28;
 
   return (
     <View style={styles.root}>
@@ -55,9 +55,10 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
     width: "100%",
-    maxWidth: 720, // Clean max-width for web/tablet viewing
+    maxWidth: 880,
     paddingTop: Platform.OS === "android" ? 6 : 2,
   },
 });
+
 
 

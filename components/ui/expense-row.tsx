@@ -185,7 +185,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     minHeight: 66,
-    paddingVertical: 10,
+    paddingVertical: 13,
     borderBottomWidth: 1,
     gap: spacing.md,
   },
@@ -222,7 +222,7 @@ const styles = StyleSheet.create({
     minWidth: 0,
   },
   title: {
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: "600",
     letterSpacing: -0.2,
   },
@@ -234,7 +234,7 @@ const styles = StyleSheet.create({
     marginTop: 3,
   },
   metaCategory: {
-    fontSize: 11.5,
+    fontSize: 12,
     fontWeight: "500",
   },
   paymentBadge: {
@@ -243,14 +243,14 @@ const styles = StyleSheet.create({
     borderRadius: 4,
   },
   paymentText: {
-    fontSize: 10,
+    fontSize: 11,
     fontWeight: "600",
   },
   metaDot: {
     fontSize: 8,
   },
   metaDate: {
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: "500",
   },
   rightSide: {
@@ -291,3 +291,4 @@ const styles = StyleSheet.create({
     transform: [{ scale: 0.92 }],
   },
 });
+

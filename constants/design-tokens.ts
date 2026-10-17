@@ -22,8 +22,8 @@ export const typography: Record<string, TextStyle> = {
   screenTitle: {
     fontSize: 28,
     fontWeight: "700",
-    lineHeight: 34,
-    letterSpacing: -0.6,
+    lineHeight: 36,
+    letterSpacing: -0.75,
   },
   sectionTitle: {
     fontSize: 16,
@@ -32,15 +32,15 @@ export const typography: Record<string, TextStyle> = {
     letterSpacing: -0.25,
   },
   body: {
-    fontSize: 14,
-    lineHeight: 20,
+    fontSize: 15,
+    lineHeight: 23,
   },
   bodyMedium: {
-    fontSize: 13,
-    lineHeight: 18,
+    fontSize: 14,
+    lineHeight: 21,
   },
   label: {
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: "700",
     letterSpacing: 0.45,
   },
@@ -64,3 +64,4 @@ export const motionDuration = {
   standard: 220,
   entrance: 320,
 } as const;
+
