@@ -2,6 +2,7 @@ import React from "react";
 import { StyleSheet, Text, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "@/lib/theme-store";
+import { NeumorphicSurface } from "@/components/ui/neumorphic-surface";
 
 interface StatCardProps {
   label: string;
@@ -13,20 +14,7 @@ export function StatCard({ label, value, icon }: StatCardProps) {
   const { colors, dark } = useTheme();
 
   return (
-    <View
-      style={[
-        styles.stat,
-        {
-          backgroundColor: colors.surface,
-          borderColor: colors.border,
-          shadowColor: dark ? "#000000" : "#0A1F1C",
-          shadowOffset: { width: 0, height: 4 },
-          shadowOpacity: dark ? 0.25 : 0.03,
-          shadowRadius: 8,
-          elevation: 1,
-        },
-      ]}
-    >
+    <NeumorphicSurface radius={18} style={styles.stat}>
       <View
         style={[
           styles.iconWrap,
@@ -47,7 +35,7 @@ export function StatCard({ label, value, icon }: StatCardProps) {
       <Text style={[styles.statLabel, { color: colors.muted }]} numberOfLines={1}>
         {label}
       </Text>
-    </View>
+    </NeumorphicSurface>
   );
 }
 
@@ -57,8 +45,6 @@ const styles = StyleSheet.create({
     minWidth: 0,
     paddingVertical: 14,
     paddingHorizontal: 8,
-    borderRadius: 18,
-    borderWidth: 1,
     alignItems: "center",
   },
   iconWrap: {

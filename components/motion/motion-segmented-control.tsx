@@ -55,7 +55,6 @@ export function MotionSegmentedControl<T extends string = string>({
   const reduceMotion = useReducedMotion();
 
   const [layouts, setLayouts] = useState<Record<string, LayoutItem>>({});
-  const [containerHeight, setContainerHeight] = useState<number>(38);
   const isInitialRender = useRef(true);
 
   const pillX = useSharedValue(0);
@@ -66,7 +65,7 @@ export function MotionSegmentedControl<T extends string = string>({
   const inactiveColor = inactiveTextColor || colors.muted;
 
   const handleItemLayout = (id: string, event: LayoutChangeEvent) => {
-    const { x, width, height } = event.nativeEvent.layout;
+    const { x, width } = event.nativeEvent.layout;
     setLayouts((prev) => {
       if (prev[id]?.x === x && prev[id]?.width === width) return prev;
       return {
@@ -74,9 +73,6 @@ export function MotionSegmentedControl<T extends string = string>({
         [id]: { x, width },
       };
     });
-    if (height > containerHeight) {
-      setContainerHeight(height);
-    }
   };
 
   useEffect(() => {

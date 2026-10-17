@@ -4,6 +4,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { Account } from "@/types/auth";
 import { useTheme } from "@/lib/theme-store";
 import { ProfileAvatar } from "@/components/account/profile-avatar";
+import { NeumorphicSurface } from "@/components/ui/neumorphic-surface";
 
 interface ProfileCardProps {
   account: Account | null;
@@ -29,20 +30,7 @@ export function ProfileCard({ account, syncing, syncError }: ProfileCardProps) {
   const statusColor = getStatusColor();
 
   return (
-    <View
-      style={[
-        styles.profileCard,
-        {
-          backgroundColor: colors.surface,
-          borderColor: colors.border,
-          shadowColor: dark ? "#000000" : "#0A1F1C",
-          shadowOffset: { width: 0, height: 6 },
-          shadowOpacity: dark ? 0.35 : 0.05,
-          shadowRadius: 12,
-          elevation: 2,
-        },
-      ]}
-    >
+    <NeumorphicSurface radius={22} style={styles.profileCard}>
       <View
         style={[
           styles.avatar,
@@ -86,7 +74,7 @@ export function ProfileCard({ account, syncing, syncError }: ProfileCardProps) {
           <Text style={[styles.statusText, { color: statusColor }]}>{getStatusText()}</Text>
         </View>
       </View>
-    </View>
+    </NeumorphicSurface>
   );
 }
 
@@ -95,8 +83,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     padding: 18,
-    borderRadius: 22,
-    borderWidth: 1,
     marginBottom: 16,
   },
   avatar: {
