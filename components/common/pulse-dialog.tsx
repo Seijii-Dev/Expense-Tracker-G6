@@ -8,12 +8,12 @@ import {
   View,
 } from "react-native";
 import Animated, {
-  Easing,
   useAnimatedStyle,
   useSharedValue,
   withTiming,
   useReducedMotion,
 } from "react-native-reanimated";
+import { motionDuration, motionEasing } from "@/constants/motion";
 import { Ionicons } from "@expo/vector-icons";
 
 import { useTheme } from "@/lib/theme-store";
@@ -44,15 +44,15 @@ export function PulseDialog({
   const reduceMotion = useReducedMotion();
 
   const fade = useSharedValue(0);
-  const scale = useSharedValue(0.92);
+  const scale = useSharedValue(0.96);
 
   useEffect(() => {
     if (visible) {
-      fade.value = reduceMotion ? 1 : withTiming(1, { duration: 180, easing: Easing.out(Easing.quad) });
-      scale.value = reduceMotion ? 1 : withTiming(1, { duration: 180, easing: Easing.out(Easing.quad) });
+      fade.value = reduceMotion ? 1 : withTiming(1, { duration: motionDuration.modal, easing: motionEasing.enter });
+      scale.value = reduceMotion ? 1 : withTiming(1, { duration: motionDuration.modal, easing: motionEasing.enter });
     } else {
       fade.value = 0;
-      scale.value = 0.92;
+      scale.value = 0.96;
     }
   }, [visible, fade, scale, reduceMotion]);
 
@@ -354,3 +354,4 @@ const styles = StyleSheet.create({
     transform: [{ scale: 0.98 }],
   },
 });
+

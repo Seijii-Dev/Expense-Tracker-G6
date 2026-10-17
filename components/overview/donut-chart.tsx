@@ -3,6 +3,7 @@ import { StyleSheet, Text, View } from "react-native";
 import Animated, {
   interpolate,
   useAnimatedStyle,
+  useReducedMotion,
   useSharedValue,
   withSpring,
 } from "react-native-reanimated";
@@ -13,6 +14,7 @@ import { useExpenses } from "@/lib/expense-store";
 import { useTheme } from "@/lib/theme-store";
 import { formatMoney } from "@/utils/formatters";
 import { radii } from "@/constants/design-tokens";
+import { motionSpring } from "@/constants/motion";
 
 interface DonutChartProps {
   total: number;
@@ -23,26 +25,23 @@ export const DonutChart = React.memo(function DonutChart({ total, expenses }: Do
   const { colors, dark } = useTheme();
   const { customCategories } = useExpenses();
   const progress = useSharedValue(0);
+  const reduceMotion = useReducedMotion();
 
   const isFirstRender = React.useRef(true);
 
   useEffect(() => {
     if (isFirstRender.current) {
       isFirstRender.current = false;
-      progress.value = withSpring(1, {
-        damping: 20,
-        stiffness: 220,
-        mass: 0.7,
-      });
+      progress.value = reduceMotion ? 1 : withSpring(1, motionSpring.chart);
     } else {
+      if (reduceMotion) {
+        progress.value = 1;
+        return;
+      }
       progress.value = 0.92;
-      progress.value = withSpring(1, {
-        damping: 18,
-        stiffness: 260,
-        mass: 0.6,
-      });
+      progress.value = withSpring(1, motionSpring.control);
     }
-  }, [total, progress]);
+  }, [total, progress, reduceMotion]);
 
   const animatedStyle = useAnimatedStyle(() => ({
     opacity: progress.value,
@@ -211,3 +210,4 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
 });
+

@@ -9,11 +9,14 @@ import {
   ViewStyle,
 } from "react-native";
 import Animated, {
+  Easing,
   useAnimatedStyle,
   useReducedMotion,
   useSharedValue,
+  withSpring,
   withTiming,
 } from "react-native-reanimated";
+import { motionDuration, motionSpring } from "@/constants/motion";
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
@@ -26,7 +29,7 @@ export interface PressableScaleProps extends Omit<PressableProps, "style"> {
 
 export function PressableScale({
   children,
-  activeScale = 0.96,
+  activeScale = 0.975,
   style,
   containerStyle,
   onPressIn,
@@ -44,14 +47,17 @@ export function PressableScale({
   const handlePressIn = (event: GestureResponderEvent) => {
     if (disabled) return;
     if (!reduceMotion) {
-      scale.value = withTiming(activeScale, { duration: 90 });
+      scale.value = withTiming(activeScale, {
+        duration: motionDuration.pressIn,
+        easing: Easing.out(Easing.quad),
+      });
     }
 
     onPressIn?.(event);
   };
 
   const handlePressOut = (event: GestureResponderEvent) => {
-    scale.value = reduceMotion ? 1 : withTiming(1, { duration: 130 });
+    scale.value = reduceMotion ? 1 : withSpring(1, motionSpring.press);
 
     onPressOut?.(event);
   };
@@ -73,3 +79,4 @@ export function PressableScale({
     </AnimatedPressable>
   );
 }
+

@@ -1,3 +1,6 @@
+Warning: truncated output (original token count: 12589)
+Total output lines: 1530
+
 import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
@@ -42,8 +45,10 @@ import {
   removeStoredProfileBanner,
 } from "@/utils/profile-banner-media";
 import type { ProfileBannerMedia } from "@/types/auth";
+import { useReducedMotion } from "react-native-reanimated";
 
 export default function AccountScreen() {
+  const reduceMotion = useReducedMotion();
   const insets = useSafeAreaInsets();
   const { width: windowWidth } = useWindowDimensions();
   const { account, logout, updateProfilePicture, updateProfileBanner } = useAuth();
@@ -629,64 +634,7 @@ export default function AccountScreen() {
               style={[
                 styles.logoutButton,
                 {
-                  backgroundColor: dark ? "rgba(232, 74, 63, 0.12)" : "#FFF0ED",
-                  borderColor: dark ? "rgba(232, 74, 63, 0.3)" : "#FED7D2",
-                },
-              ]}
-              onPress={() => {
-                setShowSignOut(true);
-              }}
-              accessibilityRole="button"
-              accessibilityLabel="Log Out of Ledgerly"
-            >
-              <Ionicons name="log-out-outline" size={19} color={colors.primary} />
-              <Text style={styles.logoutButtonText}>Log Out of Ledgerly</Text>
-            </PressableScale>
-          </View>
-        </MotionEntrance>
-      </ScrollView>
-
-      {/* Photo Actions Modal */}
-      <Modal
-        visible={showPhotoActions}
-        animationType="fade"
-        transparent
-        onRequestClose={() => setShowPhotoActions(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <Pressable style={styles.modalBackdrop} onPress={() => setShowPhotoActions(false)} />
-          <View style={[styles.modalSheetCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-            <View style={styles.modalHeader}>
-              <Text style={[styles.modalTitle, { color: colors.foreground }]}>Profile Photo</Text>
-              <Pressable
-                onPress={() => setShowPhotoActions(false)}
-                style={({ pressed }) => [styles.closeBtn, pressed && { opacity: 0.7 }]}
-                accessibilityRole="button"
-              >
-                <Ionicons name="close" size={20} color={colors.muted} />
-              </Pressable>
-            </View>
-
-            {photoError ? <Text style={styles.errorText}>{photoError}</Text> : null}
-
-            <Pressable
-              style={({ pressed }) => [styles.modalPrimaryBtn, pressed && { opacity: 0.88 }]}
-              onPress={choosePhoto}
-              disabled={isPickingPhoto || isSavingPhoto}
-              accessibilityRole="button"
-            >
-              <LinearGradient
-                colors={["#FF5A4E", "#E84A3F"]}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                style={styles.modalBtnGradient}
-              >
-                {isPickingPhoto ? (
-                  <ActivityIndicator color="#FFFFFF" />
-                ) : (
-                  <>
-                    <Ionicons name="image-outline" size={18} color="#FFFFFF" />
-                    <Text style={styles.modalBtnText}>Choose Photo</Text>
+                  backgroundColor: dark ? "rgba(232, 74, 63, 0.12)" : "#FFF0ED",…589 tokens truncated…{styles.modalBtnText}>Choose Photo</Text>
                   </>
                 )}
               </LinearGradient>
@@ -724,7 +672,7 @@ export default function AccountScreen() {
       {/* Photo Preview Modal */}
       <Modal
         visible={showPhotoPreview}
-        animationType="fade"
+        animationType={reduceMotion ? "none" : "fade"}
         transparent
         onRequestClose={() => {
           if (!isSavingPhoto) {
@@ -792,7 +740,7 @@ export default function AccountScreen() {
       {/* Banner Actions Modal */}
       <Modal
         visible={showBannerActions}
-        animationType="fade"
+        animationType={reduceMotion ? "none" : "fade"}
         transparent
         onRequestClose={() => setShowBannerActions(false)}
       >
@@ -879,7 +827,7 @@ export default function AccountScreen() {
       </Modal>
 
       {/* Banner Processing Modal */}
-      <Modal visible={showBannerProcessing} transparent animationType="fade" onRequestClose={() => undefined}>
+      <Modal visible={showBannerProcessing} transparent animationType={reduceMotion ? "none" : "fade"} onRequestClose={() => undefined}>
         <View style={styles.modalOverlay}>
           <View style={[styles.modalSheetCard, { backgroundColor: colors.surface, borderColor: colors.border, alignItems: "center" }]}>
             <ActivityIndicator size="large" color="#E84A3F" />
@@ -899,7 +847,7 @@ export default function AccountScreen() {
       {/* Banner Preview Modal */}
       <Modal
         visible={showBannerPreview}
-        animationType="fade"
+        animationType={reduceMotion ? "none" : "fade"}
         transparent
         onRequestClose={cancelBannerPreview}
       >
@@ -972,7 +920,7 @@ export default function AccountScreen() {
       {/* Info Dialog Modal */}
       <Modal
         visible={Boolean(infoModalTitle)}
-        animationType="fade"
+        animationType={reduceMotion ? "none" : "fade"}
         transparent
         onRequestClose={() => setInfoModalTitle(null)}
       >
@@ -1525,3 +1473,4 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
 });
+

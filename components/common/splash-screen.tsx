@@ -2,12 +2,12 @@ import React, { useEffect, useRef, useState } from "react";
 import {
   AccessibilityInfo,
   Animated,
-  Easing,
   StyleSheet,
   Text,
   View,
 } from "react-native";
 import { useReducedMotion } from "react-native-reanimated";
+import { motionDuration, nativeMotionEasing } from "@/constants/motion";
 
 interface SplashScreenProps {
   isReady: boolean;
@@ -27,7 +27,7 @@ export function SplashScreen({ isReady, onFinish, dark = false }: SplashScreenPr
 
   // Animations
   const opacityAnim = useRef(new Animated.Value(0)).current;
-  const scaleAnim = useRef(new Animated.Value(0.88)).current;
+  const scaleAnim = useRef(new Animated.Value(0.94)).current;
   const exitOpacityAnim = useRef(new Animated.Value(1)).current;
   const exitScaleAnim = useRef(new Animated.Value(1)).current;
   const onFinishRef = useRef(onFinish);
@@ -74,14 +74,14 @@ export function SplashScreen({ isReady, onFinish, dark = false }: SplashScreenPr
     const entrance = Animated.parallel([
       Animated.timing(opacityAnim, {
         toValue: 1,
-        duration: 420,
-        easing: Easing.out(Easing.cubic),
+        duration: motionDuration.splashIn,
+        easing: nativeMotionEasing.enter,
         useNativeDriver: true,
       }),
       Animated.spring(scaleAnim, {
         toValue: 1,
-        friction: 7,
-        tension: 50,
+        friction: 8,
+        tension: 56,
         useNativeDriver: true,
       }),
     ]);
@@ -105,14 +105,14 @@ export function SplashScreen({ isReady, onFinish, dark = false }: SplashScreenPr
     const exitAnimation = Animated.parallel([
       Animated.timing(exitOpacityAnim, {
         toValue: 0,
-        duration: 380,
-        easing: Easing.inOut(Easing.ease),
+        duration: motionDuration.splashOut,
+        easing: nativeMotionEasing.exit,
         useNativeDriver: true,
       }),
       Animated.timing(exitScaleAnim, {
-        toValue: 1.05,
-        duration: 380,
-        easing: Easing.out(Easing.quad),
+        toValue: 1.02,
+        duration: motionDuration.splashOut,
+        easing: nativeMotionEasing.exit,
         useNativeDriver: true,
       }),
     ]);
@@ -207,3 +207,4 @@ const styles = StyleSheet.create({
     opacity: 0.75,
   },
 });
+

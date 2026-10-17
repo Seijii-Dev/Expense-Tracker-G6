@@ -17,6 +17,7 @@ import Animated, {
 } from "react-native-reanimated";
 
 import { useTheme } from "@/lib/theme-store";
+import { motionSpring } from "@/constants/motion";
 
 export interface SegmentOption<T extends string = string> {
   id: T;
@@ -77,15 +78,9 @@ export function MotionSegmentedControl<T extends string = string>({
 
   useEffect(() => {
     // Short, damped movement keeps the selected option easy to follow.
-    const springConfig = {
-      damping: 24,
-      stiffness: 240,
-      mass: 0.65,
-    };
-
     const currentLayout = layouts[selectedId];
     if (!selectedId || !currentLayout) {
-      pillOpacity.value = withSpring(0, springConfig);
+      pillOpacity.value = withSpring(0, motionSpring.control);
       return;
     }
 
@@ -97,9 +92,9 @@ export function MotionSegmentedControl<T extends string = string>({
       return;
     }
 
-    pillX.value = withSpring(currentLayout.x, springConfig);
-    pillWidth.value = withSpring(currentLayout.width, springConfig);
-    pillOpacity.value = withSpring(1, springConfig);
+    pillX.value = withSpring(currentLayout.x, motionSpring.control);
+    pillWidth.value = withSpring(currentLayout.width, motionSpring.control);
+    pillOpacity.value = withSpring(1, motionSpring.control);
   }, [selectedId, layouts, reduceMotion]);
 
   const animatedPillStyle = useAnimatedStyle(() => ({
@@ -206,3 +201,4 @@ const styles = StyleSheet.create({
     letterSpacing: -0.1,
   },
 });
+

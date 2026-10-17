@@ -21,6 +21,7 @@ import { useTheme } from "@/lib/theme-store";
 import { useExpenses } from "@/lib/expense-store";
 import { NavIcon, NavTabName } from "@/components/navigation/nav-icons";
 import { NeumorphicSurface } from "@/components/ui/neumorphic-surface";
+import { motionSpring } from "@/constants/motion";
 
 export interface FloatingTabBarProps {
   state: {
@@ -67,21 +68,13 @@ function TabButton({ name, isFocused, onPress, onLongPress, isCompact }: TabButt
 
   const handlePressIn = () => {
     if (!reduceMotion) {
-      scale.value = withSpring(0.92, {
-        damping: 20,
-        stiffness: 280,
-        mass: 0.6,
-      });
+      scale.value = withSpring(0.96, motionSpring.press);
     }
   };
 
   const handlePressOut = () => {
     if (!reduceMotion) {
-      scale.value = withSpring(1, {
-        damping: 18,
-        stiffness: 200,
-        mass: 0.7,
-      });
+      scale.value = withSpring(1, motionSpring.press);
     }
   };
 
@@ -183,21 +176,13 @@ export function FloatingTabBar({ state, descriptors, navigation }: FloatingTabBa
 
   const handleFabPressIn = () => {
     if (!reduceMotion) {
-      fabScale.value = withSpring(0.90, {
-        damping: 20,
-        stiffness: 300,
-        mass: 0.6,
-      });
+      fabScale.value = withSpring(0.94, motionSpring.press);
     }
   };
 
   const handleFabPressOut = () => {
     if (!reduceMotion) {
-      fabScale.value = withSpring(1, {
-        damping: 16,
-        stiffness: 220,
-        mass: 0.7,
-      });
+      fabScale.value = withSpring(1, motionSpring.press);
     }
   };
 

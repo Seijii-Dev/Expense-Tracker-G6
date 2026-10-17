@@ -10,9 +10,11 @@ import {
   ViewStyle,
 } from "react-native";
 import { usePathname } from "expo-router";
+import { useReducedMotion } from "react-native-reanimated";
 import { VideoView, useVideoPlayer } from "expo-video";
 import type { ProfileBannerMedia } from "@/types/auth";
 import { resolveProfileBannerSource } from "@/utils/profile-banner-media";
+import { motionDuration, nativeMotionEasing } from "@/constants/motion";
 
 type ProfileBannerLayerProps = {
   banner?: ProfileBannerMedia | null;
@@ -24,6 +26,7 @@ export function ProfileBannerLayer({ banner, visible, style }: ProfileBannerLaye
   const [sourceUri, setSourceUri] = useState<string | null>(null);
   const [hasError, setHasError] = useState(false);
   const opacityAnim = useRef(new Animated.Value(0)).current;
+  const reduceMotion = useReducedMotion();
 
   useEffect(() => {
     let active = true;
@@ -56,12 +59,17 @@ export function ProfileBannerLayer({ banner, visible, style }: ProfileBannerLaye
   }, [banner?.uri, opacityAnim]);
 
   const handleMediaLoaded = useCallback(() => {
+    if (reduceMotion) {
+      opacityAnim.setValue(1);
+      return;
+    }
     Animated.timing(opacityAnim, {
       toValue: 1,
-      duration: 320,
+      duration: motionDuration.section,
+      easing: nativeMotionEasing.standard,
       useNativeDriver: true,
     }).start();
-  }, [opacityAnim]);
+  }, [opacityAnim, reduceMotion]);
 
   const handleMediaError = useCallback(() => setHasError(true), []);
 
@@ -168,3 +176,4 @@ const styles = StyleSheet.create({
     height: "100%",
   },
 });
+

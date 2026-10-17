@@ -2,6 +2,7 @@ import React, { useEffect } from "react";
 import { StyleSheet, Text, View } from "react-native";
 import Animated, {
   useAnimatedStyle,
+  useReducedMotion,
   useSharedValue,
   withSpring,
 } from "react-native-reanimated";
@@ -14,6 +15,7 @@ import { CategoryTotal } from "@/hooks/useReportMetrics";
 import { CustomCategory } from "@/types/expense";
 import { useTheme } from "@/lib/theme-store";
 import { formatMoney, formatPercent } from "@/utils/formatters";
+import { motionSpring } from "@/constants/motion";
 
 interface CategoryBreakdownProps {
   categoryTotals: CategoryTotal[];
@@ -31,13 +33,12 @@ const CategoryProgressFill = React.memo(function CategoryProgressFill({
   color: string;
 }) {
   const widthAnim = useSharedValue(0);
+  const reduceMotion = useReducedMotion();
 
   useEffect(() => {
-    widthAnim.value = withSpring(Math.min(100, Math.max(0, fillPct)), {
-      damping: 22,
-      stiffness: 200,
-    });
-  }, [fillPct, widthAnim]);
+    const target = Math.min(100, Math.max(0, fillPct));
+    widthAnim.value = reduceMotion ? target : withSpring(target, motionSpring.chart);
+  }, [fillPct, widthAnim, reduceMotion]);
 
   const animatedStyle = useAnimatedStyle(() => ({
     width: `${widthAnim.value}%`,
@@ -344,3 +345,4 @@ const styles = StyleSheet.create({
     marginTop: 1,
   },
 });
+

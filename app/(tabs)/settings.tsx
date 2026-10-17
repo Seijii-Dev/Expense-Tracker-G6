@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { useReducedMotion } from "react-native-reanimated";
 import {
   Modal,
   Platform,
@@ -37,6 +38,7 @@ import { radii, spacing, typography } from "@/constants/design-tokens";
 const BUDGET_PRESETS = [3000, 5000, 10000, 15000, 20000] as const;
 
 export default function SettingsScreen() {
+  const reduceMotion = useReducedMotion();
   const {
     budget,
     setBudget,
@@ -505,7 +507,7 @@ export default function SettingsScreen() {
       {/* Budget Settings Modal */}
       <Modal
         visible={showBudgetModal}
-        animationType="slide"
+        animationType={reduceMotion ? "none" : "slide"}
         transparent
         onRequestClose={() => setShowBudgetModal(false)}
       >
@@ -695,7 +697,7 @@ export default function SettingsScreen() {
       {/* Data & Backup Modal */}
       <Modal
         visible={showBackupModal}
-        animationType="slide"
+        animationType={reduceMotion ? "none" : "slide"}
         transparent
         onRequestClose={() => setShowBackupModal(false)}
       >
@@ -799,7 +801,7 @@ export default function SettingsScreen() {
       {/* CSV Import Modal */}
       <Modal
         visible={showImportModal}
-        animationType="slide"
+        animationType={reduceMotion ? "none" : "slide"}
         transparent
         onRequestClose={() => setShowImportModal(false)}
       >
@@ -1298,3 +1300,4 @@ const styles = StyleSheet.create({
     textAlignVertical: "top",
   },
 });
+

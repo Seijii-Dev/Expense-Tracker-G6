@@ -16,6 +16,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { NeumorphicSurface } from "@/components/ui/neumorphic-surface";
 import { PRESET_CATEGORY_COLORS, PRESET_CATEGORY_ICONS } from "@/constants/categories";
 import { useTheme } from "@/lib/theme-store";
+import { useReducedMotion } from "react-native-reanimated";
 
 interface CustomCategoryModalProps {
   visible: boolean;
@@ -31,6 +32,7 @@ export function CustomCategoryModal({
   existingCategories,
 }: CustomCategoryModalProps) {
   const { colors, dark } = useTheme();
+  const reduceMotion = useReducedMotion();
 
   const [name, setName] = useState("");
   const [selectedColor, setSelectedColor] = useState(PRESET_CATEGORY_COLORS[0]);
@@ -94,7 +96,7 @@ export function CustomCategoryModal({
   };
 
   return (
-    <Modal visible={visible} transparent animationType="slide" onRequestClose={handleClose}>
+    <Modal visible={visible} transparent animationType={reduceMotion ? "none" : "slide"} onRequestClose={handleClose}>
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : undefined}
         style={styles.backdrop}
@@ -404,3 +406,4 @@ const styles = StyleSheet.create({
     transform: [{ scale: 0.98 }],
   },
 });
+

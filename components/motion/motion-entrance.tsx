@@ -1,13 +1,13 @@
 import React, { useMemo } from "react";
 import { Platform, StyleProp, View, ViewStyle } from "react-native";
 import Animated, {
-  Easing,
   FadeIn,
   FadeInDown,
   FadeInUp,
   LinearTransition,
   useReducedMotion,
 } from "react-native-reanimated";
+import { motionDuration, motionEasing } from "@/constants/motion";
 
 export interface MotionEntranceProps {
   children: React.ReactNode;
@@ -18,13 +18,11 @@ export interface MotionEntranceProps {
   direction?: "down" | "up" | "fade";
   style?: StyleProp<ViewStyle>;
 }
-const interfaceEase = Easing.bezier(0.2, 0, 0, 1);
-
 /** Adds a short entrance transition to a screen section. */
 export function MotionEntrance({
   children,
   delay = 0,
-  duration = 220,
+  duration = motionDuration.section,
   translateY = 6,
   direction = "down",
   enableLayoutTransition = false,
@@ -36,12 +34,12 @@ export function MotionEntrance({
   const enteringAnimation = useMemo(() => {
     if (reduceMotion) return undefined;
 
-    const safeDelay = Math.min(Math.max(0, delay) * 0.35, 100);
+    const safeDelay = Math.min(Math.max(0, delay), 120);
     const distance = Math.max(0, translateY);
 
     if (direction === "down") {
       return FadeInDown.duration(duration)
-        .easing(interfaceEase)
+        .easing(motionEasing.enter)
         .withInitialValues({
           opacity: 0,
           transform: [{ translateY: -distance }],
@@ -51,7 +49,7 @@ export function MotionEntrance({
 
     if (direction === "up") {
       return FadeInUp.duration(duration)
-        .easing(interfaceEase)
+        .easing(motionEasing.enter)
         .withInitialValues({
           opacity: 0,
           transform: [{ translateY: distance }],
@@ -59,7 +57,7 @@ export function MotionEntrance({
         .delay(safeDelay);
     }
 
-    return FadeIn.duration(duration).easing(interfaceEase).delay(safeDelay);
+    return FadeIn.duration(duration).easing(motionEasing.enter).delay(safeDelay);
   }, [direction, delay, duration, translateY, reduceMotion]);
 
   if (reduceMotion) {
@@ -71,7 +69,7 @@ export function MotionEntrance({
       entering={enteringAnimation}
       layout={
         enableLayoutTransition
-          ? LinearTransition.duration(180).easing(interfaceEase)
+          ? LinearTransition.duration(motionDuration.layout).easing(motionEasing.standard)
           : undefined
       }
       style={[
@@ -83,3 +81,4 @@ export function MotionEntrance({
     </Animated.View>
   );
 }
+

@@ -2,9 +2,11 @@ import React, { useEffect, useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
 import Animated, {
   useAnimatedStyle,
+  useReducedMotion,
   useSharedValue,
   withTiming,
 } from "react-native-reanimated";
+import { motionDuration, motionEasing } from "@/constants/motion";
 import { Account } from "@/types/auth";
 
 interface ProfileAvatarProps {
@@ -27,6 +29,7 @@ export function ProfileAvatar({
   const uri = account?.profilePictureUri;
   const [imageFailed, setImageFailed] = useState(false);
   const imageOpacity = useSharedValue(0);
+  const reduceMotion = useReducedMotion();
 
   useEffect(() => {
     setImageFailed(false);
@@ -35,8 +38,10 @@ export function ProfileAvatar({
       return;
     }
     imageOpacity.value = 0;
-    imageOpacity.value = withTiming(1, { duration: 180 });
-  }, [imageOpacity, uri]);
+    imageOpacity.value = reduceMotion
+      ? 1
+      : withTiming(1, { duration: motionDuration.standard, easing: motionEasing.standard });
+  }, [imageOpacity, reduceMotion, uri]);
 
   const animatedImageStyle = useAnimatedStyle(() => ({
     opacity: imageOpacity.value,
@@ -79,3 +84,4 @@ const styles = StyleSheet.create({
     fontWeight: "700",
   },
 });
+

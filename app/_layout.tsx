@@ -8,6 +8,7 @@ import { ExpenseProvider } from "@/lib/expense-store";
 import { AuthProvider } from "@/lib/auth-store";
 import { ThemeProvider, useTheme } from "@/lib/theme-store";
 import { SplashScreen } from "@/components/common/splash-screen";
+import { useReducedMotion } from "react-native-reanimated";
 
 function ThemedStatusBar() {
   const { dark } = useTheme();
@@ -20,6 +21,7 @@ function BrandedSplashScreen({ isReady }: { isReady: boolean }) {
 }
 
 export default function RootLayout() {
+  const reduceMotion = useReducedMotion();
   const [fontsLoaded, fontError] = useFonts({
     // Load Ionicons under both casing keys so Font.isLoaded('ionicons') resolves on web
     ...Ionicons.font,
@@ -39,7 +41,7 @@ export default function RootLayout() {
                 screenOptions={{
                   headerShown: false,
                   // Use none on web to avoid the JS-animated fade which is laggy
-                  animation: Platform.OS === "web" ? "none" : "default",
+                  animation: reduceMotion || Platform.OS === "web" ? "none" : "default",
                 }}
               />
               {/* Branded Application Launch Screen with Theme Awareness */}
@@ -57,4 +59,5 @@ const styles = StyleSheet.create({
     flex: 1,
   },
 });
+
 

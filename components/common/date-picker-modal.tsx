@@ -5,6 +5,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTheme } from "@/lib/theme-store";
 import { getPhilippinesDate, shiftCalendarMonth } from "@/utils/date";
 import { formatDate } from "@/utils/formatters";
+import { useReducedMotion } from "react-native-reanimated";
 
 type DatePickerModalProps = {
   visible: boolean;
@@ -24,6 +25,7 @@ export function DatePickerModal({
   onSelect,
 }: DatePickerModalProps) {
   const { colors, dark } = useTheme();
+  const reduceMotion = useReducedMotion();
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
   const initialDate = selectedDate || maxDate;
@@ -58,7 +60,7 @@ export function DatePickerModal({
   const daySize = Math.min(44, Math.max(36, (width - 72) / 7));
 
   return (
-    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
+    <Modal visible={visible} transparent animationType={reduceMotion ? "none" : "slide"} onRequestClose={onClose}>
       <View style={styles.backdrop}>
         <Pressable style={StyleSheet.absoluteFill} onPress={onClose} accessibilityLabel="Close date picker" />
         <View
@@ -253,3 +255,4 @@ const styles = StyleSheet.create({
   },
   todayText: { fontSize: 12, fontWeight: "800" },
 });
+

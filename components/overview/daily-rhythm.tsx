@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { Pressable, StyleSheet, Text, View, useWindowDimensions } from "react-native";
 import Animated, {
   useAnimatedStyle,
+  useReducedMotion,
   useSharedValue,
   withSpring,
 } from "react-native-reanimated";
@@ -14,6 +15,7 @@ import { NeumorphicSurface } from "@/components/ui/neumorphic-surface";
 import { formatDate, formatMoney } from "@/utils/formatters";
 import { addCalendarDays, getExpenseDateKey, getPhilippinesDate, getWeekdayShort } from "@/utils/date";
 import { DatePickerModal } from "@/components/common/date-picker-modal";
+import { motionSpring } from "@/constants/motion";
 
 interface DailyRhythmProps {
   expenses: Expense[];
@@ -39,14 +41,12 @@ const RhythmBarItem = React.memo(function RhythmBarItem({
   onPress: () => void;
 }) {
   const heightAnim = useSharedValue(0);
+  const reduceMotion = useReducedMotion();
 
   useEffect(() => {
-    heightAnim.value = withSpring(Math.max((pct / 100) * 100, 6), {
-      damping: 18,
-      stiffness: 220,
-      mass: 0.8,
-    });
-  }, [heightAnim, pct]);
+    const target = Math.max((pct / 100) * 100, 6);
+    heightAnim.value = reduceMotion ? target : withSpring(target, motionSpring.chart);
+  }, [heightAnim, pct, reduceMotion]);
 
   const animatedStyle = useAnimatedStyle(() => ({
     height: `${heightAnim.value}%`,
@@ -487,3 +487,4 @@ const styles = StyleSheet.create({
   expenseAmount: { fontSize: 12.5, fontWeight: "700" },
   emptyActivity: { fontSize: 11, marginTop: 8 },
 });
+

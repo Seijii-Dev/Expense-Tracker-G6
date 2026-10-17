@@ -1,8 +1,8 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Platform, Pressable, StyleSheet, Text, View, useWindowDimensions } from "react-native";
 import Animated, {
-  Easing,
   useAnimatedStyle,
+  useReducedMotion,
   useSharedValue,
   withTiming,
 } from "react-native-reanimated";
@@ -11,6 +11,7 @@ import { useTheme } from "@/lib/theme-store";
 import { formatMoney } from "@/utils/formatters";
 import { SpendingTimeline } from "@/utils/spending-trajectory";
 import { radii, spacing } from "@/constants/design-tokens";
+import { motionDuration, motionEasing } from "@/constants/motion";
 
 import { NeumorphicSurface } from "@/components/ui/neumorphic-surface";
 
@@ -24,6 +25,7 @@ export function SpendingTrendChart({ timeline }: SpendingTrendChartProps) {
   const [selectedPointKey, setSelectedPointKey] = useState<string | null>(null);
   const [measuredWidth, setMeasuredWidth] = useState(0);
   const chartOpacity = useSharedValue(1);
+  const reduceMotion = useReducedMotion();
   const isFirstTimeline = useRef(true);
 
   // Compute exact chart width to match container width
@@ -42,6 +44,10 @@ export function SpendingTrendChart({ timeline }: SpendingTrendChartProps) {
 
   useEffect(() => {
     setSelectedPointKey(null);
+    if (reduceMotion) {
+      chartOpacity.value = 1;
+      return;
+    }
     if (isFirstTimeline.current) {
       isFirstTimeline.current = false;
       return;
@@ -49,10 +55,10 @@ export function SpendingTrendChart({ timeline }: SpendingTrendChartProps) {
 
     chartOpacity.value = 0.5;
     chartOpacity.value = withTiming(1, {
-      duration: 240,
-      easing: Easing.bezier(0.16, 1, 0.3, 1),
+      duration: motionDuration.standard,
+      easing: motionEasing.enter,
     });
-  }, [chartOpacity, timeline?.interval, timeline?.startDate, timeline?.endDate]);
+  }, [chartOpacity, reduceMotion, timeline?.interval, timeline?.startDate, timeline?.endDate]);
 
   const animatedContainerStyle = useAnimatedStyle(() => ({
     opacity: chartOpacity.value,
@@ -374,3 +380,4 @@ const styles = StyleSheet.create({
     fontSize: 9.5,
   },
 });
+

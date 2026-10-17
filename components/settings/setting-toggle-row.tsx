@@ -11,6 +11,7 @@ import Animated, {
 } from "react-native-reanimated";
 
 import { spacing } from "@/constants/design-tokens";
+import { motionDuration, motionEasing } from "@/constants/motion";
 import { useTheme } from "@/lib/theme-store";
 
 interface SettingToggleRowProps {
@@ -43,7 +44,9 @@ export function SettingToggleRow({
 
   useEffect(() => {
     const nextValue = value ? 1 : 0;
-    progress.value = reduceMotion ? nextValue : withTiming(nextValue, { duration: 160 });
+    progress.value = reduceMotion
+      ? nextValue
+      : withTiming(nextValue, { duration: motionDuration.control, easing: motionEasing.standard });
   }, [progress, reduceMotion, value]);
 
   const trackStyle = useAnimatedStyle(() => ({
@@ -155,3 +158,4 @@ const styles = StyleSheet.create({
     backgroundColor: "#FFFFFF",
   },
 });
+

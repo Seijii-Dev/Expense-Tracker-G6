@@ -1,6 +1,7 @@
-import React, { useEffect, useRef, useState } from "react";
-import { StyleProp, Text, TextProps, TextStyle } from "react-native";
-import { useReducedMotion } from "react-native-reanimated";
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import { StyleProp, TextProps, TextStyle } from "react-native";
+import Animated, { FadeInUp, useReducedMotion } from "react-native-reanimated";
+import { motionDuration, motionEasing } from "@/constants/motion";
 
 export interface MotionNumberProps extends Omit<TextProps, "children" | "style"> {
   value: number;
@@ -17,7 +18,7 @@ export function MotionNumber({
   formatter,
   prefix = "",
   suffix = "",
-  duration = 320,
+  duration = motionDuration.number,
   style,
   ...textProps
 }: MotionNumberProps) {
@@ -25,6 +26,29 @@ export function MotionNumber({
   const [displayValue, setDisplayValue] = useState<number>(() => (reduceMotion ? value : 0));
   const currentValRef = useRef<number>(reduceMotion ? value : 0);
   const rafId = useRef<number | null>(null);
+  const previousValue = useRef(value);
+  const [popVersion, setPopVersion] = useState(0);
+
+  // Replay the pop only when the source value changes, not on each counter frame.
+  useEffect(() => {
+    if (previousValue.current !== value) {
+      previousValue.current = value;
+      setPopVersion((version) => version + 1);
+    }
+  }, [value]);
+
+  const popIn = useMemo(
+    () =>
+      reduceMotion
+        ? undefined
+        : FadeInUp.duration(motionDuration.standard)
+            .easing(motionEasing.enter)
+            .withInitialValues({
+              opacity: 0,
+              transform: [{ translateY: 8 }],
+            }),
+    [reduceMotion],
+  );
 
   useEffect(() => {
     if (reduceMotion) {
@@ -45,7 +69,7 @@ export function MotionNumber({
       const progress = Math.min(elapsed / duration, 1);
 
       // Ease out quickly, then settle at the final value.
-      const eased = 1 - Math.pow(1 - progress, 4);
+      const eased = 1 - Math.pow(1 - progress, 3);
       const nextVal = startVal + (endVal - startVal) * eased;
       currentValRef.current = nextVal;
 
@@ -80,10 +104,11 @@ export function MotionNumber({
     : Math.round(displayValue).toLocaleString();
 
   return (
-    <Text style={style} {...textProps}>
+    <Animated.Text key={popVersion} entering={popIn} style={style} {...textProps}>
       {prefix}
       {formatted}
       {suffix}
-    </Text>
+    </Animated.Text>
   );
 }
+
