@@ -56,12 +56,8 @@ export function CategoryChips({ selected, onSelect, countMap }: CategoryChipsPro
                   : dark
                   ? "rgba(255, 255, 255, 0.08)"
                   : colors.border,
-                shadowColor: isActive ? colors.primary : "#1A1D20",
-                shadowOpacity: isActive ? 0.24 : 0.02,
-                shadowRadius: isActive ? 8 : 4,
-                elevation: isActive ? 3 : 1,
                 opacity: pressed ? 0.8 : 1,
-                transform: [{ scale: pressed ? 0.96 : 1 }],
+                transform: [{ scale: pressed ? 0.98 : 1 }],
               },
             ]}
           >
@@ -122,7 +118,7 @@ const styles = StyleSheet.create({
   chip: {
     flexDirection: "row",
     alignItems: "center",
-    height: 36,
+    minHeight: 44,
     paddingHorizontal: 14,
     borderRadius: 18,
     borderWidth: 1,

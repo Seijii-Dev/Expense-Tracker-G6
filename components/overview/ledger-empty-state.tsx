@@ -27,14 +27,12 @@ export function LedgerEmptyState({ onLogExpense, onSetBudget }: LedgerEmptyState
       contentStyle={styles.cardContent}
     >
       <View style={styles.iconCluster}>
-        <View style={[styles.glow, { backgroundColor: `${colors.primary}14` }]} />
         <View
           style={[
             styles.iconTile,
             {
               backgroundColor: colors.primarySoft,
               borderColor: `${colors.primary}33`,
-              shadowColor: colors.primary,
             },
           ]}
         >
@@ -62,7 +60,7 @@ export function LedgerEmptyState({ onLogExpense, onSetBudget }: LedgerEmptyState
         accessibilityLabel="Log your first expense"
         style={[
           styles.primaryBtn,
-          { backgroundColor: colors.primary, shadowColor: colors.primary },
+          { backgroundColor: colors.primary },
           Platform.OS === "web" ? ({ cursor: "pointer" } as any) : null,
         ]}
       >
@@ -101,12 +99,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     marginBottom: 6,
   },
-  glow: {
-    position: "absolute",
-    width: 96,
-    height: 96,
-    borderRadius: 48,
-  },
   iconTile: {
     width: 58,
     height: 58,
@@ -114,10 +106,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     alignItems: "center",
     justifyContent: "center",
-    shadowOpacity: 0.35,
-    shadowRadius: 18,
-    shadowOffset: { width: 0, height: 6 },
-    elevation: 4,
   },
   plusBadge: {
     position: "absolute",
@@ -154,10 +142,6 @@ const styles = StyleSheet.create({
     minHeight: 52,
     marginTop: 20,
     borderRadius: 16,
-    shadowOpacity: 0.3,
-    shadowRadius: 14,
-    shadowOffset: { width: 0, height: 6 },
-    elevation: 4,
     ...(Platform.OS === "web" ? ({ cursor: "pointer" } as any) : {}),
   },
   primaryBtnText: {

@@ -1218,11 +1218,6 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     overflow: "hidden",
     marginTop: 10,
-    shadowColor: "#E84A3F",
-    shadowOpacity: 0.35,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 4,
   },
   saveGradient: {
     width: "100%",

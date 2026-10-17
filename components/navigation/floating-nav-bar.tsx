@@ -289,7 +289,6 @@ export function FloatingTabBar({ state, descriptors, navigation }: FloatingTabBa
                 styles.fabSquare,
                 {
                   backgroundColor: colors.primary,
-                  shadowColor: colors.primary,
                 },
               ]}
             >
@@ -362,9 +361,5 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     alignItems: "center",
     justifyContent: "center",
-    shadowOpacity: 0.45,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 6,
   },
 });

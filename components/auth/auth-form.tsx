@@ -11,7 +11,6 @@ import {
   View,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { LinearGradient } from "expo-linear-gradient";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { useTheme } from "@/lib/theme-store";
@@ -142,15 +141,6 @@ function FloatingInput({
         {/* Trailing content (e.g. password visibility toggle) */}
         {trailingContent}
 
-        {/* Focused glow accent line */}
-        {isFocused && (
-          <View
-            style={[
-              styles.focusAccentLine,
-              { backgroundColor: colors.primary },
-            ]}
-          />
-        )}
       </View>
     </Pressable>
   );
@@ -431,7 +421,7 @@ export function AuthForm({ mode, onModeChange, onBack, onSubmit, busy }: AuthFor
           </View>
         </View>
 
-        {/* Submit Button with Gradient */}
+        {/* Solid primary action */}
         <Pressable
           disabled={busy}
           style={({ pressed }) => [
@@ -442,12 +432,7 @@ export function AuthForm({ mode, onModeChange, onBack, onSubmit, busy }: AuthFor
           onPress={handleSubmit}
           accessibilityRole="button"
         >
-          <LinearGradient
-            colors={["#FF5A4E", "#E84A3F", "#D43C32"]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 0 }}
-            style={styles.submitGradient}
-          >
+          <View style={[styles.submitGradient, { backgroundColor: colors.primary }]}>
             {busy ? (
               <Text style={styles.submitText}>Please wait…</Text>
             ) : (
@@ -460,7 +445,7 @@ export function AuthForm({ mode, onModeChange, onBack, onSubmit, busy }: AuthFor
                 </View>
               </>
             )}
-          </LinearGradient>
+          </View>
         </Pressable>
 
         {/* Divider */}
@@ -612,10 +597,6 @@ const styles = StyleSheet.create({
     fontWeight: "500",
     paddingVertical: 0,
   },
-  focusAccentLine: {
-    position: "absolute",
-    display: "none",
-  },
   eyeToggle: {
     padding: 4,
     ...(Platform.OS === "web" ? ({ cursor: "pointer" } as any) : {}),
@@ -659,11 +640,6 @@ const styles = StyleSheet.create({
     marginTop: 24,
     borderRadius: 18,
     overflow: "hidden",
-    shadowColor: "#FF6554",
-    shadowOpacity: 0.35,
-    shadowRadius: 16,
-    shadowOffset: { width: 0, height: 7 },
-    elevation: 6,
     ...(Platform.OS === "web" ? ({ cursor: "pointer" } as any) : {}),
   },
   submitGradient: {

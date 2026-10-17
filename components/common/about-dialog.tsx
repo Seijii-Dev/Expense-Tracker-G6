@@ -215,11 +215,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     alignItems: "center",
     justifyContent: "center",
-    shadowColor: "#FF6554",
-    shadowOpacity: 0.15,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 3,
   },
   logo: {
     width: 52,
@@ -291,11 +286,6 @@ const styles = StyleSheet.create({
     width: "100%",
     height: 42,
     borderRadius: 14,
-    shadowColor: "#FF6554",
-    shadowOpacity: 0.25,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 3 },
-    elevation: 4,
     ...(Platform.OS === "web" ? ({ cursor: "pointer" } as any) : {}),
   },
   visitBtnText: {

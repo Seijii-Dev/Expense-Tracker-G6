@@ -27,10 +27,9 @@ export function SearchBar({
       style={[
         styles.search,
         {
-          backgroundColor: dark ? "rgba(255,255,255,0.04)" : "#FFFFFF",
+          backgroundColor: colors.inputBg,
           borderColor: isFocused ? colors.primary : colors.border,
         },
-        isFocused && styles.searchFocused,
       ]}
     >
       <Ionicons
@@ -99,19 +98,7 @@ const styles = StyleSheet.create({
     height: 52,
     paddingHorizontal: 16,
     borderRadius: 16,
-    borderWidth: 1.5,
-    shadowColor: "#1A1D20",
-    shadowOpacity: 0.03,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 1,
-  },
-  searchFocused: {
-    shadowColor: "#E84A3F",
-    shadowOpacity: 0.16,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 3 },
-    elevation: 3,
+    borderWidth: 1,
   },
   searchInput: {
     flex: 1,
@@ -119,8 +106,8 @@ const styles = StyleSheet.create({
     fontWeight: "500",
   },
   filterBtn: {
-    width: 34,
-    height: 34,
+    width: 40,
+    height: 40,
     borderRadius: 10,
     alignItems: "center",
     justifyContent: "center",

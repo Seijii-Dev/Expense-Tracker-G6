@@ -4,9 +4,6 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Ledgerly — Mobile Device Preview</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&display=swap" rel="stylesheet" />
   <style>
     :root {
       --primary: #E84A3F;
@@ -24,8 +21,8 @@
     }
 
     body {
-      font-family: 'DM Sans', system-ui, -apple-system, sans-serif;
-      background: radial-gradient(circle at 50% 20%, #1E293B 0%, #0F172A 100%);
+      font-family: -apple-system, BlinkMacSystemFont, system-ui, "Segoe UI", sans-serif;
+      background: #0F172A;
       color: var(--text);
       min-height: 100vh;
       display: flex;
@@ -42,12 +39,11 @@
       align-items: center;
       justify-content: space-between;
       padding: 12px 20px;
-      background: rgba(30, 41, 59, 0.7);
-      backdrop-filter: blur(16px);
+      background: #1E293B;
       border: 1px solid var(--border);
       border-radius: 16px;
       margin-bottom: 20px;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+      box-shadow: 6px 6px 14px rgba(0, 0, 0, 0.28), -4px -4px 10px rgba(71, 85, 105, 0.12);
     }
 
     .brand {
@@ -67,7 +63,6 @@
       font-weight: 800;
       font-size: 16px;
       color: white;
-      box-shadow: 0 2px 8px rgba(232, 74, 63, 0.4);
     }
 
     .brand-title {
@@ -90,7 +85,7 @@
 
     .btn-group {
       display: flex;
-      background: rgba(15, 23, 42, 0.6);
+      background: #172033;
       padding: 3px;
       border-radius: 10px;
       border: 1px solid var(--border);
@@ -116,14 +111,14 @@
     .btn.active {
       background: var(--primary);
       color: #FFFFFF;
-      box-shadow: 0 2px 6px rgba(232, 74, 63, 0.35);
+      box-shadow: inset 2px 2px 4px rgba(0, 0, 0, 0.22), inset -2px -2px 4px rgba(255, 255, 255, 0.08);
     }
 
     .action-btn {
       display: flex;
       align-items: center;
       gap: 6px;
-      background: rgba(15, 23, 42, 0.6);
+      background: #172033;
       border: 1px solid var(--border);
       color: var(--text);
       padding: 7px 12px;
@@ -155,11 +150,7 @@
       background: #000000;
       border-radius: 54px;
       padding: 12px;
-      box-shadow: 
-        0 0 0 2px #334155,
-        0 0 0 8px #1E293B,
-        0 25px 60px -15px rgba(0, 0, 0, 0.7),
-        0 10px 24px -8px rgba(232, 74, 63, 0.15);
+      box-shadow: 12px 12px 24px rgba(0, 0, 0, 0.42), -6px -6px 14px rgba(71, 85, 105, 0.1);
       transition: width 0.3s ease, height 0.3s ease;
       overflow: hidden;
     }
@@ -224,7 +215,7 @@
       width: 135px;
       height: 4px;
       border-radius: 2px;
-      background: rgba(15, 23, 42, 0.35);
+      background: #CBD5E1;
       z-index: 20;
       pointer-events: none;
     }
@@ -244,7 +235,6 @@
       height: 7px;
       border-radius: 50%;
       background: #10B981;
-      box-shadow: 0 0 8px #10B981;
     }
   </style>
 </head>

@@ -477,12 +477,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     ...(Platform.OS === "web" ? ({ cursor: "pointer" } as any) : {}),
   },
-  timeframeTabActive: {
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 6,
-    elevation: 2,
-  },
   timeframeText: {
     fontSize: 12.5,
   },

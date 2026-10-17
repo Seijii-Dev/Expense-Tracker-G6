@@ -706,11 +706,6 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     alignItems: "center",
     justifyContent: "center",
-    shadowColor: "#E84A3F",
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 3 },
-    elevation: 3,
     ...(Platform.OS === "web" ? ({ cursor: "pointer" } as any) : {}),
   },
   rangePillsScroll: {

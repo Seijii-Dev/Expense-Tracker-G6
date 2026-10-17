@@ -484,7 +484,7 @@ export default function TransactionDetailsScreen() {
           onPress={handleSave}
           style={[
             styles.saveBtn,
-            { backgroundColor: colors.primary, shadowColor: colors.primary },
+            { backgroundColor: colors.primary },
           ]}
           accessibilityRole="button"
           accessibilityLabel="Save transaction changes"
@@ -755,10 +755,6 @@ const styles = StyleSheet.create({
     minHeight: 54,
     marginTop: 28,
     borderRadius: 16,
-    shadowOpacity: 0.32,
-    shadowRadius: 14,
-    shadowOffset: { width: 0, height: 6 },
-    elevation: 4,
     ...(Platform.OS === "web" ? ({ cursor: "pointer" } as any) : {}),
   },
   saveBtnText: {

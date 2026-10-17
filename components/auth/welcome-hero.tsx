@@ -184,11 +184,6 @@ const styles = StyleSheet.create({
     gap: 8,
     height: 52,
     borderRadius: 16,
-    shadowColor: "#FF6554",
-    shadowOpacity: 0.35,
-    shadowRadius: 14,
-    shadowOffset: { width: 0, height: 6 },
-    elevation: 5,
     ...(Platform.OS === "web" ? ({ cursor: "pointer" } as any) : {}),
   },
   primaryCtaText: {

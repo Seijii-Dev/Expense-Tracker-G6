@@ -72,7 +72,6 @@ const RhythmBarItem = React.memo(function RhythmBarItem({
                 ? "rgba(255, 255, 255, 0.12)"
                 : "#E9ECEF",
             },
-            (isToday || isSelected) && styles.barActiveShadow,
           ]}
         />
       </View>
@@ -445,13 +444,6 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
 
-  barActiveShadow: {
-    shadowColor: "#E84A3F",
-    shadowOpacity: 0.35,
-    shadowRadius: 6,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 3,
-  },
   barLabel: {
     fontSize: 10,
     fontWeight: "600",
