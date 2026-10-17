@@ -34,7 +34,9 @@ export function MotionEntrance({
   const enteringAnimation = useMemo(() => {
     if (reduceMotion) return undefined;
 
-    const safeDelay = Math.min(Math.max(0, delay), 120);
+    // Preserve the screens' intended section rhythm; clamping at 120ms made
+    // later sections arrive together and caused a burst of simultaneous motion.
+    const safeDelay = Math.min(Math.max(0, delay), 320);
     const distance = Math.max(0, translateY);
 
     if (direction === "down") {
